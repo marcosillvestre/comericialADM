@@ -85,7 +85,6 @@ class CreateDocuments {
 
             const browser = await puppeteer.launch({
                 headless: 'new',
-                executablePath: '/usr/node_modules/bin/chromium-browser',
                 args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
 
             })
