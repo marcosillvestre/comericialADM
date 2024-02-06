@@ -31,6 +31,7 @@ class CreateDocuments {
             "Pacote Office Essentials": "office",
             "Excel Avaçado": "excel"
         }
+
         const compiler = async (templateName, data) => {
             let filePath = path.join(process.cwd(), 'public', `${archives[templateName]}.hbs`)
             const html = await fs.readFile(filePath, 'utf-8')
@@ -40,6 +41,7 @@ class CreateDocuments {
 
 
         const info = req.body
+        info['parcelaDescontada'] = info.valorParcela - info.desconto
         const rawPhone = info.CelularResponsavel
 
         let phone = rawPhone.includes("+55") ? rawPhone : `+55${rawPhone}`
@@ -80,7 +82,12 @@ class CreateDocuments {
             }
 
 
-            const browser = await puppeteer.launch({ headless: 'new', args: ["--no-sandbox", "--disable-setuid-sandbox"], })
+
+            const browser = await puppeteer.launch({
+                executablePath: '/usr/bin/chromium-browser',
+                args: ['--no-sandbox', '--headless', '--disable-gpu']
+            })
+
             const page = await browser.newPage()
 
             const content = await compiler(info.subclasse, info)
@@ -92,9 +99,11 @@ class CreateDocuments {
                 printBackground: true,
                 displayHeaderFooter: true,
                 preferCSSPageSize: true
-            }).then(async (res) => {
-                if (res) {
+            }).then(async (data) => {
+                if (data) {
                     await sender()
+                    // return res.status(401).json({ message: "Erro na criação do contrato" })
+
                 }
             })
                 .catch((error) => {
@@ -111,8 +120,6 @@ class CreateDocuments {
             return res.status(401).json({ message: "Erro ao enviar o contrato" })
 
         }
-
-
     }
 }
 
