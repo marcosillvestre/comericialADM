@@ -1,4 +1,4 @@
-FROM zenika/alpine-chrome:77-with-node
+FROM ghcr.io/puppeteer/puppeteer:latest
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
 # Use a imagem base que suporta a instalação do Chromium Browser
