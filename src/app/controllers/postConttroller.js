@@ -9,12 +9,6 @@ const prisma = new PrismaClient()
 const limit = 200
 const comebackDays = 3
 
-const backDay = new Date()
-backDay.setDate(backDay.getDate() - comebackDays)
-const startDate = backDay.toISOString()
-
-const currentDate = new Date()
-const endDate = currentDate.toISOString()
 
 const options = { method: 'GET', headers: { accept: 'application/json' } };
 
@@ -22,7 +16,16 @@ const options = { method: 'GET', headers: { accept: 'application/json' } };
 class PostController {
 
     async searchSync(req, res) {
+
+        const backDay = new Date()
+        backDay.setDate(backDay.getDate() - comebackDays)
+        const startDate = backDay.toISOString()
+
+        const currentDate = new Date()
+        const endDate = currentDate.toISOString()
+
         await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=${limit}&token=${process.env.RD_TOKEN}&win=true&closed_at_period=true&start_date=${startDate}&end_date=${endDate}`, options)
+
             .then(async response => {
                 if (response.data.total > 0) {
                     const array = []
