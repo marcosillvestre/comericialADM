@@ -92,31 +92,30 @@ async function searchSync(limit) {
                         diaAula: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Dia de aula')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Dia de aula')).map(res => res.value)[0] : "Sem este dado no rd",
                         alunoNascimento: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de nascimento do aluno')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de nascimento do aluno')).map(res => res.value)[0] : "Sem este dado no rd",
                         idadeAluno: `${index.deal_custom_fields.filter(res => res.custom_field.label.includes('Idade do Aluno')).map(res => res.value)}`,
-                        tempoContrato: ".",
+                        tempoContrato: "",
                         dataMatricula: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de emissão da venda')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de emissão da venda')).map(res => res.value)[0] : "Sem este dado no rd",
-                        observacao: [{}],
-                        dataValidacao: ".",
-                        dataComissionamento: ".",
+                        observacao: [{ "data": "pending" }],
+                        dataValidacao: "",
+                        dataComissionamento: "",
                         contratoStatus: "Pendente",
                         cargaHoraria: `${index.deal_custom_fields.filter(res => res.custom_field.label.includes('Carga horário do curso')).map(res => res.value)}`,
-                        tmDesconto: ".",
-                        tmParcelas: ".",
-                        tmData: ".",
+                        tmDesconto: "",
+                        tmParcelas: "",
+                        tmData: "",
                         ppDesconto: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor do desconto de pontualidade por parcela')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor do desconto de pontualidade por parcela')).map(res => res.value)[0] : "Sem este dado no rd",
                         ppFormaPg: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Forma de pagamento da parcela')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Forma de pagamento da parcela')).map(res => res.value)[0] : "Sem este dado no rd",
                         ppParcelas: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Número de parcelas')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Número de parcelas')).map(res => res.value)[0] : "Sem este dado no rd",
-                        ppData: ".",
+                        ppData: "",
                         ppValor: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor total da parcela')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor total da parcela')).map(res => res.value)[0] : "Sem este dado no rd",
-                        mdDesconto: ".",
+                        mdDesconto: "",
 
                         mdFormaPg: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Forma de pagamento do MD')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Forma de pagamento do MD')).map(res => res.value)[0] : "Sem este dado no rd",
                         mdVencimento: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de pagamento MD')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de pagamento MD')).map(res => res.value)[0] : "Sem este dado no rd",
 
-                        mdParcelas: ".",
-                        mdData: ".",
+                        mdParcelas: "",
+                        mdData: "",
                         comissaoStatus: "Pendente",
                         curso: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Curso')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Curso')).map(res => res.value)[0] : "Sem este dado no rd",
-
                     }
                     array.push(body)
 
@@ -174,26 +173,26 @@ async function searchSync(limit) {
                                     diaAula: res.diaAula,
                                     alunoNascimento: res.alunoNascimento,
                                     idadeAluno: `${res.idadeAluno}`,
-                                    tempoContrato: ".",
+                                    tempoContrato: "",
                                     dataMatricula: res.dataMatricula,
                                     observacao: [{}],
-                                    dataValidacao: ".",
-                                    dataComissionamento: ".",
+                                    dataValidacao: "",
+                                    dataComissionamento: "",
                                     contratoStatus: "Pendente",
                                     cargaHoraria: `${res.cargaHoraria}`,
-                                    tmDesconto: ".",
+                                    tmDesconto: "",
                                     tmFormaPg: res.tmFormaPg,
-                                    tmParcelas: ".",
-                                    tmData: ".",
+                                    tmParcelas: "",
+                                    tmData: "",
                                     ppDesconto: res.ppDesconto,
-                                    ppFormaPg: ".",
+                                    ppFormaPg: "",
                                     ppParcelas: res.ppParcelas,
-                                    ppData: ".",
+                                    ppData: "",
                                     ppValor: res.ppValor,
-                                    mdDesconto: ".",
+                                    mdDesconto: "",
                                     mdFormaPg: res.mdFormaPg,
-                                    mdParcelas: ".",
-                                    mdData: ".",
+                                    mdParcelas: "",
+                                    mdData: "",
                                     mdVencimento: res.mdVencimento,
                                     curso: res.curso,
                                     comissaoStatus: "Pendente",
@@ -238,7 +237,6 @@ function addUsefullDays(data, diasUteis) {
 
     return dataAtual;
 }
-
 
 async function trelloCreateCard(array) {
     let today = new Date();
@@ -297,3 +295,6 @@ async function trelloCreateCard(array) {
         .then(() => console.log("Enviado ao trello"))
         .catch(() => console.log("Erro ao enviar ao trello"))
 }
+
+
+// searchSync(limit);
