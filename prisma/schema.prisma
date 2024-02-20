@@ -75,7 +75,7 @@ model person {
   mdParcelas          String
   mdVencimento        String
   nivelamento         String
-  observacao          String
+  observacao          Json[]
   ppData              String
   ppDesconto          String
   ppFormaPg           String
@@ -97,4 +97,11 @@ model person {
 model unities {
   id         String    @id @default(uuid())
   name       String
+}
+
+model historic {
+  id             String    @id @default(uuid())
+  responsible    String
+  date           DateTime  @default(now())
+  information    Json
 }
