@@ -11,7 +11,7 @@ const job = new CronJob(
     '0 */30 * * * *',
 
     function () {
-        // searchSync(limit);
+        searchSync(limit);
     },
     null,
     true,
@@ -297,24 +297,3 @@ async function trelloCreateCard(array) {
 }
 
 
-// searchSync(limit);
-
-
-
-// async function douiafh() {
-//     let data = await prisma.person.findMany({})
-
-//     let fodbg = (data.filter(res => res.observacao[0].data === "Pendente"))
-//     console.log(fodbg.length)
-
-//     fodbg.map(async res => {
-//         await prisma.person.update({
-//             where: { contrato: res.contrato },
-//             data: {
-//                 "observacao": [{ "obs": "", "name": "" }]
-//             }
-
-//         }).then(() => console.log("first"))
-//     })
-// }
-// douiafh()
