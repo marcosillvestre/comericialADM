@@ -1,11 +1,11 @@
 import bodyParser from 'body-parser';
 import { Router } from 'express';
+import HistoricController from '../app/controllers/historicController.js';
 import PostConttroller from "../app/controllers/postConttroller.js";
 import SessionController from "../app/controllers/sessionController.js";
 import UnityController from "../app/controllers/unitiesController.js";
 import UserController from "../app/controllers/userController.js";
 import auth from "../middleware/auth.js";
-
 const routes = Router();
 
 
@@ -21,7 +21,11 @@ routes.post('/redefinir-senha', SessionController.forgetPassword)
 routes.post('/nova-senha', SessionController.redefinePassword)
 
 
+
 routes.use(auth)
+
+routes.get('/historico', HistoricController.index)
+
 
 routes.post('/page-update', PostConttroller.searchSync)
 

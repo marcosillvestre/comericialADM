@@ -12,11 +12,9 @@ const comebackDays = 3
 
 const options = { method: 'GET', headers: { accept: 'application/json' } };
 
-
 class PostController {
 
     async searchSync(req, res) {
-
         const backDay = new Date()
         backDay.setDate(backDay.getDate() - comebackDays)
         const startDate = backDay.toISOString()
@@ -87,7 +85,7 @@ class PostController {
                             idadeAluno: `${index.deal_custom_fields.filter(res => res.custom_field.label.includes('Idade do Aluno')).map(res => res.value)}`,
                             tempoContrato: "",
                             dataMatricula: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de emissão da venda')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de emissão da venda')).map(res => res.value)[0] : "Sem este dado no rd",
-                            observacao: "",
+                            observacao: [{ "obs": "", "name": "" }],
                             dataValidacao: "",
                             dataComissionamento: "",
                             contratoStatus: "Pendente",
@@ -155,7 +153,7 @@ class PostController {
                                         ppStatus: "Pendente",
 
 
-                                        dataAC: [{ name: 'Pendente' }],
+                                        dataAC: [{ "data": "pendente" }],
                                         formatoAula: array[i].formatoAula,
                                         tipoModalidade: array[i].tipoModalidade,
                                         professor: array[i].professor,
@@ -169,7 +167,7 @@ class PostController {
                                         idadeAluno: `${array[i].idadeAluno}`,
                                         tempoContrato: "",
                                         dataMatricula: array[i].dataMatricula,
-                                        observacao: "",
+                                        observacao: [{ "obs": "", "name": "" }],
                                         dataValidacao: "",
                                         dataComissionamento: "",
                                         contratoStatus: "Pendente",
@@ -218,7 +216,6 @@ class PostController {
             })
             .catch(() => {
                 return res.status(400).json({ message: 'Something went wrong' })
-
             })
     }
 
@@ -352,21 +349,104 @@ class PostController {
         const { id } = req.params
 
 
-        await prisma.person.update({
-            where: { contrato: id },
-            data: {
-                [area]: value,
-                dataValidacao: day,
-                responsavelADM: responsible
+        if (value.delete === undefined) {
+
+            const alreadyHave = await prisma.person.findFirst({
+                where: { contrato: id }
+            })
+            const newObj = alreadyHave.observacao.some(res => res.obs === "") ?
+                value : [...alreadyHave.observacao.filter(item => item.obs !== ""), value]
+
+
+            const historic = async () => {
+                return new Promise(resolve => {
+                    resolve(prisma.historic.create({
+                        data: {
+                            responsible: area === "observacao" ? value.name : responsible.name,
+                            information: {
+                                field: area,
+                                to: area === "observacao" ? value.obs : value,
+                                from: id,
+                                when: new Date().toLocaleString()
+                            }
+                        }
+                    })
+                    )
+                })
             }
-        }).then(() => {
-            return res.status(200).json("Success")
-        }).catch(() => {
-            return res.status(200).json("Error")
+
+            const update = async () => {
+
+                let object = alreadyHave.observacao.some(res => res.obs === "") ? [newObj] : newObj
+
+                const bodyAdmValidation = {
+                    [area]: area === "observacao" ? object : value,
+                    responsavelADM: responsible.name
+                }
+                const bodyDirectorValidation = {
+                    [area]: area === "observacao" ? object : value,
+                    dataValidacao: day,
+                    diretorResponsavel: responsible.name
+                }
+                const bodyDirector = {
+                    [area]: area === "observacao" ? object : value,
+                    diretorResponsavel: responsible.name
+                }
+
+
+                const body = {
+                    [area]: area === "observacao" ? object : value,
+                }
+
+                let realBdoy = {}
+
+                if (responsible.role === 'administrativo') realBdoy = bodyAdmValidation
+                if (responsible.role === 'direcao' && area === 'aprovacaoDirecao') realBdoy = bodyDirectorValidation
+                if (responsible.role === 'direcao' && area !== 'aprovacaoDirecao') realBdoy = bodyDirector
+                if (responsible.role !== 'administrativo' && responsible.role !== 'direcao') realBdoy = body
+
+
+                return new Promise(resolve => {
+                    resolve(prisma.person.update({
+                        where: { contrato: id },
+                        data: realBdoy
+                    }))
+                })
+            }
+
+            await Promise.all([
+                historic(),
+                update()
+            ])
+                .then(() => {
+                    return res.status(200).json({ message: "Success" })
+                })
+                .catch(() => {
+                    return res.status(400).json({ message: "Something went wrong" })
+                })
         }
-        )
+        if (value.delete === true) {
+            const alreadyHave = await prisma.person.findFirst({
+                where: { contrato: id }
+            })
+            const newObj = alreadyHave.observacao.length === 1 ?
+                { "obs": "", "name": "" } :
+                alreadyHave.observacao.filter(item => item.obs !== value.deleted)
 
 
+            await prisma.person.update({
+                where: { contrato: id },
+                data: {
+                    observacao: [newObj]
+                }
+            }).then(() => {
+                return res.status(200).json({ message: "Success" })
+            })
+                .catch((err) => {
+                    console.log(err)
+                    return res.status(400).json({ message: "Something went wrong" })
+                })
+        }
     }
 
     async delete(req, res) {

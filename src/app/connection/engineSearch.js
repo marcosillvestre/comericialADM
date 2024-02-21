@@ -11,7 +11,7 @@ const job = new CronJob(
     '0 */30 * * * *',
 
     function () {
-        searchSync(limit);
+        // searchSync(limit);
     },
     null,
     true,
@@ -94,7 +94,7 @@ async function searchSync(limit) {
                         idadeAluno: `${index.deal_custom_fields.filter(res => res.custom_field.label.includes('Idade do Aluno')).map(res => res.value)}`,
                         tempoContrato: "",
                         dataMatricula: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de emissão da venda')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de emissão da venda')).map(res => res.value)[0] : "Sem este dado no rd",
-                        observacao: [{ "data": "pendente" }],
+                        observacao: [{ "obs": "", "name": "" }],
                         dataValidacao: "",
                         dataComissionamento: "",
                         contratoStatus: "Pendente",
@@ -161,7 +161,7 @@ async function searchSync(limit) {
                                     ppStatus: "Pendente",
 
 
-                                    dataAC: [{}],
+                                    dataAC: [{ "data": "pendente" }],
                                     formatoAula: res.formatoAula,
                                     tipoModalidade: res.tipoModalidade,
                                     professor: res.professor,
@@ -175,7 +175,7 @@ async function searchSync(limit) {
                                     idadeAluno: `${res.idadeAluno}`,
                                     tempoContrato: "",
                                     dataMatricula: res.dataMatricula,
-                                    observacao: [{ "data": "Pendente" }],
+                                    observacao: [{ "obs": "", "name": "" }],
                                     dataValidacao: "",
                                     dataComissionamento: "",
                                     contratoStatus: "Pendente",
@@ -298,3 +298,23 @@ async function trelloCreateCard(array) {
 
 
 // searchSync(limit);
+
+
+
+// async function douiafh() {
+//     let data = await prisma.person.findMany({})
+
+//     let fodbg = (data.filter(res => res.observacao[0].data === "Pendente"))
+//     console.log(fodbg.length)
+
+//     fodbg.map(async res => {
+//         await prisma.person.update({
+//             where: { contrato: res.contrato },
+//             data: {
+//                 "observacao": [{ "obs": "", "name": "" }]
+//             }
+
+//         }).then(() => console.log("first"))
+//     })
+// }
+// douiafh()
