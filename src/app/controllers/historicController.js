@@ -1,6 +1,5 @@
-import { PrismaClient } from "@prisma/client";
 import "dotenv/config";
-const prisma = new PrismaClient()
+import prisma from '../../database/database.js';
 
 class Historic {
     async store(req, res) {

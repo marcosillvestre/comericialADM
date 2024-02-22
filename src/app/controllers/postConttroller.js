@@ -1,10 +1,9 @@
-import { PrismaClient } from "@prisma/client";
 import axios from 'axios';
 import "dotenv/config";
 import { funis } from "../../utils/funnels.js";
 import { stages } from "../../utils/stage.js";
 
-const prisma = new PrismaClient()
+import prisma from '../../database/database.js';
 
 const limit = 200
 const comebackDays = 3
@@ -226,47 +225,48 @@ class PostController {
             .then(response => {
                 const array = []
                 for (const index of response?.data?.deals) {
+                    const deal = index.deal_custom_fields
                     const body = {
                         vendedor: index.user.name,
-                        contrato: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nº do contrato')).map(res => res.value)[0],
-                        dataMatricula: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de emissão da venda')).map(res => res.value)[0],
-                        classe: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Classe')).map(res => res.value)[0],
-                        unidade: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Unidade')).map(res => res.value)[0],
-                        tipoModalidade: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Tipo/ modalidade')).map(res => res.value)[0],
+                        contrato: deal.filter(res => res.custom_field.label.includes('Nº do contrato')).map(res => res.value)[0],
+                        dataMatricula: deal.filter(res => res.custom_field.label.includes('Data de emissão da venda')).map(res => res.value)[0],
+                        classe: deal.filter(res => res.custom_field.label.includes('Classe')).map(res => res.value)[0],
+                        unidade: deal.filter(res => res.custom_field.label.includes('Unidade')).map(res => res.value)[0],
+                        tipoModalidade: deal.filter(res => res.custom_field.label.includes('Tipo/ modalidade')).map(res => res.value)[0],
                         name: index.name,
-                        rg: index.deal_custom_fields.filter(res => res.custom_field.label.includes('RG responsável')).map(res => res.value)[0],
-                        cpf: index.deal_custom_fields.filter(res => res.custom_field.label.includes('CPF')).map(res => res.value)[0],
-                        DatadeNascdoResp: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de nascimento do  responsável')).map(res => res.value)[0],
+                        rg: deal.filter(res => res.custom_field.label.includes('RG responsável')).map(res => res.value)[0],
+                        cpf: deal.filter(res => res.custom_field.label.includes('CPF')).map(res => res.value)[0],
+                        DatadeNascdoResp: deal.filter(res => res.custom_field.label.includes('Data de nascimento do  responsável')).map(res => res.value)[0],
                         CelularResponsavel: index.contacts[0]?.phones[0]?.phone,
-                        EnderecoResponsavel: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Endereço')).map(res => res.value)[0],
-                        NumeroEnderecoResponsavel: index.deal_custom_fields.filter(res => res.custom_field.label === 'Número').map(res => res.value)[0],
-                        complemento: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Complemento')).map(res => res.value)[0],
-                        bairro: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Bairro')).map(res => res.value)[0],
-                        cidade: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Cidade')).map(res => res.value)[0],
-                        estado: index.deal_custom_fields.filter(res => res.custom_field.label === 'UF').map(res => res.value)[0],
-                        cep: index.deal_custom_fields.filter(res => res.custom_field.label.includes('CEP')).map(res => res.value)[0],
-                        estadoCivil: index.deal_custom_fields.filter(res => res.custom_field.label === 'Estado civil responsável').map(res => res.value)[0],
-                        profissao: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Profissão')).map(res => res.value)[0],
+                        EnderecoResponsavel: deal.filter(res => res.custom_field.label.includes('Endereço')).map(res => res.value)[0],
+                        NumeroEnderecoResponsavel: deal.filter(res => res.custom_field.label === 'Número').map(res => res.value)[0],
+                        complemento: deal.filter(res => res.custom_field.label.includes('Complemento')).map(res => res.value)[0],
+                        bairro: deal.filter(res => res.custom_field.label.includes('Bairro')).map(res => res.value)[0],
+                        cidade: deal.filter(res => res.custom_field.label.includes('Cidade')).map(res => res.value)[0],
+                        estado: deal.filter(res => res.custom_field.label === 'UF').map(res => res.value)[0],
+                        cep: deal.filter(res => res.custom_field.label.includes('CEP')).map(res => res.value)[0],
+                        estadoCivil: deal.filter(res => res.custom_field.label === 'Estado civil responsável').map(res => res.value)[0],
+                        profissao: deal.filter(res => res.custom_field.label.includes('Profissão')).map(res => res.value)[0],
                         email: index.contacts[0]?.emails[0]?.email,
-                        nomeAluno: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome do aluno')).map(res => res.value)[0],
-                        nascimentoAluno: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de nascimento do aluno')).map(res => res.value)[0],
-                        formato: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Formato de Aula')).map(res => res.value)[0],
-                        tipoModalidade: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Tipo/ modalidade')).map(res => res.value)[0],
-                        classe: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Classe')).map(res => res.value)[0],
-                        subclasse: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Subclasse')).map(res => res.value)[0],
-                        cargaHoraria: `${index.deal_custom_fields.filter(res => res.custom_field.label.includes('Carga horário do curso')).map(res => res.value)}`,
-                        paDATA: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data da primeira aula')).map(res => res.value)[0],
-                        valorMensalidade: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor total da parcela')).map(res => res.value)[0],
-                        numeroParcelas: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Número de parcelas')).map(res => res.value)[0],
-                        diaVenvimento: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0],
-                        dataPrimeiraParcelaMensalidade: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0],
-                        dataUltimaParcelaMensalidade: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de vencimento da última parcela')).map(res => res.value)[0],
-                        descontoTotal: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Desconto total')).map(res => res.value)[0],
-                        descontoPorParcela: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor do desconto de pontualidade por parcela')).map(res => res.value)[0],
-                        valorParcela: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor total da parcela')).map(res => res.value)[0],
-                        testemunha1: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Testemunha 01')).map(res => res.value)[0],
-                        testemunha2: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Testemunha 2')).map(res => res.value)[0],
-                        curso: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Curso')).map(res => res.value)[0],
+                        nomeAluno: deal.filter(res => res.custom_field.label.includes('Nome do aluno')).map(res => res.value)[0],
+                        nascimentoAluno: deal.filter(res => res.custom_field.label.includes('Data de nascimento do aluno')).map(res => res.value)[0],
+                        formato: deal.filter(res => res.custom_field.label.includes('Formato de Aula')).map(res => res.value)[0],
+                        tipoModalidade: deal.filter(res => res.custom_field.label.includes('Tipo/ modalidade')).map(res => res.value)[0],
+                        classe: deal.filter(res => res.custom_field.label.includes('Classe')).map(res => res.value)[0],
+                        subclasse: deal.filter(res => res.custom_field.label.includes('Subclasse')).map(res => res.value)[0],
+                        cargaHoraria: `${deal.filter(res => res.custom_field.label.includes('Carga horário do curso')).map(res => res.value)}`,
+                        paDATA: deal.filter(res => res.custom_field.label.includes('Data da primeira aula')).map(res => res.value)[0],
+                        valorMensalidade: deal.filter(res => res.custom_field.label.includes('Valor total da parcela')).map(res => res.value)[0],
+                        numeroParcelas: deal.filter(res => res.custom_field.label.includes('Número de parcelas')).map(res => res.value)[0],
+                        diaVenvimento: deal.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0],
+                        dataPrimeiraParcelaMensalidade: deal.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0],
+                        dataUltimaParcelaMensalidade: deal.filter(res => res.custom_field.label.includes('Data de vencimento da última parcela')).map(res => res.value)[0],
+                        descontoTotal: deal.filter(res => res.custom_field.label.includes('Desconto total')).map(res => res.value)[0],
+                        descontoPorParcela: deal.filter(res => res.custom_field.label.includes('Valor do desconto de pontualidade por parcela')).map(res => res.value)[0],
+                        valorParcela: deal.filter(res => res.custom_field.label.includes('Valor total da parcela')).map(res => res.value)[0],
+                        testemunha1: deal.filter(res => res.custom_field.label.includes('Testemunha 01')).map(res => res.value)[0],
+                        testemunha2: deal.filter(res => res.custom_field.label.includes('Testemunha 2')).map(res => res.value)[0],
+                        curso: deal.filter(res => res.custom_field.label.includes('Curso')).map(res => res.value)[0],
                         valorCurso: index.deal_products[0]?.total
                     }
                     array.push(body)
@@ -357,27 +357,11 @@ class PostController {
             const newObj = alreadyHave.observacao.some(res => res.obs === "") ?
                 value : [...alreadyHave.observacao.filter(item => item.obs !== ""), value]
 
-
-            const historic = async () => {
-                return new Promise(resolve => {
-                    resolve(prisma.historic.create({
-                        data: {
-                            responsible: area === "observacao" ? value.name : responsible.name,
-                            information: {
-                                field: area,
-                                to: area === "observacao" ? value.obs : value,
-                                from: id,
-                                when: new Date().toLocaleString()
-                            }
-                        }
-                    })
-                    )
-                })
-            }
-
             const update = async () => {
 
                 let object = alreadyHave.observacao.some(res => res.obs === "") ? [newObj] : newObj
+
+                console.log(object)
 
                 const bodyAdmValidation = {
                     [area]: area === "observacao" ? object : value,
@@ -413,6 +397,23 @@ class PostController {
                     }))
                 })
             }
+
+            const historic = async () => {
+                return new Promise(resolve => {
+                    resolve(prisma.historic.create({
+                        data: {
+                            responsible: area === "observacao" ? value.name : responsible.name,
+                            information: {
+                                field: area,
+                                to: area === "observacao" ? value.obs : value,
+                                from: id,
+                            }
+                        }
+                    })
+                    )
+                })
+            }
+
 
             await Promise.all([
                 historic(),

@@ -1,26 +1,9 @@
-import { PrismaClient } from "@prisma/client";
 import axios from 'axios';
-import { CronJob } from "cron";
 import "dotenv/config";
+import prisma from '../../database/database.js';
 
-const prisma = new PrismaClient()
-
-const limit = 200
 const comebackDays = 2
-const job = new CronJob(
-    '0 */30 * * * *',
-
-    function () {
-        searchSync(limit);
-    },
-    null,
-    true,
-    'America/Los_Angeles'
-)
-
-
 const options = { method: 'GET', headers: { accept: 'application/json' } };
-
 
 async function searchSync(limit) {
 
@@ -297,3 +280,4 @@ async function trelloCreateCard(array) {
 }
 
 
+export default searchSync

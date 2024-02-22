@@ -1,8 +1,7 @@
 
-import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcrypt'
-import * as Yup from 'yup'
-const prisma = new PrismaClient()
+import bcrypt from 'bcrypt';
+import * as Yup from 'yup';
+import prisma from '../../database/database.js';
 
 class UserController {
     async store(req, res) {

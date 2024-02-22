@@ -1,11 +1,10 @@
-import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcrypt'
 import 'dotenv/config'
 import jwt from 'jsonwebtoken'
 import nodemailer from 'nodemailer'
 import * as Yup from 'yup'
 
-const prisma = new PrismaClient()
+import prisma from '../../database/database.js'
 
 class SessionsController {
 

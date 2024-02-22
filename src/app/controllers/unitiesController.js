@@ -1,7 +1,7 @@
 
-import { PrismaClient } from '@prisma/client'
-import * as Yup from 'yup'
-const prisma = new PrismaClient()
+import * as Yup from 'yup';
+import prisma from '../../database/database.js';
+
 
 class UnityController {
 

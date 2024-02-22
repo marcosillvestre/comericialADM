@@ -1,5 +1,6 @@
 import bodyParser from 'body-parser';
 import { Router } from 'express';
+import RegisterController from '../app/controllers/contaAzulRegister.js';
 import HistoricController from '../app/controllers/historicController.js';
 import PostConttroller from "../app/controllers/postConttroller.js";
 import SessionController from "../app/controllers/sessionController.js";
@@ -20,9 +21,9 @@ routes.post('/redefinir-senha', SessionController.forgetPassword)
 
 routes.post('/nova-senha', SessionController.redefinePassword)
 
-
-
 routes.use(auth)
+
+routes.post("/cadastros", RegisterController.store)
 
 routes.get('/historico', HistoricController.index)
 

@@ -1,7 +1,9 @@
 import cors from 'cors'
 import express from 'express'
-import '../src/app/connection/engineSearch.js'
+// import '../src/app/connection/engineSearch.js'
+import '../src/app/core/cronManager.js'
 import routes from './routes/routes.js'
+
 class App {
     constructor() {
         this.app = express()
@@ -10,6 +12,7 @@ class App {
         this.middlewares()
         this.routes()
     }
+
 
     middlewares() {
         this.app.use(express.json())
