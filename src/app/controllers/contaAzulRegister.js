@@ -27,6 +27,7 @@ class RegisterController {
         // const emissaoVenda = deal.filter(res => res.custom_field.label.includes('Data de emissão da venda')).map(res => res.value)[0]
         // const cep = deal.filter(res => res.custom_field.label.includes('CEP')).map(res => res.value)[0]
         // const valorParcela = deal.filter(res => res.custom_field.label.includes('Valor total da parcela')).map(res => res.value)[0]
+
         const contrato = deal.filter(res => res.custom_field.label.includes('Nº do contrato')).map(res => res.value)[0]
         const unidade = deal.filter(res => res.custom_field.label.includes('Unidade')).map(res => res.value)[0]
         const rg = deal.filter(res => res.custom_field.label.includes('RG responsável')).map(res => res.value)[0]
