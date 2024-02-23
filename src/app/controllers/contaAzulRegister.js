@@ -15,7 +15,6 @@ class RegisterController {
         const currentDate = new Date()
         const { name } = req.body
 
-        console.log(name)
 
         const headers = {
             "content-type": "application/json",
@@ -340,7 +339,6 @@ class RegisterController {
                         }
                     }).catch((err) => {
                         if (err) {
-                            console.log('first')
                             return res.status(401).json({ message: "error" })
                         }
                     })

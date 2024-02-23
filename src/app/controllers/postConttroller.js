@@ -332,7 +332,7 @@ class PostController {
                     data: {
                         "dataAC": newArr
                     }
-                }).then(() => console.log("Success"))
+                }).then(() => console.log("Contrato assinado"))
 
             } catch (error) {
                 if (error) {
@@ -360,8 +360,6 @@ class PostController {
             const update = async () => {
 
                 let object = alreadyHave.observacao.some(res => res.obs === "") ? [newObj] : newObj
-
-                console.log(object)
 
                 const bodyAdmValidation = {
                     [area]: area === "observacao" ? object : value,
@@ -444,7 +442,6 @@ class PostController {
                 return res.status(200).json({ message: "Success" })
             })
                 .catch((err) => {
-                    console.log(err)
                     return res.status(400).json({ message: "Something went wrong" })
                 })
         }

@@ -4,7 +4,10 @@ import searchSync from '../connection/engineSearch.js';
 
 const job = new CronJob('0 */50 * * * *',
     function () {
-        let data = [searchSync(200), token()]
+        let data = [
+            searchSync(200),
+            token()
+        ]
         data.forEach(res => res)
     },
     null,

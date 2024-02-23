@@ -28,7 +28,6 @@ async function refreshCentro(token) {
     try {
         await axios.post("https://api.contaazul.com/oauth2/token",
             body, { headers }).then(async data => {
-                console.log(data.data)
                 await prisma.conec.update({
                     where: { id: 1 },
                     data: {

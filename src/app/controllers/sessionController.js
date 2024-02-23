@@ -85,9 +85,8 @@ class SessionsController {
             return res.status(200).json({ message: "Sucesso" })
         } catch (error) {
             if (error) {
-                console.log(error)
+                return res.status(401).json({ error })
             }
-            return res.status(401).json({ error })
 
         }
 
