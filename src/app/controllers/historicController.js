@@ -26,7 +26,6 @@ class Historic {
                 }
             })
 
-            console.log(data)
             return res.status(200).json(data)
 
         } catch (error) {
