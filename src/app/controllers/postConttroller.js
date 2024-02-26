@@ -601,12 +601,12 @@ class PostController {
     }
 
     async updateMany(req, res) {
-        const { contracts, where, value } = req.body
+        const { contracts, where, value, responsible } = req.body
 
-        if (contracts) {
-            try {
-                contracts.map(async data => {
-                    await prisma.person.update(
+        new Promise(resolve => {
+            contracts.map(data => {
+                resolve(
+                    prisma.person.update(
                         {
                             where: {
                                 contrato: data
@@ -615,20 +615,25 @@ class PostController {
                                 [where]: value
                             }
 
-                        }).catch(err => {
-                            if (err) {
-                                return res.status(400).json({ error: err })
-                            }
-                        })
+                        }).then(async () => {
+                            await prisma.historic.create({
+                                data: {
+                                    responsible: responsible.name,
+                                    information: {
+                                        field: where,
+                                        to: value,
+                                        from: data,
+                                    }
+                                }
+                            })
+                        }
+                        )
+                )
+            })
+        })
 
-                })
 
-                return res.status(200).json({ message: "Success" })
-
-            } catch (error) {
-                return res.status(400).json({ error: error })
-            }
-        }
+        return res.status(200).json({ message: "Success" })
 
     }
 

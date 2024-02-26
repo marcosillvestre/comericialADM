@@ -51,7 +51,6 @@ async function refreshPtb(token) {
     try {
         await axios.post("https://api.contaazul.com/oauth2/token",
             body, { headers }).then(async data => {
-
                 await prisma.conec.update({
                     where: { id: 2 },
                     data: {
@@ -62,7 +61,7 @@ async function refreshPtb(token) {
             })
 
     } catch (error) {
-        // console.log(error)
+        console.log(error)
 
     }
 }
