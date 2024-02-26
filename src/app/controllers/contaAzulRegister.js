@@ -172,8 +172,9 @@ class RegisterController {
             async function senderSale(customer) {
 
                 await axios.get(`https://api.contaazul.com/v1/services`, { headers: header[0] })
+
                     .then(async res => {
-                        const filtered = res.data?.filter(res => res.name === deals[0].deal_products[0].name)
+                        const filtered = res.data?.filter(res => res.name.includes(deals[0].deal_products[0].name))
 
                         let products = []
                         materialDidatico.map(async data => {
@@ -191,7 +192,6 @@ class RegisterController {
 
                                 })
                         })
-                        // - parseFloat(descontoTotal)
                         let discount = parseFloat(valorCurso)
                         let value = discount / parseInt(numeroParcelas)
 
@@ -331,33 +331,47 @@ class RegisterController {
             }
 
 
+
+
+
             async function ContaAzulSender(cell) {
-                await axios.post('https://api.contaazul.com/v1/sales', cell, { headers: header[0] })
-                    .then(data => {
-                        if (data.status === 201 || data.status === 200) {
-                            console.log("A venda foi lançada")
-                        }
-                    }).catch((err) => {
-                        if (err) {
-                            return res.status(401).json({ message: "error" })
-                        }
-                    })
+                return new Promise(resolve => {
+                    resolve(
+                        axios.post('https://api.contaazul.com/v1/sales', cell, { headers: header[0] })
+                            .then(data => {
+                                if (data.status === 201 || data.status === 200) {
+                                    console.log("A venda foi lançada")
+                                }
+                            }).catch((err) => {
+                                if (err) {
+                                    console.log(err)
+                                    return res.status(401).json({ message: "error" })
+                                }
+                            })
+
+                    )
+                })
             }
 
             async function ContaAzulSenderContract(cell) {
-                await axios.post('https://api.contaazul.com/v1/contracts', cell, { headers: header[0] })
-                    .then(data => {
-                        if (data.status === 201 || data.status === 200) {
-                            console.log("A venda foi lançada")
-                        }
-                    }).catch((err) => {
-                        if (err) {
-                            return res.status(401).json({ message: "error" })
-                        }
-                    })
+                return new Promise(resolve => {
+                    resolve(
+                        axios.post('https://api.contaazul.com/v1/contracts', cell, { headers: header[0] })
+                            .then(data => {
+                                if (data.status === 201 || data.status === 200) {
+                                    console.log("A venda foi lançada")
+                                }
+                            }).catch((err) => {
+                                if (err) {
+                                    console.log(err)
+                                    return res.status(401).json({ message: "error" })
+                                }
+                            })
+                    )
+                })
             }
 
-            return res.status(201).json({ data: "A venda foi lançada" })
+            return res.status(201).json({ message: "A venda foi lançada" })
 
         } catch (error) {
             if (error) {
