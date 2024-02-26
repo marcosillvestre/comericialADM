@@ -20,10 +20,17 @@ class Historic {
     }
     async index(req, res) {
         try {
-            const data = await prisma.historic.findMany()
+            const data = await prisma.historic.findMany({
+                orderBy: {
+                    date: "desc"
+                }
+            })
+
+            console.log(data)
             return res.status(200).json(data)
 
         } catch (error) {
+            console.log(error)
             if (error) return res.status(400).json({ message: "Somenthing went wrong" })
         }
 
