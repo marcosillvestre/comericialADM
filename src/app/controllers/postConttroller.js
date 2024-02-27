@@ -449,11 +449,44 @@ class PostController {
 
     async delete(req, res) {
         const { id } = req.params
-        await prisma.person.delete({ where: { contrato: id } })
-            .then(() => {
-                return res.status(201).json({ message: "deletado com sucesso" })
-            })
+        const { responsible } = req.query
 
+
+        const deleteData = async () => {
+            return new Promise(resolve => {
+                resolve(
+                    prisma.person.delete({ where: { contrato: id } })
+                )
+            })
+        }
+
+        const historic = async () => {
+            return new Promise(resolve => {
+                resolve(prisma.historic.create({
+                    data: {
+                        responsible: responsible,
+                        information: {
+                            field: "Contratos",
+                            to: "Deletado",
+                            from: id,
+                        }
+                    }
+                })
+                )
+            })
+        }
+
+        await Promise.all([
+            deleteData(),
+            historic()
+        ])
+            .then(() => {
+                return res.status(201).json({ message: "Deleted" })
+
+            })
+            .catch(() => {
+                return res.status(400).json({ message: "Something went wrong" })
+            })
     }
 
     async indexPeriod(req, res) {

@@ -9,7 +9,7 @@ import { PTBformaDePagamento, PtbAccount } from '../../utils/services/ptb/ids.js
 
 
 
-class RegisterController {
+class RegisterContaAzulController {
     async store(req, res) {
 
         const currentDate = new Date()
@@ -384,4 +384,4 @@ class RegisterController {
 
 }
 
-export default new RegisterController
+export default new RegisterContaAzulController

@@ -2,7 +2,7 @@ import axios from 'axios';
 import "dotenv/config";
 import prisma from '../../database/database.js';
 
-const comebackDays = 2
+const comebackDays = 4
 const options = { method: 'GET', headers: { accept: 'application/json' } };
 
 async function searchSync(limit) {
@@ -278,6 +278,5 @@ async function trelloCreateCard(array) {
         .then(() => console.log("Enviado ao trello"))
         .catch(() => console.log("Erro ao enviar ao trello"))
 }
-
 
 export default searchSync

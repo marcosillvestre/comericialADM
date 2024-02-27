@@ -21,30 +21,38 @@ class UserController {
             return res.status(400).json({ error: "Erro nos dados enviados" })
         }
 
+        const { name, email, password, admin, role, unity, responsible } = req.body
 
-        const { name, email, password, admin, role, unity } = req.body
+        const permissionTest = await prisma.login.findFirst({ where: { name: responsible.name } })
 
-        const password_hash = await bcrypt.hash(password, 10)
+        if (permissionTest.role === 'direcao') {
 
-        try {
-            const userExists = await prisma.login.findMany({ where: { email: email } })
-            if (userExists.length === 0) {
-                await prisma.login.create({
-                    data: {
-                        "name": name,
-                        "email": email.toLowerCase(),
-                        "password": password_hash,
-                        "role": role,
-                        "admin": admin,
-                        "unity": unity
-                    }
-                })
+            const password_hash = await bcrypt.hash(password, 10)
+
+            try {
+                const userExists = await prisma.login.findMany({ where: { email: email } })
+                if (userExists.length === 0) {
+                    await prisma.login.create({
+                        data: {
+                            "name": name,
+                            "email": email.toLowerCase(),
+                            "password": password_hash,
+                            "role": role,
+                            "admin": admin,
+                            "unity": unity
+                        }
+                    })
+                }
+
+            } catch (error) {
+                return res.status(401).json({ error })
             }
-
-        } catch (error) {
-            return res.status(401).json({ error })
+            return res.status(201).json({ name, email })
         }
-        return res.status(201).json({ name, email })
+
+        if (permissionTest.role !== 'direcao') {
+            return res.status(403).json({ message: "No permission" })
+        }
     }
 
     async index(req, res) {
@@ -55,12 +63,13 @@ class UserController {
     async delete(req, res) {
         const { id } = req.params
         const int = parseInt(id)
+
         if (int) {
             await prisma.login.delete({ where: { id: int } })
             return res.sendStatus(204);
-        } else {
-            return res.status(400).json({ message: "falta algo" })
         }
+
+        return res.status(400).json({ message: "falta algo" })
     }
 
 

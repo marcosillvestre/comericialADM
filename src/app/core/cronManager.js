@@ -8,7 +8,7 @@ const job = new CronJob('0 */50 * * * *',
             searchSync(200),
             token()
         ]
-        // data.forEach(async res => await res)
+        data.forEach(async res => await res)
     },
     null,
     true,
