@@ -20,11 +20,19 @@ routes.post('/redefinir-senha', SessionController.forgetPassword)
 
 routes.post('/nova-senha', SessionController.redefinePassword)
 
+
+
+
 routes.use(auth)
+
+routes.post('/cliente', RegisterContaAzulController.storeCostumer)
+routes.post('/contrato-conta-azul', RegisterContaAzulController.storeContract)
+routes.post('/venda', RegisterContaAzulController.storeSale)
+
+
 routes.post('/cadastro', UserController.store)
 // autenticated routes
 
-routes.post("/cadastros", RegisterContaAzulController.store)
 
 routes.get('/historico', HistoricController.index)
 

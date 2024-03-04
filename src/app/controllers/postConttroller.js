@@ -43,7 +43,6 @@ class PostController {
                             situMatric: "Pendente",
                             paStatus: "Pendente",
 
-
                             responsavelADM: "Pendente",
                             aprovacaoADM: "Pendente",
                             aprovacaoDirecao: "Pendente",
@@ -52,10 +51,6 @@ class PostController {
                             fimContrato: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de fim do contrato')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de fim do contrato')).map(res => res.value)[0] : "Sem este dado no rd",
                             acFormato: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Tipo de assinatura')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Tipo de assinatura')).map(res => res.value)[0] : "Sem este dado no rd",
                             acStatus: "Pendente",
-
-                            tmValor: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor de taxa de matrícula')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor de taxa de matrícula')).map(res => res.value)[0] : "Sem este dado no rd",
-                            tmFormaPg: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Forma de pagamento TM')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Forma de pagamento TM')).map(res => res.value)[0] : "Sem este dado no rd",
-                            tmVencimento: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de pagamento TM')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de pagamento TM')).map(res => res.value)[0] : "Sem este dado no rd",
 
                             tmStatus: "Pendente",
                             ppVencimento: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0] : "Sem este dado no rd",
@@ -101,6 +96,9 @@ class PostController {
 
                             mdFormaPg: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Forma de pagamento do MD')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Forma de pagamento do MD')).map(res => res.value)[0] : "Sem este dado no rd",
                             mdVencimento: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de pagamento MD')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de pagamento MD')).map(res => res.value)[0] : "Sem este dado no rd",
+                            tmValor: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor de taxa de matrícula')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor de taxa de matrícula')).map(res => res.value)[0] : "Sem este dado no rd",
+                            tmFormaPg: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Forma de pagamento TM')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Forma de pagamento TM')).map(res => res.value)[0] : "Sem este dado no rd",
+                            tmVencimento: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de pagamento TM')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de pagamento TM')).map(res => res.value)[0] : "Sem este dado no rd",
 
                             mdParcelas: "",
                             mdData: "",
@@ -221,58 +219,74 @@ class PostController {
     async getRecent(req, res) {
         const { unity } = req.params
 
-        await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=100&token=${process.env.RD_TOKEN}&deal_pipeline_id=${funis[unity]}&deal_stage_id=${stages[unity]}`)
-            .then(response => {
-                const array = []
-                for (const index of response?.data?.deals) {
-                    const deal = index.deal_custom_fields
-                    const body = {
-                        vendedor: index.user.name,
-                        contrato: deal.filter(res => res.custom_field.label.includes('Nº do contrato')).map(res => res.value)[0],
-                        dataMatricula: deal.filter(res => res.custom_field.label.includes('Data de emissão da venda')).map(res => res.value)[0],
-                        classe: deal.filter(res => res.custom_field.label.includes('Classe')).map(res => res.value)[0],
-                        unidade: deal.filter(res => res.custom_field.label.includes('Unidade')).map(res => res.value)[0],
-                        tipoModalidade: deal.filter(res => res.custom_field.label.includes('Tipo/ modalidade')).map(res => res.value)[0],
-                        name: index.name,
-                        rg: deal.filter(res => res.custom_field.label.includes('RG responsável')).map(res => res.value)[0],
-                        cpf: deal.filter(res => res.custom_field.label.includes('CPF')).map(res => res.value)[0],
-                        DatadeNascdoResp: deal.filter(res => res.custom_field.label.includes('Data de nascimento do  responsável')).map(res => res.value)[0],
-                        CelularResponsavel: index.contacts[0]?.phones[0]?.phone,
-                        EnderecoResponsavel: deal.filter(res => res.custom_field.label.includes('Endereço')).map(res => res.value)[0],
-                        NumeroEnderecoResponsavel: deal.filter(res => res.custom_field.label === 'Número').map(res => res.value)[0],
-                        complemento: deal.filter(res => res.custom_field.label.includes('Complemento')).map(res => res.value)[0],
-                        bairro: deal.filter(res => res.custom_field.label.includes('Bairro')).map(res => res.value)[0],
-                        cidade: deal.filter(res => res.custom_field.label.includes('Cidade')).map(res => res.value)[0],
-                        estado: deal.filter(res => res.custom_field.label === 'UF').map(res => res.value)[0],
-                        cep: deal.filter(res => res.custom_field.label.includes('CEP')).map(res => res.value)[0],
-                        estadoCivil: deal.filter(res => res.custom_field.label === 'Estado civil responsável').map(res => res.value)[0],
-                        profissao: deal.filter(res => res.custom_field.label.includes('Profissão')).map(res => res.value)[0],
-                        email: index.contacts[0]?.emails[0]?.email,
-                        nomeAluno: deal.filter(res => res.custom_field.label.includes('Nome do aluno')).map(res => res.value)[0],
-                        nascimentoAluno: deal.filter(res => res.custom_field.label.includes('Data de nascimento do aluno')).map(res => res.value)[0],
-                        formato: deal.filter(res => res.custom_field.label.includes('Formato de Aula')).map(res => res.value)[0],
-                        tipoModalidade: deal.filter(res => res.custom_field.label.includes('Tipo/ modalidade')).map(res => res.value)[0],
-                        classe: deal.filter(res => res.custom_field.label.includes('Classe')).map(res => res.value)[0],
-                        subclasse: deal.filter(res => res.custom_field.label.includes('Subclasse')).map(res => res.value)[0],
-                        cargaHoraria: `${deal.filter(res => res.custom_field.label.includes('Carga horário do curso')).map(res => res.value)}`,
-                        paDATA: deal.filter(res => res.custom_field.label.includes('Data da primeira aula')).map(res => res.value)[0],
-                        valorMensalidade: deal.filter(res => res.custom_field.label.includes('Valor total da parcela')).map(res => res.value)[0],
-                        numeroParcelas: deal.filter(res => res.custom_field.label.includes('Número de parcelas')).map(res => res.value)[0],
-                        diaVenvimento: deal.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0],
-                        dataPrimeiraParcelaMensalidade: deal.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0],
-                        dataUltimaParcelaMensalidade: deal.filter(res => res.custom_field.label.includes('Data de vencimento da última parcela')).map(res => res.value)[0],
-                        descontoTotal: deal.filter(res => res.custom_field.label.includes('Desconto total')).map(res => res.value)[0],
-                        descontoPorParcela: deal.filter(res => res.custom_field.label.includes('Valor do desconto de pontualidade por parcela')).map(res => res.value)[0],
-                        valorParcela: deal.filter(res => res.custom_field.label.includes('Valor total da parcela')).map(res => res.value)[0],
-                        testemunha1: deal.filter(res => res.custom_field.label.includes('Testemunha 01')).map(res => res.value)[0],
-                        testemunha2: deal.filter(res => res.custom_field.label.includes('Testemunha 2')).map(res => res.value)[0],
-                        curso: deal.filter(res => res.custom_field.label.includes('Curso')).map(res => res.value)[0],
-                        valorCurso: index.deal_products[0]?.total
+        try {
+            await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=100&token=${process.env.RD_TOKEN}&deal_pipeline_id=${funis[unity]}&deal_stage_id=${stages[unity]}`)
+                .then(response => {
+                    const array = []
+                    for (const index of response?.data?.deals) {
+                        const deal = index.deal_custom_fields
+                        const body = {
+                            name: index.name,
+                            contrato: deal.filter(res => res.custom_field.label.includes('Nº do contrato')).map(res => res.value)[0],
+                            unidade: deal.filter(res => res.custom_field.label.includes('Unidade')).map(res => res.value)[0],
+                            rg: deal.filter(res => res.custom_field.label.includes('RG responsável')).map(res => res.value)[0],
+                            cpf: deal.filter(res => res.custom_field.label.includes('CPF')).map(res => res.value)[0],
+                            DatadeNascdoResp: deal.filter(res => res.custom_field.label.includes('Data de nascimento do  responsável')).map(res => res.value)[0],
+                            CelularResponsavel: index.contacts[0]?.phones[0]?.phone,
+                            EnderecoResponsavel: deal.filter(res => res.custom_field.label.includes('Endereço')).map(res => res.value)[0],
+                            NumeroEnderecoResponsavel: deal.filter(res => res.custom_field.label === 'Número').map(res => res.value)[0],
+                            complemento: deal.filter(res => res.custom_field.label.includes('Complemento')).map(res => res.value)[0],
+                            bairro: deal.filter(res => res.custom_field.label.includes('Bairro')).map(res => res.value)[0],
+                            profissao: deal.filter(res => res.custom_field.label.includes('Profissão')).map(res => res.value)[0],
+                            email: index.contacts[0]?.emails[0]?.email,
+                            nomeAluno: deal.filter(res => res.custom_field.label.includes('Nome do aluno')).map(res => res.value)[0],
+                            cargaHoraria: `${deal.filter(res => res.custom_field.label.includes('Carga horário do curso')).map(res => res.value)}`,
+                            numeroParcelas: deal.filter(res => res.custom_field.label.includes('Número de parcelas')).map(res => res.value)[0],
+                            descontoTotal: deal.filter(res => res.custom_field.label.includes('Desconto total')).map(res => res.value)[0],
+                            descontoPorParcela: deal.filter(res => res.custom_field.label.includes('Valor do desconto de pontualidade por parcela')).map(res => res.value)[0],
+                            curso: deal.filter(res => res.custom_field.label.includes('Curso')).map(res => res.value)[0],
+                            valorCurso: index.deal_products[0]?.total,
+                            dataUltimaParcelaMensalidade: deal.filter(res => res.custom_field.label.includes('Data de vencimento da última parcela')).map(res => res.value)[0],
+
+                            vendedor: index.user.name,
+                            dataMatricula: deal.filter(res => res.custom_field.label.includes('Data de emissão da venda')).map(res => res.value)[0],
+                            classe: deal.filter(res => res.custom_field.label.includes('Classe')).map(res => res.value)[0],
+                            tipoModalidade: deal.filter(res => res.custom_field.label.includes('Tipo/ modalidade')).map(res => res.value)[0],
+                            cidade: deal.filter(res => res.custom_field.label.includes('Cidade')).map(res => res.value)[0],
+                            estado: deal.filter(res => res.custom_field.label === 'UF').map(res => res.value)[0],
+                            cep: deal.filter(res => res.custom_field.label.includes('CEP')).map(res => res.value)[0],
+                            estadoCivil: deal.filter(res => res.custom_field.label === 'Estado civil responsável').map(res => res.value)[0],
+                            nascimentoAluno: deal.filter(res => res.custom_field.label.includes('Data de nascimento do aluno')).map(res => res.value)[0],
+                            formato: deal.filter(res => res.custom_field.label.includes('Formato de Aula')).map(res => res.value)[0],
+                            tipoModalidade: deal.filter(res => res.custom_field.label.includes('Tipo/ modalidade')).map(res => res.value)[0],
+                            classe: deal.filter(res => res.custom_field.label.includes('Classe')).map(res => res.value)[0],
+                            subclasse: deal.filter(res => res.custom_field.label.includes('Subclasse')).map(res => res.value)[0],
+                            paDATA: deal.filter(res => res.custom_field.label.includes('Data da primeira aula')).map(res => res.value)[0],
+                            valorMensalidade: deal.filter(res => res.custom_field.label.includes('Valor total da parcela')).map(res => res.value)[0],
+                            diaVenvimento: deal.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0],
+                            dataPrimeiraParcelaMensalidade: deal.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0],
+                            valorParcela: deal.filter(res => res.custom_field.label.includes('Valor total da parcela')).map(res => res.value)[0],
+
+                            ppFormaPg: deal.filter(res => res.custom_field.label.includes('Forma de pagamento da parcela')).map(res => res.value)[0],
+                            ppVencimento: deal.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0],
+                            materialDidatico: deal.filter(res => res.custom_field.label.includes('Material didático')).map(res => res.value)[0],
+                            mdValor: deal.filter(res => res.custom_field.label.includes('Valor do material didático')).map(res => res.value)[0],
+                            mdFormaPg: deal.filter(res => res.custom_field.label.includes('Forma de pagamento do MD')).map(res => res.value)[0],
+                            mdVencimento: deal.filter(res => res.custom_field.label.includes('Data de pagamento MD')).map(res => res.value)[0],
+                            tmValor: deal.filter(res => res.custom_field.label.includes('Valor de taxa de matrícula')).map(res => res.value)[0],
+                            tmFormaPg: deal.filter(res => res.custom_field.label.includes('Forma de pagamento TM')).map(res => res.value)[0],
+                            tmVencimento: deal.filter(res => res.custom_field.label.includes('Data de pagamento TM')).map(res => res.value)[0],
+                            service: index.deal_products[0]?.name ? index.deal_products[0]?.name : ""
+                        }
+
+                        array.push(body)
                     }
-                    array.push(body)
-                }
-                return res.status(200).json(array)
-            })
+                    return res.status(200).json(array)
+                })
+
+        } catch (error) {
+            console.log(error)
+        }
 
     }
 
@@ -332,7 +346,7 @@ class PostController {
                     data: {
                         "dataAC": newArr
                     }
-                }).then(() => console.log("Contrato assinado"))
+                }).then(() => console.log(`Contrato assinado ${email1}`))
 
             } catch (error) {
                 if (error) {

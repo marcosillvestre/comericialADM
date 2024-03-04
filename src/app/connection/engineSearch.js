@@ -2,7 +2,7 @@ import axios from 'axios';
 import "dotenv/config";
 import prisma from '../../database/database.js';
 
-const comebackDays = 4
+const comebackDays = 3
 const options = { method: 'GET', headers: { accept: 'application/json' } };
 
 async function searchSync(limit) {
@@ -280,3 +280,6 @@ async function trelloCreateCard(array) {
 }
 
 export default searchSync
+
+
+
