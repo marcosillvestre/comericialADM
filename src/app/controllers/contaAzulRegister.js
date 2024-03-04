@@ -18,59 +18,57 @@ class RegisterContaAzulController {
             email, nameResponsible,
         } = req.body
 
-        try {
-
-            var header = {
-                "Authorization": `Bearer ${await getToken(unidade)}`,
-                "Content-Type": "application/json"
-            }
+        var header = {
+            "Authorization": `Bearer ${await getToken(unidade)}`,
+            "Content-Type": "application/json"
+        }
 
 
-            const customerBody = {
-                "name": nameResponsible || name,
-                "email": email,
-                "business_phone": CelularResponsavel,
-                "mobile_phone": CelularResponsavel,
-                "person_type": cpf.lenght <= 11 ? "LEGAL" : "NATURAL",
-                "document": cpf,
-                "identity_document": rg, //
-                "date_of_birth": new Date(DatadeNascdoResp.split("/").reverse().join("-")),
-                "notes": contrato,
-                "contacts": [
-                    {
-                        "name": name.split("-")[0],
-                        "business_phone": CelularResponsavel,
-                        "email": email,
-                        "job_title": profissao
-                    }
-                ],
-                "address": {
-                    "street": EnderecoResponsavel,
-                    "number": NumeroEnderecoResponsavel,
-                    "complement": complemento,
-                    "neighborhood": bairro
+        const customerBody = {
+            "name": nameResponsible || name,
+            "email": email,
+            "business_phone": CelularResponsavel,
+            "mobile_phone": CelularResponsavel,
+            "person_type": cpf.lenght <= 11 ? "LEGAL" : "NATURAL",
+            "document": cpf,
+            "identity_document": rg, //
+            "date_of_birth": new Date(DatadeNascdoResp.split("/").reverse().join("-")),
+            "notes": contrato,
+            "contacts": [
+                {
+                    "name": name.split("-")[0],
+                    "business_phone": CelularResponsavel,
+                    "email": email,
+                    "job_title": profissao
                 }
-            }
-
-
-            new Promise(resolve => {
-                resolve(
-                    axios.post('https://api.contaazul.com/v1/customers',
-                        customerBody, { headers: header })
-                )
-            })
-                .then(() => { return res.status(201).json({ message: "Success" }) })
-
-        } catch (error) {
-            console.log(error)
-            if (error.response.data.message === 'CPF/CPNJ já utilizado por outro cliente.') {
-                return res.status(201).json({ message: "Success" })
-            }
-            if (error.response.data.message !== 'CPF/CPNJ já utilizado por outro cliente.') {
-                console.log(error.response.data)
-                return res.status(401).json({ message: error.response.data })
+            ],
+            "address": {
+                "street": EnderecoResponsavel,
+                "number": NumeroEnderecoResponsavel,
+                "complement": complemento,
+                "neighborhood": bairro
             }
         }
+
+
+        new Promise(resolve => {
+            resolve(
+                axios.post('https://api.contaazul.com/v1/customers',
+                    customerBody, { headers: header })
+            )
+        })
+            .then(() => { return res.status(201).json({ message: "Success" }) })
+            .catch(error => {
+                if (error.response.data.message === 'CPF/CPNJ já utilizado por outro cliente.') {
+                    return res.status(201).json({ message: "Success" })
+                }
+                if (error.response.data.message !== 'CPF/CPNJ já utilizado por outro cliente.') {
+                    console.log(error)
+                    return res.status(401).json({ message: error.response.data })
+                }
+
+            })
+
 
 
     }
@@ -162,6 +160,7 @@ class RegisterContaAzulController {
                                     .then(data => {
                                         if (data.status === 201 || data.status === 200) {
                                             console.log("A venda foi lançada")
+                                            return res.status(200).json({ message: "Success" })
                                         }
                                     }).catch((err) => {
                                         if (err) {
