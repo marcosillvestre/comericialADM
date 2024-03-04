@@ -26,7 +26,7 @@ routes.post('/nova-senha', SessionController.redefinePassword)
 routes.use(auth)
 
 routes.post('/cliente', RegisterContaAzulController.storeCostumer)
-routes.post('/contrato-conta-azul', RegisterContaAzulController.storeContract)
+routes.post('/registro-conta-azul', RegisterContaAzulController.storeContract)
 routes.post('/venda', RegisterContaAzulController.storeSale)
 
 
