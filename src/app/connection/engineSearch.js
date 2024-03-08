@@ -5,7 +5,7 @@ import prisma from '../../database/database.js';
 const comebackDays = 3
 const options = { method: 'GET', headers: { accept: 'application/json' } };
 
-async function searchSync(limit) {
+async function searchSync() {
 
     const backDay = new Date()
     backDay.setDate(backDay.getDate() - comebackDays)
@@ -13,7 +13,7 @@ async function searchSync(limit) {
 
     const currentDate = new Date()
     const endDate = currentDate.toISOString()
-
+    let limit = 200
     await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=${limit}&token=${process.env.RD_TOKEN}&win=true&closed_at_period=true&start_date=${startDate}&end_date=${endDate}`, options)
         .then(async response => {
             console.log(response.data.total)

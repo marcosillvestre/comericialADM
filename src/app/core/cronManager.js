@@ -2,17 +2,29 @@ import { CronJob } from "cron";
 import token from "../connection/contaAzulDBSearch.js";
 import searchSync from '../connection/engineSearch.js';
 
-const job = new CronJob('0 */50 * * * *',
-    function () {
-        let data = [
-            searchSync(200),
-            token()
-        ]
-        data.forEach(async res => await res)
+
+
+
+const functionsArray = [
+    {
+        time: "0 */30 * * * *",
+        fn: searchSync
     },
-    null,
-    true,
-    'America/Los_Angeles'
-)
+    {
+        time: "0 */57 * * * *",
+        fn: token
+    },
 
+]
 
+functionsArray.forEach(async res => {
+    new CronJob(`${res.time}`,
+
+        async function () {
+            await res.fn();
+        },
+        null,
+        true,
+        'America/Los_Angeles'
+    )
+})

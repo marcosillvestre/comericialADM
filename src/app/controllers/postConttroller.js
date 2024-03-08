@@ -344,7 +344,8 @@ class PostController {
                 await prisma.person.update({
                     where: { contrato: res.contrato },
                     data: {
-                        "dataAC": newArr
+                        "dataAC": newArr,
+                        "acStatus": "Ok"
                     }
                 }).then(() => console.log(`Contrato assinado ${email1}`))
 

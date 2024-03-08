@@ -177,10 +177,10 @@ class RegisterContaAzulController {
 
     }
 
-
     async storeSale(req, res) {
 
-        const { name, contrato, unidade, cpf,
+        const {
+            name, contrato, unidade, cpf,
             cargaHoraria, numeroParcelas, descontoTotal,
             curso, valorCurso, ppFormaPg,
             ppVencimento, dataUltimaParcelaMensalidade, materialDidatico,
@@ -198,7 +198,6 @@ class RegisterContaAzulController {
                 { headers: header }))
         }).then(async data => {
             if (data.data[0]) {
-
 
                 const salesNotesString = {
                     "Valor total": parseFloat(valorCurso),
@@ -226,6 +225,7 @@ class RegisterContaAzulController {
                 }
                 const saleNotes = JSON.stringify(salesNotesString, null, 2)
 
+
                 if (parseInt(mdValor) > 0) {
                     let products = []
                     const product = materialDidatico.map(async teachMaterial => {
@@ -237,7 +237,7 @@ class RegisterContaAzulController {
                                 const pd = {
                                     "description": product.data[0]?.name,
                                     "quantity": 1,
-                                    "value": product.data[0]?.value,
+                                    "value": product.data[0]?.value === 0 ? product.data[0]?.value + 1 : product.data[0]?.value,
                                     "product_id": product.data[0]?.id,
                                 }
                                 await products.push(pd)
@@ -277,8 +277,42 @@ class RegisterContaAzulController {
                         }
 
                         ContaAzulSender(teachingmaterial)
+
+                        async function ContaAzulSender(cell) {
+
+                            // console.log(cell)
+                            // console.log(materialDidatico)
+
+
+                            return new Promise(resolve => {
+                                resolve(
+                                    axios.post('https://api.contaazul.com/v1/sales', cell, { headers: header })
+                                        .then(data => {
+                                            console.log(data)
+                                            if (data.status === 201 || data.status === 200) {
+                                                console.log("A venda foi lançada")
+                                            }
+
+                                        }).catch((err) => {
+
+                                            if (err.response.data.message === "The sale product's value cannot be null") {
+                                                // console.log("produto nao encontrado")
+                                                return res.status(401).json({ message: "Material didático não cadastrado no conta azul!" })
+                                            }
+                                            if (err.response.data.message !== "The sale product's value cannot be null") {
+                                                // console.log(err)
+
+                                            }
+                                        })
+
+                                )
+                            })
+
+
+                        }
                     }
                 }
+
 
                 if (parseInt(tmValor) > 0) {
                     const formatedTaxDate = moment(tmVencimento, "DD/MM/YYYY").toDate()
@@ -318,29 +352,29 @@ class RegisterContaAzulController {
 
                     }
                     ContaAzulSender(taxCell)
+
+                    async function ContaAzulSender(cell) {
+                        return new Promise(resolve => {
+                            resolve(
+                                axios.post('https://api.contaazul.com/v1/sales', cell, { headers: header })
+                                    .then(data => {
+                                        if (data.status === 201 || data.status === 200) {
+                                            console.log("A venda foi lançada")
+
+                                        }
+                                    }).catch((err) => {
+                                        if (err) {
+                                            return res.status(401).json({ message: "Erro ao cadastrar a taxa de matrícula" })
+                                        }
+                                    })
+
+                            )
+                        })
+
+
+                    }
                 }
             }
-
-            async function ContaAzulSender(cell) {
-                return new Promise(resolve => {
-                    resolve(
-                        axios.post('https://api.contaazul.com/v1/sales', cell, { headers: header })
-                            .then(data => {
-                                if (data.status === 201 || data.status === 200) {
-                                    console.log("A venda foi lançada")
-
-                                }
-                            }).catch((err) => {
-                                if (err) {
-                                    console.log(err)
-                                    return res.status(401).json({ message: "Error" })
-                                }
-                            })
-
-                    )
-                })
-            }
-
         })
 
         return res.status(200).json({ message: "Success" })

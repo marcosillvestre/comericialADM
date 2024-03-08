@@ -16,6 +16,7 @@ async function token() {
         refreshCentro(res.filter(data => data.id === 1))
         refreshPtb(res.filter(data => data.id === 2))
     })
+
 }
 
 
@@ -40,7 +41,7 @@ async function refreshCentro(token) {
             })
 
     } catch (error) {
-        console.log(error)
+        console.log(error.response.data)
     }
 }
 
@@ -64,7 +65,7 @@ async function refreshPtb(token) {
             })
 
     } catch (error) {
-        console.log(error)
+        console.log(error.response.data)
 
     }
 }

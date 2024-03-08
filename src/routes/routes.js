@@ -23,6 +23,7 @@ routes.post('/nova-senha', SessionController.redefinePassword)
 
 
 
+// autenticated routes
 routes.use(auth)
 
 routes.post('/cliente', RegisterContaAzulController.storeCostumer)
@@ -31,7 +32,6 @@ routes.post('/venda', RegisterContaAzulController.storeSale)
 
 
 routes.post('/cadastro', UserController.store)
-// autenticated routes
 
 
 routes.get('/historico', HistoricController.index)
