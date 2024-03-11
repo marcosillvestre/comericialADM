@@ -199,48 +199,52 @@ class RegisterContaAzulController {
         }).then(async data => {
             if (data.data[0]) {
 
-                const salesNotesString = {
-                    "Valor total": parseFloat(valorCurso),
-                    "Valor da Parcela": parseFloat(valorCurso) / parseInt(numeroParcelas),
-                    "PP Forma PG": ppFormaPg,
-                    "Parcela dia de vencimento": ppVencimento.split("/")[0],
-                    "PP Vencimento": ppVencimento,
-                    "Data de vencimento da última": dataUltimaParcelaMensalidade,
-                    "N° de Parcelas": numeroParcelas,
-                    "Desconto total": descontoTotal,
-                    "MD": materialDidatico.map(res => res),
-                    "MD Valor": mdValor,
-                    "MD vencimento": mdVencimento,
-                    "MD forma pg": mdFormaPg,
-                    "TM Valor": tmValor,
-                    "TM forma de pg": tmFormaPg,
-                    "TM Venc": tmVencimento,
-                    "Carga Horária do Curso": cargaHoraria,
-                    "Unidade": unidade,
-                    "Curso": curso,
-                    "Aluno": nomeAluno,
-                    "Responsável": name,
-                    "contrato": contrato,
-                    "serviço": service
-                }
-                const saleNotes = JSON.stringify(salesNotesString, null, 2)
-
-
                 if (parseInt(mdValor) > 0) {
+                    const salesNotesString = {
+                        "Valor total": parseFloat(valorCurso),
+                        "Valor da Parcela": parseFloat(valorCurso) / parseInt(numeroParcelas),
+                        "PP Forma PG": ppFormaPg,
+                        "Parcela dia de vencimento": ppVencimento.split("/")[0],
+                        "PP Vencimento": ppVencimento,
+                        "Data de vencimento da última": dataUltimaParcelaMensalidade,
+                        "N° de Parcelas": numeroParcelas,
+                        "Desconto total": descontoTotal,
+                        "MD": materialDidatico.map(res => res),
+                        "MD Valor": mdValor,
+                        "MD vencimento": mdVencimento,
+                        "MD forma pg": mdFormaPg,
+                        "TM Valor": tmValor,
+                        "TM forma de pg": tmFormaPg,
+                        "TM Venc": tmVencimento,
+                        "Carga Horária do Curso": cargaHoraria,
+                        "Unidade": unidade,
+                        "Curso": curso,
+                        "Aluno": nomeAluno,
+                        "Responsável": name,
+                        "contrato": contrato,
+                        "serviço": "material didatico"
+
+                    }
+                    const saleNotes = JSON.stringify(salesNotesString, null, 2)
+
+
+
                     let products = []
                     const product = materialDidatico.map(async teachMaterial => {
-                        await axios.get(`https://api.contaazul.com/v1/products?name=${teachMaterial}`,
+                        await axios.get(`https://api.contaazul.com/v1/products`,
                             { headers: header })
                             .then(async product => {
 
 
-                                const pd = {
-                                    "description": product.data[0]?.name,
-                                    "quantity": 1,
-                                    "value": product.data[0]?.value === 0 ? product.data[0]?.value + 1 : product.data[0]?.value,
-                                    "product_id": product.data[0]?.id,
-                                }
-                                await products.push(pd)
+                                console.log(product.data)
+
+                                // const pd = {
+                                //     "description": product.data[0]?.name,
+                                //     "quantity": 1,
+                                //     "value": product.data[0]?.value === 0 ? product.data[0]?.value + 1 : product.data[0]?.value,
+                                //     "product_id": product.data[0]?.id,
+                                // }
+                                // await products.push(pd)
 
                             })
 
@@ -284,29 +288,29 @@ class RegisterContaAzulController {
                             // console.log(materialDidatico)
 
 
-                            return new Promise(resolve => {
-                                resolve(
-                                    axios.post('https://api.contaazul.com/v1/sales', cell, { headers: header })
-                                        .then(data => {
-                                            console.log(data)
-                                            if (data.status === 201 || data.status === 200) {
-                                                console.log("A venda foi lançada")
-                                            }
+                            // return new Promise(resolve => {
+                            //     resolve(
+                            //         axios.post('https://api.contaazul.com/v1/sales', cell, { headers: header })
+                            //             .then(data => {
+                            //                 console.log(data)
+                            //                 if (data.status === 201 || data.status === 200) {
+                            //                     console.log("A venda foi lançada")
+                            //                 }
 
-                                        }).catch((err) => {
+                            //             }).catch((err) => {
 
-                                            if (err.response.data.message === "The sale product's value cannot be null") {
-                                                // console.log("produto nao encontrado")
-                                                return res.status(401).json({ message: "Material didático não cadastrado no conta azul!" })
-                                            }
-                                            if (err.response.data.message !== "The sale product's value cannot be null") {
-                                                // console.log(err)
+                            //                 if (err.response.data.message === "The sale product's value cannot be null") {
+                            //                     // console.log("produto nao encontrado")
+                            //                     return res.status(401).json({ message: "Material didático não cadastrado no conta azul!" })
+                            //                 }
+                            //                 if (err.response.data.message !== "The sale product's value cannot be null") {
+                            //                     // console.log(err)
 
-                                            }
-                                        })
+                            //                 }
+                            //             })
 
-                                )
-                            })
+                            //     )
+                            // })
 
 
                         }
@@ -315,6 +319,36 @@ class RegisterContaAzulController {
 
 
                 if (parseInt(tmValor) > 0) {
+
+
+
+                    const salesNotesString = {
+                        "Valor total": parseFloat(valorCurso),
+                        "Valor da Parcela": parseFloat(valorCurso) / parseInt(numeroParcelas),
+                        "PP Forma PG": ppFormaPg,
+                        "Parcela dia de vencimento": ppVencimento.split("/")[0],
+                        "PP Vencimento": ppVencimento,
+                        "Data de vencimento da última": dataUltimaParcelaMensalidade,
+                        "N° de Parcelas": numeroParcelas,
+                        "Desconto total": descontoTotal,
+                        "MD": materialDidatico.map(res => res),
+                        "MD Valor": mdValor,
+                        "MD vencimento": mdVencimento,
+                        "MD forma pg": mdFormaPg,
+                        "TM Valor": tmValor,
+                        "TM forma de pg": tmFormaPg,
+                        "TM Venc": tmVencimento,
+                        "Carga Horária do Curso": cargaHoraria,
+                        "Unidade": unidade,
+                        "Curso": curso,
+                        "Aluno": nomeAluno,
+                        "Responsável": name,
+                        "contrato": contrato,
+                        "serviço": "taxa de matricula"
+
+                    }
+                    const saleNotes = JSON.stringify(salesNotesString, null, 2)
+
                     const formatedTaxDate = moment(tmVencimento, "DD/MM/YYYY").toDate()
 
                     const taxCell = {
