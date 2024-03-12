@@ -209,7 +209,15 @@ class RegisterContaAzulController {
                         { headers: header })
                     let seller = vendedor.split(" ")
                     let related = sellers.data.filter(res => res.name.includes(seller[0]))
-                    return related[0].id
+
+
+                    if (related.lenght > 0) {
+                        return related[0].id
+                    }
+                    if (related.lenght === 0) {
+                        return ""
+                    }
+
                 }
 
 

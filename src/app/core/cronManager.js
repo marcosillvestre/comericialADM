@@ -1,6 +1,7 @@
 import { CronJob } from "cron";
 import token from "../connection/contaAzulDBSearch.js";
 import searchSync from '../connection/engineSearch.js';
+import syncContaAzul from "../connection/syncCA&Db.js";
 
 
 
@@ -11,18 +12,18 @@ const functionsArray = [
         fn: searchSync
     },
     // {
-    //     time: "0 */5 * * * *",
-    //     fn: SyncContaAzulAndDatabase
+    //     time: "0 */1 * * * *",
+    //     fn: syncContaAzul
     // },
-    // {
-    //     time: "0 0 */3 * *",
-    //     fn: SyncContaAzulAndDatabase
-    // },
+    {
+        time: "0 0 */3 * *",
+        fn: syncContaAzul
+    },
+
     {
         time: "0 */53 * * * *",
         fn: token
     },
-
 ]
 
 functionsArray.forEach(async res => {
