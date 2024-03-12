@@ -119,7 +119,7 @@ class RegisterContaAzulController {
                     "Aluno": nomeAluno,
                     "Responsável": name,
                     "contrato": contrato,
-                    "serviço": service
+                    "serviço": "parcela"
 
                 }
                 const saleNotes = JSON.stringify(salesNotesString, null, 2)
