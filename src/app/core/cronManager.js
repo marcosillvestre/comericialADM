@@ -10,8 +10,16 @@ const functionsArray = [
         time: "0 */30 * * * *",
         fn: searchSync
     },
+    // {
+    //     time: "0 */5 * * * *",
+    //     fn: SyncContaAzulAndDatabase
+    // },
+    // {
+    //     time: "0 0 */3 * *",
+    //     fn: SyncContaAzulAndDatabase
+    // },
     {
-        time: "0 */57 * * * *",
+        time: "0 */53 * * * *",
         fn: token
     },
 

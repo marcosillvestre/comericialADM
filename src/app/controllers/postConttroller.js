@@ -276,7 +276,8 @@ class PostController {
                             tmValor: deal.filter(res => res.custom_field.label.includes('Valor de taxa de matrícula')).map(res => res.value)[0],
                             tmFormaPg: deal.filter(res => res.custom_field.label.includes('Forma de pagamento TM')).map(res => res.value)[0],
                             tmVencimento: deal.filter(res => res.custom_field.label.includes('Data de pagamento TM')).map(res => res.value)[0],
-                            service: index.deal_products[0]?.name ? index.deal_products[0]?.name : ""
+                            service: index.deal_products[0]?.name ? index.deal_products[0]?.name : "",
+                            observacaoRd: deal.filter(res => res.custom_field.label.includes('Observações importantes para o pedagógico')).map(res => res.value)[0]
                         }
 
                         array.push(body)

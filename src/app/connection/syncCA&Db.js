@@ -10,16 +10,28 @@ async function SyncContaAzulAndDatabase() {
 
     const filtered = json.filter(res => res.notes !== '')
 
-
+    // console.log(JSON.stringify(filtered, null, 2))
     let notes = filtered.map(res => {
         let notes = res.notes
         let cleanData = notes.replace(/\\n/g, "")
         let note = JSON.parse(cleanData)
-        return notes !== '' && note.contrato
+
+        // console.log(note)
+
+        if (notes !== undefined && note.contrato !== undefined) {
+            return {
+                aluno: note.Aluno,
+                responsavel: note["Responsável"],
+                contract: note.contrato,
+                service: note.serviço,
+                tm: note['TM Valor'],
+                value: res.total,
+            }
+        }
 
     })
 
-    // console.log(notes)
+    console.log(notes)
 }
 
 // SyncContaAzulAndDatabase()
