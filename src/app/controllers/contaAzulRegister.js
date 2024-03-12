@@ -1,6 +1,7 @@
 import axios from 'axios';
 import 'dotenv/config';
 
+import moment from 'moment';
 import { getToken } from '../core/getToken.js';
 
 
@@ -421,7 +422,7 @@ class RegisterContaAzulController {
 
             }
         })
-            .catch(err => console.log(err.response))
+            .catch(err => console.log(err))
 
         return res.status(200).json({ message: "Success" })
 
