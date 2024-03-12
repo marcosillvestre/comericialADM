@@ -249,7 +249,9 @@ class RegisterContaAzulController {
                         await axios.get(`https://api.contaazul.com/v1/products`,
                             { headers: header })
                             .then(async products => {
-                                let product = products.data.filter(data => data.name === teachMaterial)
+
+                                let product = products.data.filter(data => data.code
+                                    === teachMaterial.split(" / ")[1])
 
                                 const pd = {
                                     "description": product[0]?.name,
@@ -297,6 +299,7 @@ class RegisterContaAzulController {
                         }
 
                         ContaAzulSender(teachingmaterial)
+
 
                         async function ContaAzulSender(cell) {
 

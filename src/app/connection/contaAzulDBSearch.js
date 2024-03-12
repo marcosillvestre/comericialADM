@@ -6,7 +6,7 @@ import prisma from '../../database/database.js';
 const encoded = (Buffer.from(`${process.env.CONTA_AZUL_CLIENT_ID}:${process.env.CONTA_AZUL_CLIENT_SECRET}`).toString('base64'));
 
 
-const headers = {
+const header = {
     "Authorization": `Basic ${encoded}`,
     "Content-Type": "application/json"
 }
@@ -28,7 +28,7 @@ async function refreshCentro(token) {
 
     try {
         await axios.post("https://api.contaazul.com/oauth2/token",
-            body, { headers }).then(async data => {
+            body, { headers: header }).then(async data => {
                 console.log("token 1 atualizado")
 
                 await prisma.conec.update({
@@ -41,7 +41,7 @@ async function refreshCentro(token) {
             })
 
     } catch (error) {
-        console.log(error.response.data)
+        // console.log(error.response.data)
     }
 }
 
@@ -53,7 +53,7 @@ async function refreshPtb(token) {
 
     try {
         await axios.post("https://api.contaazul.com/oauth2/token",
-            body, { headers }).then(async data => {
+            body, { headers: header }).then(async data => {
                 console.log("token 2 atualizado")
                 await prisma.conec.update({
                     where: { id: 2 },
@@ -65,7 +65,7 @@ async function refreshPtb(token) {
             })
 
     } catch (error) {
-        console.log(error.response.data)
+        // console.log(error.response.data)
 
     }
 }
