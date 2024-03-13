@@ -2,6 +2,13 @@ import axios from "axios"
 import prisma from "../../database/database.js"
 import { getToken } from "../core/getToken.js"
 
+
+const routes = {
+    "parcela": "ppStatus",
+    "taxa de matricula": "tmStatus",
+    "material didatico": "mdStatus"
+}
+
 async function SyncContaAzulAndDatabaseCentro() {
     const header = {
         "Authorization": `Bearer ${await getToken("Centro")}`
@@ -28,11 +35,6 @@ async function SyncContaAzulAndDatabaseCentro() {
     })
 
 
-    const routes = {
-        "parcela": "ppStatus",
-        "taxa de matricula": "tmStatus",
-        "material didatico": "mdStatus"
-    }
 
 
     notes.map(async response => {
@@ -84,13 +86,7 @@ async function SyncContaAzulAndDatabasePtb() {
         }
     })
 
-
-    const routes = {
-        "parcela": "ppStatus",
-        "taxa de matricula": "tmStatus",
-        "material didatico": "mdStatus"
-    }
-
+    // console.log(notes)
 
     notes.map(async response => {
 
