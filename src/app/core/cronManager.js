@@ -5,23 +5,18 @@ import syncContaAzul from "../connection/syncCA&Db.js";
 
 
 
-
 const functionsArray = [
     {
         time: "0 */30 * * * *",
         fn: searchSync
     },
-    // {
-    //     time: "0 */1 * * * *",
-    //     fn: syncContaAzul
-    // },
     {
         time: "0 0 */3 * *",
         fn: syncContaAzul
     },
 
     {
-        time: "0 */53 * * * *",
+        time: "*/53 * * * *",
         fn: token
     },
 ]

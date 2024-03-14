@@ -235,7 +235,8 @@ class RegisterContaAzulController {
                         "Responsável": name,
                         "contrato": contrato,
                         "serviço": "material didatico",
-                        "observacao do rd": observacaoRd
+                        "observacao do rd": observacaoRd,
+                        "vendedor": vendedor
                     }
                     const saleNotes = JSON.stringify(salesNotesString, null, 2)
 
@@ -268,7 +269,6 @@ class RegisterContaAzulController {
                     })
 
                     await Promise.all(product)
-
 
                     if (productsSale.length === materialDidatico.length) {
 
@@ -330,6 +330,10 @@ class RegisterContaAzulController {
 
                         }
                     }
+                    if (productsSale.length !== materialDidatico.length) {
+                        return res.status(400).json({ message: "Erro no material didático" })
+                    }
+
                 }
 
                 if (parseInt(tmValor) > 0) {
@@ -357,7 +361,9 @@ class RegisterContaAzulController {
                         "Responsável": name,
                         "contrato": contrato,
                         "serviço": "taxa de matricula",
-                        "observacao do rd": observacaoRd
+                        "observacao do rd": observacaoRd,
+                        "vendedor": vendedor
+
                     }
                     const saleNotes = JSON.stringify(salesNotesString, null, 2)
 

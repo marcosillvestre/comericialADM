@@ -35,8 +35,6 @@ async function SyncContaAzulAndDatabaseCentro() {
     })
 
 
-
-
     notes.map(async response => {
 
         if (routes[response.service]) {
@@ -57,10 +55,9 @@ async function SyncContaAzulAndDatabaseCentro() {
 
     })
 
-
-
-
 }
+
+
 async function SyncContaAzulAndDatabasePtb() {
     const header = {
         "Authorization": `Bearer ${await getToken("PTB")}`
@@ -86,7 +83,6 @@ async function SyncContaAzulAndDatabasePtb() {
         }
     })
 
-    // console.log(notes)
 
     notes.map(async response => {
 
@@ -108,10 +104,8 @@ async function SyncContaAzulAndDatabasePtb() {
 
     })
 
-
-
-
 }
+
 
 
 const syncContaAzul = async () => {
@@ -121,4 +115,3 @@ const syncContaAzul = async () => {
 
 
 export default syncContaAzul
-
