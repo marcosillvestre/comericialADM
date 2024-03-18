@@ -272,6 +272,8 @@ class PostController {
                             ppVencimento: deal.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0],
                             materialDidatico: deal.filter(res => res.custom_field.label.includes('Material didático')).map(res => res.value)[0],
                             mdValor: deal.filter(res => res.custom_field.label.includes('Valor total do material didático')).map(res => res.value)[0],
+                            mdDesconto: deal.filter(res => res.custom_field.label.includes('Valor do desconto material didático')).map(res => res.value)[0],
+
                             mdFormaPg: deal.filter(res => res.custom_field.label.includes('Forma de pagamento do MD')).map(res => res.value)[0],
                             mdVencimento: deal.filter(res => res.custom_field.label.includes('Data de pagamento MD')).map(res => res.value)[0],
                             tmValor: deal.filter(res => res.custom_field.label.includes('Valor de taxa de matrícula')).map(res => res.value)[0],
