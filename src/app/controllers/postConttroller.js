@@ -55,7 +55,7 @@ class PostController {
                             tmStatus: "Pendente",
                             ppVencimento: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0] : "Sem este dado no rd",
 
-                            mdValor: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor total do material didático')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor do material didático')).map(res => res.value)[0] : "Sem este dado no rd",
+                            mdValor: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor total do material didático')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor total do material didático')).map(res => res.value)[0] : "Sem este dado no rd",
                             mdStatus: "Pendente",
                             aluno: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome do aluno')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome do aluno')).map(res => res.value)[0] : "Sem este dado no rd",
                             tel: index.contacts.map(res => res.phones).map(res => res[0]?.phone)[0] ? index.contacts.map(res => res.phones).map(res => res[0]?.phone)[0] : "Sem este dado no rd",
@@ -106,6 +106,7 @@ class PostController {
                             curso: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Curso')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Curso')).map(res => res.value)[0] : "Sem este dado no rd",
 
                         }
+
                         array.push(body)
                     }
                     if (array) {
@@ -270,7 +271,7 @@ class PostController {
                             ppFormaPg: deal.filter(res => res.custom_field.label.includes('Forma de pagamento da parcela')).map(res => res.value)[0],
                             ppVencimento: deal.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0],
                             materialDidatico: deal.filter(res => res.custom_field.label.includes('Material didático')).map(res => res.value)[0],
-                            mdValor: deal.filter(res => res.custom_field.label.includes('Valor do material didático')).map(res => res.value)[0],
+                            mdValor: deal.filter(res => res.custom_field.label.includes('Valor total do material didático')).map(res => res.value)[0],
                             mdFormaPg: deal.filter(res => res.custom_field.label.includes('Forma de pagamento do MD')).map(res => res.value)[0],
                             mdVencimento: deal.filter(res => res.custom_field.label.includes('Data de pagamento MD')).map(res => res.value)[0],
                             tmValor: deal.filter(res => res.custom_field.label.includes('Valor de taxa de matrícula')).map(res => res.value)[0],
@@ -279,6 +280,7 @@ class PostController {
                             service: index.deal_products[0]?.name ? index.deal_products[0]?.name : "",
                             observacaoRd: deal.filter(res => res.custom_field.label.includes('Observações importantes para o pedagógico')).map(res => res.value)[0]
                         }
+                        console.log(body)
 
                         array.push(body)
                     }
