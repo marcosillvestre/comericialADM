@@ -11,15 +11,6 @@ const header = {
     "Content-Type": "application/json"
 }
 
-async function token() {
-    await prisma.conec.findMany().then(res => {
-        refreshCentro(res.filter(data => data.id === 1))
-        refreshPtb(res.filter(data => data.id === 2))
-    })
-
-}
-
-
 async function refreshCentro(token) {
     const body = {
         "grant_type": "refresh_token",
@@ -41,7 +32,7 @@ async function refreshCentro(token) {
             })
 
     } catch (error) {
-        // console.log(error.response.data)
+        console.log("erro1")
     }
 }
 
@@ -65,9 +56,16 @@ async function refreshPtb(token) {
             })
 
     } catch (error) {
-        // console.log(error.response.data)
-
+        console.log("erro2")
     }
+}
+
+async function token() {
+    await prisma.conec.findMany().then(async res => {
+        await refreshCentro(res.filter(data => data.id === 1))
+        await refreshPtb(res.filter(data => data.id === 2))
+    })
+
 }
 //this 👆👆 part saves on a database the access and refresh_token
 

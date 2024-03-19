@@ -44,7 +44,7 @@ async function SyncContaAzulAndDatabaseCentro() {
                     data: {
                         [routes[response.service]]: "Ok"
                     }
-                }).then(() => console.log("Success"))
+                }).then(() => console.log(`${response.aluno} success updated`))
 
             } catch (error) {
                 console.log(response.aluno)
@@ -93,7 +93,7 @@ async function SyncContaAzulAndDatabasePtb() {
                     data: {
                         [routes[response.service]]: "Ok"
                     }
-                }).then(() => console.log("Success"))
+                }).then(() => console.log(`${response.aluno} success updated`))
 
             } catch (error) {
                 console.log(response.aluno)

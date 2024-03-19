@@ -64,8 +64,7 @@ class RegisterContaAzulController {
                     return res.status(201).json({ message: "Success" })
                 }
                 if (error.response.data.message !== 'CPF/CPNJ já utilizado por outro cliente.') {
-                    console.log(error)
-                    return res.status(401).json({ message: error.response.data })
+                    return res.status(401).json({ message: error.response.data.message })
                 }
 
             })
@@ -80,7 +79,7 @@ class RegisterContaAzulController {
             curso, valorCurso, ppFormaPg,
             ppVencimento, dataUltimaParcelaMensalidade, materialDidatico,
             mdValor, mdFormaPg, mdVencimento, service,
-            tmValor, tmFormaPg, tmVencimento, nomeAluno
+            tmValor, tmFormaPg, tmVencimento, nomeAluno, vendedor
         } = req.body
 
 
@@ -119,7 +118,9 @@ class RegisterContaAzulController {
                     "Aluno": nomeAluno,
                     "Responsável": name,
                     "contrato": contrato,
-                    "serviço": "parcela"
+                    "serviço": "parcela",
+                    "vendedor": vendedor
+
 
                 }
                 const saleNotes = JSON.stringify(salesNotesString, null, 2)
@@ -165,8 +166,7 @@ class RegisterContaAzulController {
                                         }
                                     }).catch((err) => {
                                         if (err) {
-                                            console.log(err)
-                                            return res.status(401).json({ message: "error" })
+                                            return res.status(401).json({ message: err.response.data.message ? err.response.data.message : "Erro" })
                                         }
                                     })
                             )
@@ -187,7 +187,7 @@ class RegisterContaAzulController {
             ppVencimento, dataUltimaParcelaMensalidade, materialDidatico,
             mdValor, mdFormaPg, mdVencimento, service,
             tmValor, tmFormaPg, tmVencimento, nomeAluno, vendedor,
-            observacaoRd
+            observacaoRd, mdDesconto
         } = req.body
 
         var header = {
@@ -203,7 +203,7 @@ class RegisterContaAzulController {
         }).then(async data => {
             if (data.data[0]) {
 
-                const sellers = await axios("https://api.contaazul.com/v1/sales/sellers",
+                const sellers = await axios.get("https://api.contaazul.com/v1/sales/sellers",
                     { headers: header })
 
                 let seller = vendedor.split(" ")
@@ -280,10 +280,13 @@ class RegisterContaAzulController {
                             "customer_id": data.data[0].id,
                             "products": productsSale,
                             "seller_id": related.length === 0 ? "" : related[0].id,
+                            "discount": {
+                                "measure_unit": "VALUE",
+                                "rate": mdDesconto
+                            },
                             "payment": {
                                 "type": "TIMES",
                                 "method": "BANKING_BILLET",
-
                                 "financial_account_id": unidade.includes("PTB") || unidade.includes("Golfinho Azul") ?
                                     "4ad586ad-3743-4d69-b311-913a66e24abb" : "e7b60ea7-0ec0-48fe-a196-d2833fc70f61",//
                                 "installments":
@@ -319,8 +322,7 @@ class RegisterContaAzulController {
                                             }
                                             if (err.response.data.message !== "The sale product's value cannot be null") {
                                                 console.log(err.response.data)
-                                                return res.status(401).json({ message: err.response.data.message })
-
+                                                return res.status(401).json({ message: err.response.data.message ? err.response.data.message : "Erro" })
                                             }
                                         })
 
@@ -383,6 +385,10 @@ class RegisterContaAzulController {
                                 "value": parseFloat(tmValor)
                             }
                         ],
+                        "discount": {
+                            "measure_unit": "VALUE",
+                            "rate": 0
+                        },
                         "payment": {
                             "type": "TIMES",
                             "method": "BANKING_BILLET",
@@ -418,10 +424,9 @@ class RegisterContaAzulController {
                                         }
                                     }).catch((err) => {
                                         if (err) {
-                                            return res.status(401).json({ message: "Erro ao cadastrar a taxa de matrícula" })
+                                            return res.status(401).json({ message: err.response.data.message ? err.response.data.message : "Erro" })
                                         }
                                     })
-
                             )
                         })
 
@@ -441,3 +446,4 @@ class RegisterContaAzulController {
 }
 
 export default new RegisterContaAzulController
+

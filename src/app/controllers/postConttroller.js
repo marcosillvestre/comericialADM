@@ -282,7 +282,6 @@ class PostController {
                             service: index.deal_products[0]?.name ? index.deal_products[0]?.name : "",
                             observacaoRd: deal.filter(res => res.custom_field.label.includes('Observações importantes para o pedagógico')).map(res => res.value)[0]
                         }
-                        console.log(body)
 
                         array.push(body)
                     }
@@ -370,7 +369,6 @@ class PostController {
 
 
         if (value.delete === undefined) {
-
             const alreadyHave = await prisma.person.findFirst({
                 where: { contrato: id }
             })
@@ -444,6 +442,7 @@ class PostController {
                     return res.status(400).json({ message: "Something went wrong" })
                 })
         }
+
         if (value.delete === true) {
             const alreadyHave = await prisma.person.findFirst({
                 where: { contrato: id }
@@ -816,7 +815,7 @@ class PostController {
             }
         } catch (error) {
 
-            return res.status(401).json({ Erro: "Tente novamente mais tarde, se o erro persistir entre em contato com o suporte " })
+            return res.status(400).json({ Erro: "Tente novamente mais tarde, se o erro persistir entre em contato com o suporte " })
         }
     }
 

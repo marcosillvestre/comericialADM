@@ -14,6 +14,7 @@ async function searchSync() {
     const currentDate = new Date()
     const endDate = currentDate.toISOString()
     let limit = 200
+
     await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=${limit}&token=${process.env.RD_TOKEN}&win=true&closed_at_period=true&start_date=${startDate}&end_date=${endDate}`, options)
         .then(async response => {
             console.log(response.data.total)
@@ -221,11 +222,11 @@ function addUsefullDays(data, diasUteis) {
     return dataAtual;
 }
 
-async function trelloCreateCard(array) {
+async function trelloCreateCard(object) {
     let today = new Date();
     let futureDate = addUsefullDays(today, 7);
 
-    const data = array
+    const data = object
 
     const templates = {
         "Golfinho azul": process.env.PTB_TEMPLATE,
