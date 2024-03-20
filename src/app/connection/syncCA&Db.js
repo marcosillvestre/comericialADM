@@ -44,10 +44,11 @@ async function SyncContaAzulAndDatabaseCentro() {
                     data: {
                         [routes[response.service]]: "Ok"
                     }
-                }).then(() => console.log(`${response.aluno} success updated`))
+                }).then(() => console.log(`${response.aluno} success updated ${routes[response.service]}`))
+
 
             } catch (error) {
-                console.log(response.aluno)
+                console.log(error)
 
             }
         }
@@ -84,7 +85,6 @@ async function SyncContaAzulAndDatabasePtb() {
     })
 
 
-    console.log(notes)
 
     notes.map(async response => {
 
@@ -95,11 +95,10 @@ async function SyncContaAzulAndDatabasePtb() {
                     data: {
                         [routes[response.service]]: "Ok"
                     }
-                }).then(() => console.log(`${response.aluno} success updated`))
+                }).then(() => console.log(`${response.aluno} success updated ${routes[response.service]}`))
 
             } catch (error) {
-                console.log(response.aluno)
-
+                console.log(error)
             }
         }
 

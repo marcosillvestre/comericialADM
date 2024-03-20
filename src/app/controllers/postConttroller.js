@@ -280,7 +280,7 @@ class PostController {
                             tmFormaPg: deal.filter(res => res.custom_field.label.includes('Forma de pagamento TM')).map(res => res.value)[0],
                             tmVencimento: deal.filter(res => res.custom_field.label.includes('Data de pagamento TM')).map(res => res.value)[0],
                             service: index.deal_products[0]?.name ? index.deal_products[0]?.name : "",
-                            observacaoRd: deal.filter(res => res.custom_field.label.includes('Observações importantes para o pedagógico')).map(res => res.value)[0]
+                            observacaoRd: deal.filter(res => res.custom_field.label.includes('Obersevações importantes para o financeiro')).map(res => res.value)[0]
                         }
 
                         array.push(body)
@@ -306,14 +306,6 @@ class PostController {
         const email2 = obj['partes[1][email]']
         const signed2 = obj['partes[1][assinado][created]']?.split("+")[0]
 
-        const name3 = obj['partes[2][nome]']?.split(" ")[0]
-        const email3 = obj['partes[2][email]']
-        const signed3 = obj['partes[2][assinado][created]']?.split("+")[0]
-
-        const name4 = obj['partes[3][nome]']?.split(" ")[0]
-        const email4 = obj['partes[3][email]']
-        const signed4 = obj['partes[3][assinado][created]']?.split("+")[0]
-
 
         const body1 = {
             name1,
@@ -325,40 +317,32 @@ class PostController {
             email2,
             signed2,
         }
-        const body3 = {
-            name3,
-            email3,
-            signed3,
-        }
-        const body4 = {
-            name4,
-            email4,
-            signed4,
-        }
 
         const Status = {
-            body1, body2, body3, body4
+            body1, body2
         }
         const newArr = []
 
-        await prisma.person.findFirst({ where: { email: email1 } }).then(async res => {
+        if (body1.name1 !== undefined) {
+            await prisma.person.findFirst({ where: { name: { contains: name1 } } })
+                .then(async res => {
+                    newArr.push(Status)
+                    try {
+                        await prisma.person.update({
+                            where: { contrato: res.contrato },
+                            data: {
+                                "dataAC": newArr,
+                                "acStatus": "Ok"
+                            }
+                        }).then(() => console.log(Status))
 
-            newArr.push(Status)
-            try {
-                await prisma.person.update({
-                    where: { contrato: res.contrato },
-                    data: {
-                        "dataAC": newArr,
-                        "acStatus": "Ok"
+                    } catch (error) {
+                        if (error) {
+                            console.log("Contrato não encontrado")
+                        }
                     }
-                }).then(() => console.log(Status))
-
-            } catch (error) {
-                if (error) {
-                    console.log("Contrato não encontrado")
-                }
-            }
-        })
+                })
+        }
 
         return res.status(200).json({ message: "worked" })
     }
