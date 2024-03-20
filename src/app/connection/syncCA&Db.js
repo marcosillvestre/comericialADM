@@ -84,6 +84,8 @@ async function SyncContaAzulAndDatabasePtb() {
     })
 
 
+    console.log(notes)
+
     notes.map(async response => {
 
         if (routes[response.service]) {
@@ -105,7 +107,7 @@ async function SyncContaAzulAndDatabasePtb() {
     })
 
 }
-
+// SyncContaAzulAndDatabaseCentro()
 
 
 const syncContaAzul = async () => {

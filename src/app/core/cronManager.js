@@ -11,7 +11,7 @@ const functionsArray = [
         fn: searchSync
     },
     {
-        time: "0 0 */3 * *",
+        time: "0 0 * * *",
         fn: syncContaAzul
     },
     // {
