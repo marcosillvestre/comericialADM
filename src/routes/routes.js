@@ -21,8 +21,6 @@ routes.post('/redefinir-senha', SessionController.forgetPassword)
 routes.post('/nova-senha', SessionController.redefinePassword)
 
 
-
-
 // autenticated routes
 routes.use(auth)
 

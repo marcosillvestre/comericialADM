@@ -323,13 +323,14 @@ class PostController {
         const newArr = []
 
         if (body1.name1 !== undefined) {
-            await prisma.person.findFirst({ where: { name: { contains: name1 } } })
+            await prisma.person.findMany({ where: { name: { contains: name1 } } })
                 .then(async res => {
                     newArr.push(Status)
-                    if (res.acStatus !== "Ok") {
+                    let data = res.filter(item => item.acStatus !== "Ok")
+                    if (data.length > 0) {
                         try {
                             await prisma.person.update({
-                                where: { contrato: res.contrato },
+                                where: { contrato: data[0].contrato },
                                 data: {
                                     "dataAC": newArr,
                                     "acStatus": "Ok"

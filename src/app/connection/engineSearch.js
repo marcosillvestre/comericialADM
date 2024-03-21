@@ -286,7 +286,8 @@ export default searchSync
 
 
 
-// const kk = async () => {
-//     await prisma.person.findFirst({ where: { name: { contains: "Aracelly Nascimento de gois" } } })
-//         .then(res => console.log(res))
-// }
+const kk = async () => {
+    await prisma.person.findMany({ where: { name: { contains: "Aracelly Nascimento de gois" } } })
+        .then(res => console.log(res))
+}
+// kk()

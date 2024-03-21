@@ -1,6 +1,6 @@
 import axios from 'axios';
 import 'dotenv/config';
-
+import moment from 'moment';
 import { getToken } from '../core/getToken.js';
 
 
@@ -78,11 +78,8 @@ class RegisterContaAzulController {
             curso, valorCurso, ppFormaPg,
             ppVencimento, dataUltimaParcelaMensalidade, materialDidatico,
             mdValor, mdFormaPg, mdVencimento, service,
-            tmValor, tmFormaPg, tmVencimento, nomeAluno, vendedor
+            tmValor, tmFormaPg, tmVencimento, nomeAluno, vendedor, observacaoRd
         } = req.body
-
-
-
 
         var header = {
             "Authorization": `Bearer ${await getToken(unidade)}`,
@@ -118,8 +115,8 @@ class RegisterContaAzulController {
                     "Responsável": name,
                     "contrato": contrato,
                     "serviço": "parcela",
-                    "vendedor": vendedor
-
+                    "vendedor": vendedor,
+                    "observacao do rd": observacaoRd
 
                 }
                 const saleNotes = JSON.stringify(salesNotesString, null, 2)
@@ -171,6 +168,10 @@ class RegisterContaAzulController {
                             )
                         })
                     })
+                    .catch((err) => {
+                        console.log(err)
+                        return res.status(400).json({ message: `Erro no cpf digitado: ${cpf}` })
+                    })
 
             }
         })
@@ -193,7 +194,6 @@ class RegisterContaAzulController {
             "Authorization": `Bearer ${await getToken(unidade)}`,
             "Content-Type": "application/json"
         }
-
 
 
         await new Promise(resolve => {
@@ -344,7 +344,8 @@ class RegisterContaAzulController {
         })
             .catch(err => {
                 console.log(err)
-                return res.status(400).json({ message: "Erro" })
+                return res.status(400).json({ message: `Erro no cpf digitado: ${cpf}` })
+
 
             })
 
@@ -484,7 +485,7 @@ class RegisterContaAzulController {
         })
             .catch(err => {
                 console.log(err)
-                return res.status(400).json({ message: "Erro" })
+                return res.status(400).json({ message: `Erro no cpf digitado: ${cpf}` })
 
             })
 
