@@ -29,6 +29,7 @@ routes.use(auth)
 routes.post('/cliente', RegisterContaAzulController.storeCostumer)
 routes.post('/registro-conta-azul', RegisterContaAzulController.storeContract)
 routes.post('/venda', RegisterContaAzulController.storeSale)
+routes.post('/taxa', RegisterContaAzulController.storeEnrollmentFee)
 
 
 routes.post('/cadastro', UserController.store)

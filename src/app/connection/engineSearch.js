@@ -23,7 +23,7 @@ async function searchSync() {
                 for (const index of response?.data?.deals) {
 
                     const body = {
-                        name: index.name ? index.name : "Sem este dado no rd",
+                        name: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome  do responsável')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome  do responsável')).map(res => res.value)[0] : "Sem este dado no rd",
                         owner: index.user.name ? index.user.name : "Sem este dado no rd",
 
                         unidade: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Unidade')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Unidade')).map(res => res.value)[0] : "Sem este dado no rd",
@@ -102,7 +102,6 @@ async function searchSync() {
                         curso: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Curso')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Curso')).map(res => res.value)[0] : "Sem este dado no rd",
                     }
                     array.push(body)
-
                 }
                 if (array) {
                     array.map(async res => {
@@ -284,3 +283,10 @@ export default searchSync
 
 
 
+
+
+
+// const kk = async () => {
+//     await prisma.person.findFirst({ where: { name: { contains: "Aracelly Nascimento de gois" } } })
+//         .then(res => console.log(res))
+// }

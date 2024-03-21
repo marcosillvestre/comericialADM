@@ -11,7 +11,7 @@ const functionsArray = [
         fn: searchSync
     },
     {
-        time: "0 0 */3 * *",
+        time: "0 0 * * *",
         fn: syncContaAzul
     },
     // {
@@ -19,7 +19,7 @@ const functionsArray = [
     //     fn: renewContracts
     // },
     {
-        time: "*/53 * * * *",
+        time: "*/50 * * * *",
         fn: token
     },
 ]
