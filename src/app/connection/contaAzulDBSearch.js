@@ -32,7 +32,7 @@ async function refreshCentro(token) {
             })
 
     } catch (error) {
-        console.log("erro1")
+        console.log(error.response.data)
     }
 }
 
@@ -56,7 +56,7 @@ async function refreshPtb(token) {
             })
 
     } catch (error) {
-        console.log("erro2")
+        console.log(error.response.data)
     }
 }
 
