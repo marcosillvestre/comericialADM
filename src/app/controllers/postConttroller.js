@@ -225,6 +225,7 @@ class PostController {
                     const array = []
                     for (const index of response?.data?.deals) {
                         const deal = index.deal_custom_fields
+                        const desPrimeirasParcelas = deal.filter(res => res.custom_field.label.includes('Valor do desconto primeiras parcelas')).map(res => res.value)[0]
                         const body = {
                             name: deal.filter(res => res.custom_field.label.includes('Nome  do responsável')).map(res => res.value)[0],
                             contrato: deal.filter(res => res.custom_field.label.includes('Nº do contrato')).map(res => res.value)[0],
@@ -279,9 +280,13 @@ class PostController {
                             tmFormaPg: deal.filter(res => res.custom_field.label.includes('Forma de pagamento TM')).map(res => res.value)[0],
                             tmVencimento: deal.filter(res => res.custom_field.label.includes('Data de pagamento TM')).map(res => res.value)[0],
                             service: index.deal_products[0]?.name ? index.deal_products[0]?.name : "",
-                            observacaoRd: deal.filter(res => res.custom_field.label.includes('Obersevações importantes para o financeiro')).map(res => res.value)[0]
+                            observacaoRd: deal.filter(res => res.custom_field.label.includes('Obersevações importantes para o financeiro')).map(res => res.value)[0],
+                            parcelasAfetadas: deal.filter(res => res.custom_field.label.includes('Quantidade de primeiras parcelas com desconto')).map(res => res.value)[0],
+                            descontoPrimeirasParcelas: desPrimeirasParcelas,
+                            demaisParcelas: deal.filter(res => res.custom_field.label.includes('Quantidade de demais parcelas')).map(res => res.value)[0],
+                            descontoDemaisParcelas: deal.filter(res => res.custom_field.label.includes('Valor do desconto demais parcelas')).map(res => res.value)[0],
+                            promocao: desPrimeirasParcelas === undefined || desPrimeirasParcelas === "0" || desPrimeirasParcelas === "" ? "Não" : "Sim"
                         }
-
                         array.push(body)
                     }
                     return res.status(200).json(array)
@@ -290,7 +295,6 @@ class PostController {
         } catch (error) {
             console.log(error)
         }
-
     }
 
     async sender(req, res) {
