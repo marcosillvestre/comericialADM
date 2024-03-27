@@ -11,19 +11,19 @@ const header = {
     "Content-Type": "application/json"
 }
 
-async function refreshCentro(token) {
+async function refreshToken(id, token) {
     const body = {
         "grant_type": "refresh_token",
-        "refresh_token": `${token[0]?.refresh_token}`
+        "refresh_token": `${token}`
     }
 
     try {
         await axios.post("https://api.contaazul.com/oauth2/token",
             body, { headers: header }).then(async data => {
-                console.log("token 1 atualizado")
+                console.log(`token ${id} atualizado`)
 
                 await prisma.conec.update({
-                    where: { id: 1 },
+                    where: { id: id },
                     data: {
                         access_token: data?.data.access_token,
                         refresh_token: data?.data.refresh_token
@@ -36,36 +36,17 @@ async function refreshCentro(token) {
     }
 }
 
-async function refreshPtb(token) {
-    const body = {
-        "grant_type": "refresh_token",
-        "refresh_token": `${token[0]?.refresh_token}`
-    }
 
-    try {
-        await axios.post("https://api.contaazul.com/oauth2/token",
-            body, { headers: header }).then(async data => {
-                console.log("token 2 atualizado")
-                await prisma.conec.update({
-                    where: { id: 2 },
-                    data: {
-                        access_token: data?.data.access_token,
-                        refresh_token: data?.data.refresh_token
-                    }
-                })
-            })
 
-    } catch (error) {
-        console.log(error.response.data)
-    }
-}
 
 async function token() {
-    await prisma.conec.findMany().then(async res => {
-        await refreshCentro(res.filter(data => data.id === 1))
-        await refreshPtb(res.filter(data => data.id === 2))
-    })
 
+    await prisma.conec.findMany()
+        .then(async res => {
+            for (const realToken of res) {
+                await refreshToken(realToken.id, realToken.refresh_token)
+            }
+        })
 }
 //this 👆👆 part saves on a database the access and refresh_token
 
