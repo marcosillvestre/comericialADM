@@ -2,7 +2,7 @@ import axios from 'axios';
 import "dotenv/config";
 import prisma from '../../database/database.js';
 
-const comebackDays = 3
+const comebackDays = 2
 const options = { method: 'GET', headers: { accept: 'application/json' } };
 
 async function searchSync() {
@@ -36,7 +36,6 @@ async function searchSync() {
                         id: 1,
                         situMatric: "Pendente",
                         paStatus: "Pendente",
-
 
                         responsavelADM: "Pendente",
                         aprovacaoADM: "Pendente",
@@ -187,6 +186,7 @@ async function searchSync() {
                                 })
                                 .catch((err) => {
                                     if (err.meta) {
+                                        // res.name.includes("Evelyn Nayane de Almeida") && trelloCreateCard(res)
                                         console.log(`${res.name} está com o contrato repetido : ${res.contrato}, ${res.dataMatricula}, ${res.unidade} `)
                                     }
                                     if (!err.meta) {
@@ -205,8 +205,7 @@ async function searchSync() {
         }
         )
 }
-
-function addUsefullDays(data, diasUteis) {
+export function addUsefullDays(data, diasUteis) {
     var dataAtual = new Date(data);
     var diasAdicionados = 0;
 
@@ -221,7 +220,7 @@ function addUsefullDays(data, diasUteis) {
     return dataAtual;
 }
 
-async function trelloCreateCard(object) {
+export async function trelloCreateCard(object) {
     let today = new Date();
     let futureDate = addUsefullDays(today, 7);
 
@@ -234,7 +233,7 @@ async function trelloCreateCard(object) {
     }
 
     const idList = {
-        "Golfinho azul": process.env.PTB_LIST,
+        "Golfinho Azul": process.env.PTB_LIST,
         'PTB': process.env.PTB_LIST,
         'Centro': process.env.CENTRO_LIST
     }
@@ -260,7 +259,7 @@ async function trelloCreateCard(object) {
         Material: ${data.materialDidatico.map(res => res)},
         modalidade: ${data.tipoModalidade},
         Formato das aulas: ${data.formatoAula},
-        anotações: ${data.observacao},
+        anotações: ${data.observacao.map(res => res.value)},
         Valor do material: ${data.mdValor},
         Vaor da taxa de matricula: ${data.tmValor},
         Valor da mensalidade: ${data.ppValor},
@@ -275,19 +274,9 @@ async function trelloCreateCard(object) {
     let list = idList[data.unidade]
 
     await axios.post(`https://api.trello.com/1/cards?idList=${list}&key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`, body)
-        .then(() => console.log("Enviado ao trello"))
-        .catch(() => console.log("Erro ao enviar ao trello"))
+        .then(() => console.log(`${body.name} foi enviado ao trello`))
+        .catch((err) => console.log(err))
 }
 
 export default searchSync
 
-
-
-
-
-
-const kk = async () => {
-    await prisma.person.findMany({ where: { name: { contains: "Aracelly Nascimento de gois" } } })
-        .then(res => console.log(res))
-}
-// kk()

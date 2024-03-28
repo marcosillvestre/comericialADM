@@ -1,5 +1,6 @@
 import axios from 'axios';
 import "dotenv/config";
+import { addUsefullDays } from './engineSearch.js';
 
 
 const funis = {
@@ -13,12 +14,6 @@ const stages = {
 const stageToBeUpdated = {
     "Centro": "64badc42874ccc000dd4ed37",
     "PTB": "64bacb30693f48000d57686d",
-}
-
-
-
-const trelloList = {
-    "": "65ef33a22afe99a8c6db54d6"
 }
 
 
@@ -46,48 +41,69 @@ async function updateRdData(unity) {
             for (let i = 0; i < array.length; i++) {
                 const value = array[i].value.split("/")
                 const newValue = `${value[1]}/${value[2]}`
-                if (newValue === monthAndYear) {
 
+                if (newValue === monthAndYear) {
                     await axios.put(`https://crm.rdstation.com/api/v1/deals/${array[i].id}?token=${process.env.RD_TOKEN}`,
                         { deal_stage_id: stageToBeUpdated[unity] })
                         .then(async (res) => {
-                            console.log("old contracts updated")
                             let data = res.data
-                            const list = "65ef33a22afe99a8c6db54d6"
+                            let today = new Date();
+                            let futureDate = addUsefullDays(today, 7);
 
-                            const body = {
-                                "Nome do Aluno": "",
-                                "Nome do responsável": "",
-                                "Turma": "",
-                                "Número do responsável": "",
-                                "Data de término do contrato": "",
-                                "Valor da mensalidade atual": "",
-                                "Material atual": "",
+
+                            const list = {
+                                "Centro": "65ef33a22afe99a8c6db54d6",
+                                "PTB": "",
+                                "Golfinho Azul": ""
+                            }
+                            const template = {
+                                "Centro": "65ef349153693a762000eaef",
+                                "PTB": "",
+                                "Golfinho Azul": ""
                             }
 
-                            // await axios
-                            // .post(`https://api.trello.com/1/cards?idList=${list}&key=${process.env.TRELLO_KEY}
-                            // &token=${process.env.TRELLO_TOKEN}`, body)
+                            const body = {
+                                name: data.name,
+                                desc: `
+                                Nome do Aluno: ${data.name},
+                                Nome do responsável: ${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome  do responsável')).map(res => res.value)[0]},
+                                Turma: ${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Dia de aula')).map(res => res.value)[0]}/${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Horário de Inicio')).map(res => res.value)[0]}-${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Horário de fim')).map(res => res.value)[0]}/${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Professor')).map(res => res.value)},
+                                Data de término do contrato: ${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de fim do contrato')).map(res => res.value)[0]},
+                                Valor da mensalidade atual: ${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor total da parcela')).map(res => res.value)[0]},
+                                Material atual: ${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Material didático')).map(res => res.value)[0]},
+                                `,
+                                pos: 'top',
+                                due: futureDate,
 
+                                idList: list[unity], start: today,
+                                idCardSource: template[unity]
+                                // "Número do responsável": `${data.contacts.map(res => res.phones).map(res => res[0]?.phone)[0]}`,
+                            }
+
+
+                            await axios
+                                .post(`https://api.trello.com/1/cards?idList=${list[unity]}&key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`, body)
+                                .then(response => console.log(response.data.shortLink))
+                                .catch(err => console.log("trello ,", err))
 
                         })
-                        .catch(() => console.log("something went wrong"))
+                        .catch((err) => console.log("rd, ", err))
 
 
                 }
             }
         })
+        .catch(err => console.log(err))
 }
 
 
-
-
-// updateRdData("Centro")
 
 const renewContracts = () => {
     unities.map(async res => {
         await updateRdData(res)
     })
 }
+
+renewContracts()
 
 export default renewContracts

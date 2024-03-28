@@ -9,9 +9,9 @@ const routes = {
     "material didatico": "mdStatus"
 }
 
-async function SyncContaAzulAndDatabaseCentro() {
+async function SyncContaAzulAndDatabase(unity) {
     const header = {
-        "Authorization": `Bearer ${await getToken("Centro")}`
+        "Authorization": `Bearer ${await getToken(unity)}`
     }
     const sales = await axios.get("https://api.contaazul.com/v1/sales?size=1000", { headers: header })
     const json = sales.data.filter(res => res.payment.installments[0]?.status === "ACQUITTED")
@@ -58,59 +58,15 @@ async function SyncContaAzulAndDatabaseCentro() {
 }
 
 
-async function SyncContaAzulAndDatabasePtb() {
-    const header = {
-        "Authorization": `Bearer ${await getToken("PTB")}`
-    }
-    const sales = await axios.get("https://api.contaazul.com/v1/sales?size=1000", { headers: header })
-    const json = sales.data.filter(res => res.payment.installments[0]?.status === "ACQUITTED")
-
-    const filtered = json.filter(res => res.notes !== '')
-
-    let notes = filtered.map(res => {
-        let notes = res.notes
-        let cleanData = notes.replace(/\\n/g, "")
-        let note = JSON.parse(cleanData)
-
-
-        return {
-            aluno: note.Aluno,
-            responsavel: note["Responsável"],
-            contract: note.contrato,
-            service: note.serviço,
-            tm: note['TM Valor'],
-            value: res.total,
-        }
-    })
-
-
-    notes.map(async response => {
-
-        if (routes[response.service]) {
-            try {
-                await prisma.person.update({
-                    where: { contrato: response.contract },
-                    data: {
-                        [routes[response.service]]: "Ok"
-                    }
-                }).then(() => console.log(`${response.aluno} success updated`))
-
-            } catch (error) {
-                console.log(response.aluno)
-
-            }
-        }
-
-    })
-
-}
-
-
+let unities = ["Centro", "PTB"]
 
 const syncContaAzul = async () => {
-    await SyncContaAzulAndDatabaseCentro()
-    await SyncContaAzulAndDatabasePtb()
+    for (const realToken of unities) {
+        await SyncContaAzulAndDatabase(realToken)
+    }
 }
 
 
 export default syncContaAzul
+
+

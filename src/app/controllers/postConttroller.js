@@ -251,15 +251,13 @@ class PostController {
 
                             vendedor: index.user.name,
                             dataMatricula: deal.filter(res => res.custom_field.label.includes('Data de emissão da venda')).map(res => res.value)[0],
-                            classe: deal.filter(res => res.custom_field.label.includes('Classe')).map(res => res.value)[0],
-                            tipoModalidade: deal.filter(res => res.custom_field.label.includes('Tipo/ modalidade')).map(res => res.value)[0],
                             cidade: deal.filter(res => res.custom_field.label.includes('Cidade')).map(res => res.value)[0],
                             estado: deal.filter(res => res.custom_field.label === 'UF').map(res => res.value)[0],
                             cep: deal.filter(res => res.custom_field.label.includes('CEP')).map(res => res.value)[0],
                             estadoCivil: deal.filter(res => res.custom_field.label === 'Estado civil responsável').map(res => res.value)[0],
                             nascimentoAluno: deal.filter(res => res.custom_field.label.includes('Data de nascimento do aluno')).map(res => res.value)[0],
                             formato: deal.filter(res => res.custom_field.label.includes('Formato de Aula')).map(res => res.value)[0],
-                            tipoModalidade: deal.filter(res => res.custom_field.label.includes('Tipo/ modalidade')).map(res => res.value)[0],
+                            tipoModalidade: deal.filter(res => res.custom_field.label.includes('Tipo de plano')).map(res => res.value)[0],
                             classe: deal.filter(res => res.custom_field.label.includes('Classe')).map(res => res.value)[0],
                             subclasse: deal.filter(res => res.custom_field.label.includes('Subclasse')).map(res => res.value)[0],
                             paDATA: deal.filter(res => res.custom_field.label.includes('Data da primeira aula')).map(res => res.value)[0],
@@ -285,6 +283,7 @@ class PostController {
                             descontoPrimeirasParcelas: desPrimeirasParcelas,
                             demaisParcelas: deal.filter(res => res.custom_field.label.includes('Quantidade de demais parcelas')).map(res => res.value)[0],
                             descontoDemaisParcelas: deal.filter(res => res.custom_field.label.includes('Valor do desconto demais parcelas')).map(res => res.value)[0],
+                            background: deal.filter(res => res.custom_field.label.includes('Background do Aluno')).map(res => res.value)[0],
                             promocao: desPrimeirasParcelas === undefined || desPrimeirasParcelas === "0" || desPrimeirasParcelas === "" ? "Não" : "Sim"
                         }
                         array.push(body)

@@ -37,10 +37,7 @@ async function refreshToken(id, token) {
 }
 
 
-
-
 async function token() {
-
     await prisma.conec.findMany()
         .then(async res => {
             for (const realToken of res) {
