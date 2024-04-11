@@ -5,6 +5,7 @@ class TrelloWebhook {
 
     async capture(req, res) {
         const data = req.body
+        console.log(data)
         if (Array.isArray(data)) {
             try {
                 const webhook = data[0].action
@@ -39,7 +40,8 @@ class TrelloWebhook {
                     const description = async () => {
                         await axios.get(`https://api.trello.com/1/cards/${id}?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`)
                             .then(response => {
-                                body["descrição"] = response.data.desc
+                                let desc = response.data.desc
+                                body["descrição"] = desc.replace('"', '')
                             })
                     }
 
@@ -49,27 +51,23 @@ class TrelloWebhook {
                                 "https://hook.us1.make.com/gjazk2ejong10c7ewustyjfwu93yej0s";
 
                             await axios.post(hook, body)
-                                .then(() => {
-                                    return res.status(200).json(body)
+                                .then((response) => {
+                                    console.log(response)
                                 })
                         })
                         .catch(err => {
                             console.log(err)
                         })
-
-
                 }
-
-
             } catch (error) {
                 console.log(error)
             }
         }
 
-        return res.status(200).send()
-
+        return res.status(200).send("Accepted")
 
     }
+
 
 }
 export default new TrelloWebhook()
