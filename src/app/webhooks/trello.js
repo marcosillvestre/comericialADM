@@ -61,16 +61,12 @@ class TrelloWebhook {
             }
 
 
-
         } catch (error) {
             console.log(error)
-            return res.status(401).json("nao deu")
+            return res.status(200).json("nao deu")
 
         }
 
-
-
-        let link = "https://hook.us1.make.com/gjazk2ejong10c7ewustyjfwu93yej0s"
 
 
     }
