@@ -6,6 +6,8 @@ import PostConttroller from "../app/controllers/postConttroller.js";
 import SessionController from "../app/controllers/sessionController.js";
 import UnityController from "../app/controllers/unitiesController.js";
 import UserController from "../app/controllers/userController.js";
+import TrelloWebhook from '../app/webhooks/trello.js';
+
 import auth from "../middleware/auth.js";
 const routes = Router();
 
@@ -13,6 +15,10 @@ const routes = Router();
 const parser = bodyParser.urlencoded({ extended: false })
 
 routes.post('/contrato', parser, PostConttroller.sender)
+
+routes.post('/webhook-trello', TrelloWebhook.capture)
+
+
 
 routes.post('/login', SessionController.store)
 
@@ -66,3 +72,4 @@ routes.put('/multi-update', PostConttroller.updateMany) //
 
 
 export default routes
+
