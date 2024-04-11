@@ -39,13 +39,16 @@ class TrelloWebhook {
                 const description = async () => {
                     await axios.get(`https://api.trello.com/1/cards/${id}?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`)
                         .then(response => {
-                            body["descição"] = response.data.desc
+                            body["descrição"] = response.data.desc
                         })
                 }
 
                 Promise.all([customFields(), description()])
                     .then(async () => {
-                        await axios.post("https://hook.us1.make.com/gjazk2ejong10c7ewustyjfwu93yej0s", body)
+                        let hook = webhook.data.board.id === "65ef31794aa709ef4baaa3f5" &&
+                            "https://hook.us1.make.com/gjazk2ejong10c7ewustyjfwu93yej0s";
+
+                        await axios.post(hook, body)
                             .then(() => {
                                 return res.status(200).json(body)
                             })
