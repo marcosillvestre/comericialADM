@@ -66,7 +66,7 @@ class TrelloWebhook {
             }
         }
 
-        return res.status(200).json("nao deu")
+        return res.status(200).send()
 
 
     }
