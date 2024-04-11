@@ -325,29 +325,33 @@ class PostController {
         }
         const newArr = []
 
-        if (body1.name1 !== undefined) {
-            await prisma.person.findMany({ where: { name: { contains: name1 } } })
-                .then(async res => {
-                    newArr.push(Status)
-                    let data = res.filter(item => item.acStatus !== "Ok")
-                    if (data.length > 0) {
-                        try {
-                            await prisma.person.update({
-                                where: { contrato: data[0].contrato },
-                                data: {
-                                    "dataAC": newArr,
-                                    "acStatus": "Ok"
-                                }
-                            }).then(() => console.log(Status))
 
-                        } catch (error) {
-                            if (error) {
-                                console.log("Contrato não encontrado")
+
+        await prisma.person.findMany({
+            where: {
+                acStatus: "Pendente"
+            }
+        })
+            .then(async res => {
+                newArr.push(Status)
+                let data = res.filter(item => item.name.toLowerCase().includes(body1.name1.toLowerCase()))
+                if (data.length > 0) {
+                    try {
+                        await prisma.person.update({
+                            where: { contrato: data[0].contrato },
+                            data: {
+                                "dataAC": newArr,
+                                "acStatus": "Ok"
                             }
+                        }).then(() => console.log(Status))
+
+                    } catch (error) {
+                        if (error) {
+                            console.log("Contrato não encontrado")
                         }
                     }
-                })
-        }
+                }
+            })
 
         return res.status(200).json({ message: "worked" })
     }
