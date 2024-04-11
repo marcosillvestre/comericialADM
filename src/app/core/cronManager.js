@@ -14,17 +14,17 @@ const functionsArray = [
         fn: syncContaAzul
     },
     {
-        time: "0 0 1 * *",
+        time: "0 12 1 * *",
         fn: renewContracts
     },
     {
-        time: "*/53 * * * *",
+        time: "0 */40 * * * *",
         fn: token
     }
 ]
 
 functionsArray.forEach(async res => {
-    new CronJob(`${res.time}`,
+    await new CronJob(`${res.time}`,
 
         async function () {
             await res.fn();
@@ -34,3 +34,6 @@ functionsArray.forEach(async res => {
         'America/Los_Angeles'
     )
 })
+
+
+
