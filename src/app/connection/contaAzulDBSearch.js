@@ -47,5 +47,4 @@ async function token() {
 }
 //this 👆👆 part saves on a database the access and refresh_token
 
-
 export default token
