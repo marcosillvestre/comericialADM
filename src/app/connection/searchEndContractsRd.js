@@ -52,7 +52,7 @@ async function updateRdData(unity) {
 
 
                             const list = {
-                                "Centro": "65ef33a22afe99a8c6db54d6",
+                                "Centro": "65ef33908563ab863429d9be",
                                 "PTB": "",
                                 "Golfinho Azul": ""
                             }
@@ -61,20 +61,27 @@ async function updateRdData(unity) {
                                 "PTB": "",
                                 "Golfinho Azul": ""
                             }
+                            const description = {
+                                'id': data.id,
+                                'Nome do Aluno': data.name,
+                                'Nome do responsável': data.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome  do responsável')).map(res => res.value)[0],
+                                'turma': `${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Dia de aula')).map(res => res.value)[0]}/${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Horário de Inicio')).map(res => res.value)[0]}-${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Horário de fim')).map(res => res.value)[0]}/${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Professor')).map(res => res.value)}`,
+                                'Data de término do contrato': data.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de fim do contrato')).map(res => res.value)[0],
+                                'Valor da mensalidade atual': data.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor total da parcela')).map(res => res.value)[0],
+                                'Material atual': data.deal_custom_fields.filter(res => res.custom_field.label.includes('Material didático')).map(res => res.value)[0],
+
+                                'FEEDBACK DO ALUNO': "",
+                                'Comportamento': "",
+                                'Notas': "",
+                                'Desenvolvimento': "",
+                                'RESUMO DA REUNIÃO': "",
+                            }
 
                             const body = {
                                 name: data.name,
-                                desc: `
-                                Nome do Aluno: ${data.name},
-                                Nome do responsável: ${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome  do responsável')).map(res => res.value)[0]},
-                                Turma: ${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Dia de aula')).map(res => res.value)[0]}/${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Horário de Inicio')).map(res => res.value)[0]}-${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Horário de fim')).map(res => res.value)[0]}/${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Professor')).map(res => res.value)},
-                                Data de término do contrato: ${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de fim do contrato')).map(res => res.value)[0]},
-                                Valor da mensalidade atual: ${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor total da parcela')).map(res => res.value)[0]},
-                                Material atual: ${data.deal_custom_fields.filter(res => res.custom_field.label.includes('Material didático')).map(res => res.value)[0]},
-                                `,
+                                desc: JSON.stringify(description, null, 2).replace("{", "").replace("}", ""),
                                 pos: 'top',
                                 due: futureDate,
-
                                 idList: list[unity], start: today,
                                 idCardSource: template[unity]
                                 // "Número do responsável": `${data.contacts.map(res => res.phones).map(res => res[0]?.phone)[0]}`,
@@ -83,7 +90,9 @@ async function updateRdData(unity) {
 
                             await axios
                                 .post(`https://api.trello.com/1/cards?idList=${list[unity]}&key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`, body)
-                                .then(response => console.log(response.data.shortLink))
+                                .then(response => {
+                                    console.log(response.data.shortUrl)
+                                })
                                 .catch(err => console.log("trello ,", err))
 
                         })
@@ -98,12 +107,11 @@ async function updateRdData(unity) {
 
 
 
-const renewContracts = () => {
-    unities.map(async res => {
-        await updateRdData(res)
-    })
+const renewContracts = async () => {
+    for (const unity of unities) {
+        await updateRdData(unity)
+    }
 }
 
-renewContracts()
 
 export default renewContracts
