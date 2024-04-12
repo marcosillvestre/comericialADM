@@ -2,14 +2,13 @@ import prisma from "../../database/database.js";
 
 export const getToken = async (unity) => {
 
-    const token = await prisma.conec.findMany({
+    const token = await prisma.conec.findUnique({
         where: {
-            id: unity.includes("PTB") ||
-                unity.includes("Golfinho Azul") ? 2 : 1
+            id: unity === "Centro" ? 1 : 2
         }
     })
 
-    return token[0].access_token
+    return token.access_token
 }
 
 

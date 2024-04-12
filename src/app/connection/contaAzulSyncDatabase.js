@@ -2,8 +2,8 @@ import axios from "axios"
 import prisma from "../../database/database.js"
 import { getToken } from "../core/getToken.js"
 
-
-
+import { Historic } from "../../database/historic/properties.js"
+const historic = new Historic()
 
 
 const routes = {
@@ -61,21 +61,27 @@ async function SyncContaAzulAndDatabase(header) {
                     .then(async data => {
                         if (data.length > 0) {
                             try {
-                                await prisma.person.update({
-                                    where: { contrato: data[0].contrato },
-                                    data: {
-                                        [where]: "Ok"
-                                    }
-                                })
-                                    .then(() => {
-                                        console.log(`${response.aluno} success updated / ${where} / ${response.unidade}`)
-
+                                const update = async () => {
+                                    await prisma.person.update({
+                                        where: { contrato: data[0].contrato },
+                                        data: {
+                                            [where]: "Ok"
+                                        }
                                     })
-                                    .catch(e => console.log(e))
+                                        .then(() => {
+                                            console.log(`${response.aluno} success updated / ${where} / ${response.unidade}`)
+
+                                        })
+                                        .catch(e => console.log(e))
+                                }
+                                const storeHistoric = async () => {
+                                    await historic._store("Automatização", where, "Ok", data[0].contrato)
+                                }
+
+                                Promise.all([storeHistoric(), update()])
 
                             } catch (error) {
                                 console.log(error)
-
                             }
                         }
                     })
@@ -91,6 +97,8 @@ async function SyncContaAzulAndDatabase(header) {
 let unities = ["Centro", "PTB"]
 
 const syncContaAzul = async () => {
+    console.log("payments ca updates")
+
     for (const realToken of unities) {
         const header = {
             "Authorization": `Bearer ${await getToken(realToken)}`
@@ -98,7 +106,6 @@ const syncContaAzul = async () => {
         await SyncContaAzulAndDatabase(header)
     }
 }
-
 
 export default syncContaAzul
 

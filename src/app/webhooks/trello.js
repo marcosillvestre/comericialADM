@@ -5,7 +5,6 @@ class TrelloWebhook {
 
     async capture(req, res) {
         const data = req.body
-        console.log(data)
         if (Array.isArray(data)) {
             try {
                 const webhook = data[0].action
@@ -33,7 +32,6 @@ class TrelloWebhook {
 
 
                                 }
-                                //  getCardDescription(customFIelds)
                             })
                     }
 
@@ -65,9 +63,7 @@ class TrelloWebhook {
         }
 
         return res.status(200).send("Accepted")
-
     }
-
 
 }
 export default new TrelloWebhook()

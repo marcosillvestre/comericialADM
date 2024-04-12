@@ -20,6 +20,7 @@ const stageToBeUpdated = {
 const unities = ["Centro", "PTB"]
 
 async function updateRdData(unity) {
+
     await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=100&token=${process.env.RD_TOKEN}&deal_pipeline_id=${funis[unity]}&deal_stage_id=${stages[unity]}`)
         .then(async response => {
             const deals = response.data.deals
@@ -87,7 +88,6 @@ async function updateRdData(unity) {
                                 // "Número do responsável": `${data.contacts.map(res => res.phones).map(res => res[0]?.phone)[0]}`,
                             }
 
-
                             await axios
                                 .post(`https://api.trello.com/1/cards?idList=${list[unity]}&key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`, body)
                                 .then(response => {
@@ -108,10 +108,10 @@ async function updateRdData(unity) {
 
 
 const renewContracts = async () => {
+    console.log("renew")
     for (const unity of unities) {
         await updateRdData(unity)
     }
 }
-
 
 export default renewContracts

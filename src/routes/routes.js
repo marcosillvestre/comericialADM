@@ -39,6 +39,7 @@ routes.post('/taxa', RegisterContaAzulController.storeEnrollmentFee)
 routes.post('/cadastro', UserController.store)
 
 
+routes.get('/pessoal', HistoricController.indexPersonalHistoric)
 routes.get('/historico', HistoricController.index)
 
 

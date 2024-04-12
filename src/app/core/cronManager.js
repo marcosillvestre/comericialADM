@@ -20,6 +20,10 @@ const functionsArray = [
     {
         time: "0 */40 * * * *",
         fn: token
+    },
+    {
+        time: "0 */40 * * * *",
+        fn: token
     }
 ]
 

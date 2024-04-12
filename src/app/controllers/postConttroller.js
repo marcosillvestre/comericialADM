@@ -4,7 +4,8 @@ import { funis } from "../../utils/funnels.js";
 import { stages } from "../../utils/stage.js";
 
 import prisma from '../../database/database.js';
-
+import { Historic } from "../../database/historic/properties.js";
+const historic = new Historic()
 const limit = 200
 const comebackDays = 3
 
@@ -279,12 +280,13 @@ class PostController {
                             tmVencimento: deal.filter(res => res.custom_field.label.includes('Data de pagamento TM')).map(res => res.value)[0],
                             service: index.deal_products[0]?.name ? index.deal_products[0]?.name : "",
                             observacaoRd: deal.filter(res => res.custom_field.label.includes('Obersevações importantes para o financeiro')).map(res => res.value)[0],
+
                             parcelasAfetadas: deal.filter(res => res.custom_field.label.includes('Quantidade de primeiras parcelas com desconto')).map(res => res.value)[0],
                             descontoPrimeirasParcelas: desPrimeirasParcelas,
                             demaisParcelas: deal.filter(res => res.custom_field.label.includes('Quantidade de demais parcelas')).map(res => res.value)[0],
                             descontoDemaisParcelas: deal.filter(res => res.custom_field.label.includes('Valor do desconto demais parcelas')).map(res => res.value)[0],
+                            promocao: desPrimeirasParcelas === undefined || desPrimeirasParcelas === "0" || desPrimeirasParcelas === "" ? "Não" : "Sim",
                             background: deal.filter(res => res.custom_field.label.includes('Background do Aluno')).map(res => res.value)[0],
-                            promocao: desPrimeirasParcelas === undefined || desPrimeirasParcelas === "0" || desPrimeirasParcelas === "" ? "Não" : "Sim"
                         }
                         array.push(body)
                     }
@@ -337,13 +339,22 @@ class PostController {
                 let data = res.filter(item => item.name.toLowerCase().includes(body1.name1.toLowerCase()))
                 if (data.length > 0) {
                     try {
-                        await prisma.person.update({
-                            where: { contrato: data[0].contrato },
-                            data: {
-                                "dataAC": newArr,
-                                "acStatus": "Ok"
-                            }
-                        }).then(() => console.log(Status))
+                        const signing = async () => {
+                            await prisma.person.update({
+                                where: { contrato: data[0].contrato },
+                                data: {
+                                    "dataAC": newArr,
+                                    "acStatus": "Ok"
+                                }
+                            }).then(() => console.log(Status))
+                        }
+                        const storeHistoric = async () => {
+                            await historic._store("Automatização", "acStatus", "Ok", data[0].contrato)
+                        }
+
+                        Promise.all([storeHistoric(), signing()])
+
+
 
                     } catch (error) {
                         if (error) {

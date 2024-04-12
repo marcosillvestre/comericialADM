@@ -185,9 +185,9 @@ class RegisterContaAzulController {
             cargaHoraria, numeroParcelas, descontoTotal,
             curso, valorCurso, ppFormaPg,
             ppVencimento, dataUltimaParcelaMensalidade, materialDidatico,
-            mdValor, mdFormaPg, mdVencimento, service,
+            mdValor, mdFormaPg, mdVencimento,
             tmValor, tmFormaPg, tmVencimento, nomeAluno, vendedor,
-            observacaoRd, mdDesconto
+            observacaoRd, mdDesconto, parcelasAfetadas, descontoPrimeirasParcelas, demaisParcelas, descontoDemaisParcelas, promocao
         } = req.body
 
         var header = {
@@ -210,6 +210,12 @@ class RegisterContaAzulController {
 
 
                 if (parseInt(mdValor) > 0) {
+                    let promo = {
+                        "parcelas afetadas": parcelasAfetadas,
+                        "desconto nas primeiras parcelas": descontoPrimeirasParcelas,
+                        "demais parcelas": demaisParcelas,
+                        "desconsto demais parcelas": descontoDemaisParcelas,
+                    }
                     const salesNotesString = {
                         "Valor total": parseFloat(valorCurso),
                         "Valor da Parcela": parseFloat(valorCurso) / parseInt(numeroParcelas),
@@ -234,8 +240,11 @@ class RegisterContaAzulController {
                         "contrato": contrato,
                         "serviço": "material didatico",
                         "observacao do rd": observacaoRd,
-                        "vendedor": vendedor
+                        "vendedor": vendedor,
+                        "desconto no material didatico": mdDesconto,
+                        "promoção": promocao === "Sim" ? promo : ""
                     }
+
                     const saleNotes = JSON.stringify(salesNotesString, null, 2)
 
 

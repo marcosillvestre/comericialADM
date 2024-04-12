@@ -79,7 +79,7 @@ class SessionsController {
                 from: `American Way ${process.env.GMAIL_CLIENT}`,
                 to: email,
                 subject: `Recuperação de Senha: ${email_hash}`,
-                html: "<h2>Esqueceu a senha?</h2> <p>Copie e cole esse 👆 código na página de recuperação de senha e redefina a sua senha </p>"
+                html: `<h2>Esqueceu a senha?</h2> <br/> <p>Copie e cole esse código: <br/>${email_hash}<br/> Na página de recuperação você vai poder redefinir a sua senha </p>`
             })
 
             return res.status(200).json({ message: "Sucesso" })

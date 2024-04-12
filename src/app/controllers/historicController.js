@@ -34,5 +34,26 @@ class Historic {
         }
 
     }
+
+    async indexPersonalHistoric(req, res) {
+        const { contract } = req.query
+
+
+        try {
+            const personalHistoric = await prisma.historic.findMany({
+                where: {
+                    information: {
+                        path: ["from"],
+                        string_contains: contract
+                    }
+                }
+            })
+
+            return res.status(200).json(personalHistoric)
+
+        } catch (err) {
+            return res.status(400).json(err)
+        }
+    }
 }
 export default new Historic()
