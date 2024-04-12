@@ -528,7 +528,7 @@ class PostController {
         }
         const rangePeriod = {
             "Últimos 7 dias": 7,
-            "Este ano": 365,
+            "Todo período": 365,
         }
 
         const currentDay = new Date()
@@ -719,7 +719,7 @@ class PostController {
         }
         const rangePeriod = {
             "Últimos 7 dias": 7,
-            "Este ano": 365,
+            "Todo período": 365,
         }
 
         const currentDay = new Date()
