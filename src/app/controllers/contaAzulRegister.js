@@ -78,7 +78,8 @@ class RegisterContaAzulController {
             curso, valorCurso, ppFormaPg,
             ppVencimento, dataUltimaParcelaMensalidade, materialDidatico,
             mdValor, mdFormaPg, mdVencimento, service,
-            tmValor, tmFormaPg, tmVencimento, nomeAluno, vendedor, observacaoRd
+            tmValor, tmFormaPg, tmVencimento, nomeAluno, vendedor, observacaoRd,
+            mdDesconto, parcelasAfetadas, descontoPrimeirasParcelas, demaisParcelas, descontoDemaisParcelas, promocao
         } = req.body
 
         var header = {
