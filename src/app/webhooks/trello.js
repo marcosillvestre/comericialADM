@@ -29,8 +29,6 @@ class TrelloWebhook {
                                     const date = new Date(field.value.date)
                                     body["Data de início"] = new Date(date.setDate(date.getDate() - 1))
                                     body["Data de fim"] = field.value.date
-
-
                                 }
                             })
                     }
@@ -50,7 +48,7 @@ class TrelloWebhook {
 
                             await axios.post(hook, body)
                                 .then((response) => {
-                                    console.log(response)
+                                    console.log(response.data)
                                 })
                         })
                         .catch(err => {

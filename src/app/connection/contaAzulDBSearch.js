@@ -38,7 +38,6 @@ async function refreshToken(id, token) {
 
 
 async function token() {
-
     await prisma.conec.findMany()
         .then(async res => {
             for (const realToken of res) {
@@ -46,6 +45,8 @@ async function token() {
             }
         })
 }
+
+
 //this 👆👆 part saves on a database the access and refresh_token
 
 export default token

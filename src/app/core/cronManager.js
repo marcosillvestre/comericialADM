@@ -18,18 +18,16 @@ const functionsArray = [
         fn: renewContracts
     },
     {
-        time: "0 */40 * * * *",
+        time: "0 */30 * * * *",
         fn: token
     }
 
 ]
 
-functionsArray.forEach(async res => {
-    await new CronJob(`${res.time}`,
+functionsArray.map(res => {
+    return new CronJob(`${res.time}`,
+        res.fn(),
 
-        async function () {
-            await res.fn();
-        },
         null,
         true,
         'America/Los_Angeles'

@@ -91,7 +91,12 @@ class RegisterContaAzulController {
                 { headers: header }))
         }).then(async data => {
             if (data.data[0]) {
-
+                let promo = {
+                    "parcelas afetadas": parcelasAfetadas,
+                    "desconto nas primeiras parcelas": descontoPrimeirasParcelas,
+                    "demais parcelas": demaisParcelas,
+                    "desconsto demais parcelas": descontoDemaisParcelas,
+                }
                 const salesNotesString = {
                     "Valor total": parseFloat(valorCurso),
                     "Valor da Parcela": parseFloat(valorCurso) / parseInt(numeroParcelas),
@@ -116,8 +121,9 @@ class RegisterContaAzulController {
                     "contrato": contrato,
                     "serviço": "parcela",
                     "vendedor": vendedor,
-                    "observacao do rd": observacaoRd
-
+                    "observacao do rd": observacaoRd,
+                    "desconto no material didatico": mdDesconto,
+                    "promoção": promocao === "Sim" ? promo : ""
                 }
                 const saleNotes = JSON.stringify(salesNotesString, null, 2)
 
@@ -202,8 +208,7 @@ class RegisterContaAzulController {
         }).then(async data => {
             if (data.data[0]) {
 
-                const sellers = await axios.get("https://api.contaazul.com/v1/sales/sellers",
-                    { headers: header })
+                const sellers = await axios.get("https://api.contaazul.com/v1/sales/sellers", { headers: header })
 
                 let seller = vendedor.split(" ")
                 let related = sellers.data.filter(res => res.name.includes(seller[0]))
