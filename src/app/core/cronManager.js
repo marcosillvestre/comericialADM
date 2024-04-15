@@ -6,7 +6,7 @@ import renewContracts from '../connection/searchEndContractsRd.js';
 
 const functionsArray = [
     {
-        time: "0 */30 * * * *",
+        time: "0 */60 * * * *",
         fn: searchSync
     },
     {
@@ -26,8 +26,9 @@ const functionsArray = [
 
 functionsArray.map(res => {
     return new CronJob(`${res.time}`,
-        res.fn(),
-
+        function () {
+            res.fn()
+        },
         null,
         true,
         'America/Los_Angeles'
