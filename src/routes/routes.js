@@ -54,7 +54,7 @@ routes.post('/unidades', UnityController.storeUnities)
 
 routes.delete('/unidades/:id', UnityController.deleteUnities)
 
-routes.post('/periodo', PostConttroller.indexPeriod)
+routes.get('/periodo', PostConttroller.indexPeriod)
 
 
 routes.get('/contrato/:unity', PostConttroller.getRecent)
