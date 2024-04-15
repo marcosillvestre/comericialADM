@@ -517,6 +517,7 @@ class PostController {
 
         const skipParsed = parseInt(skip)
         const dbData = await prisma.person.findMany()
+
         try {
             const endData = take !== 'all' ? parseInt(take) : dbData.length
 
@@ -546,7 +547,6 @@ class PostController {
 
 
                 const slicedData = generalMonthsBefore.slice(skipParsed, endData + skipParsed)
-
 
                 return res.status(200).json({
                     period: range,
