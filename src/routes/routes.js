@@ -47,7 +47,9 @@ routes.post('/page-update', PostConttroller.searchSync)
 
 routes.post('/grafico', PostConttroller.graphData)
 
-routes.post('/comissao', PostConttroller.comissionData)
+
+routes.get('/comissao', PostConttroller.comissionData)
+
 
 routes.get('/unidades', UnityController.unities)
 routes.post('/unidades', UnityController.storeUnities)

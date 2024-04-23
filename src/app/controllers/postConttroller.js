@@ -692,6 +692,9 @@ class PostController {
     }
 
     async comissionData(req, res) {
+        const { range, unity, dates } = req.query
+
+
         const selectedDbData = await prisma.person.findMany({
             orderBy: {
                 name: 'asc',
@@ -706,8 +709,6 @@ class PostController {
                 owner: true
             }
         })
-
-        const { range, unity, dates } = req.body
 
         const settledPeriod = {
             "Mês passado": 1,
@@ -816,7 +817,6 @@ class PostController {
 
             }
         } catch (error) {
-
             return res.status(400).json({ Erro: "Tente novamente mais tarde, se o erro persistir entre em contato com o suporte " })
         }
     }
