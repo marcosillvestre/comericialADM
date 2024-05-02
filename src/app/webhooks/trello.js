@@ -1,6 +1,6 @@
 import axios from "axios";
 import "dotenv/config";
-
+import prisma from "../../database/database.js";
 class TrelloWebhook {
 
     async capture(req, res) {
@@ -55,6 +55,26 @@ class TrelloWebhook {
                             console.log(err)
                         })
                 }
+
+
+                const boolean = webhook.data.checklist.name === "Primeira aula ?" || webhook.data.checkItem.name === "Primeira aula ?" && webhook.data.checkItem.state === "complete"
+                if (boolean) {
+                    const nameSearch = webhook.data.card.name
+                    const person = await prisma.person.findUnique({
+                        where: { contrato: nameSearch }
+                    })
+
+
+                    if (person) {
+                        await prisma.person.update({
+                            where: { contrato: person.contrato },
+                            data: {
+                                paStatus: "Ok"
+                            }
+                        })
+                    }
+                }
+
             } catch (error) {
                 console.log(error)
             }
