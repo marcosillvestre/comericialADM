@@ -1,7 +1,7 @@
 import axios from "axios"
-import prisma from "../../database/database.js"
 import { getToken } from "../core/getToken.js"
 
+import prisma from "../../database/database.js"
 import { Historic } from "../../database/historic/properties.js"
 const historic = new Historic()
 
@@ -14,29 +14,44 @@ const routes = {
 
 
 async function SyncContaAzulAndDatabase(header) {
-    const sales = await axios.get("https://api.contaazul.com/v1/sales?size=1000", { headers: header })
 
-    const json = sales.data.filter(res => res.payment.installments[0]?.status === "ACQUITTED")
+    const comebackDays = 5
+    const backDay = new Date()
+    backDay.setDate(backDay.getDate() - comebackDays)
+    const startDate = backDay.toISOString()
 
-    const filtered = json.filter(res => res.notes !== '')
+    const currentDate = new Date()
+    const endDate = currentDate.toISOString()
 
-    let notes = filtered.map(res => {
+    const sales = await axios.get(`https://api.contaazul.com/v1/sales?emission_start=${startDate}&emission_end=${endDate}&size=1000`, { headers: header })
+
+    const filtered = sales.data.filter(res => {
+        const status = res.payment.installments[0]?.status
         let notes = res.notes
         let cleanData = notes.replace(/\\n/g, "")
+        return status === "ACQUITTED" && JSON.parse(!(cleanData.includes("(")))
+    })
 
-        let note = !(notes.includes("(")) && JSON.parse(cleanData)
 
-        return {
-            aluno: note.Aluno,
-            responsavel: note["Responsável"],
-            contract: note.contrato,
-            service: note.serviço,
-            tm: note['TM Valor'],
-            value: res.total,
-            unidade: note.Unidade
+    let notes = filtered.map(res => {
+        try {
+            let note = res.notes
+
+            return {
+                aluno: note.Aluno,
+                responsavel: note["Responsável"],
+                contract: note.contrato,
+                service: note.serviço,
+                tm: note['TM Valor'],
+                value: res.total,
+                unidade: note.Unidade
+            }
+        } catch (error) {
+            console.log(res.customer.name)
         }
 
     })
+
 
     for (const response of notes) {
         if (response !== undefined) {
@@ -90,6 +105,7 @@ async function SyncContaAzulAndDatabase(header) {
             }
         }
     }
+
 }
 
 
@@ -106,6 +122,7 @@ const syncContaAzul = async () => {
         await SyncContaAzulAndDatabase(header)
     }
 }
+
 
 export default syncContaAzul
 
