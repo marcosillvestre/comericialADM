@@ -43,7 +43,7 @@ class TrelloWebhook {
 
                     Promise.all([customFields(), description()])
                         .then(async () => {
-                            let hook = webhook.data.board.id === "65ef31794aa709ef4baaa3f5" &&
+                            let hook = webhook.data.board.id === "65ef31794aa709ef4baaa3f5" && // aqui vai o quadro do ptb, por enquanto so tem um 
                                 "https://hook.us1.make.com/gjazk2ejong10c7ewustyjfwu93yej0s";
 
                             await axios.post(hook, body)
@@ -56,12 +56,11 @@ class TrelloWebhook {
                         })
                 }
 
-
                 const boolean = webhook.data.checklist.name === "Primeira aula ?" || webhook.data.checkItem.name === "Primeira aula ?" && webhook.data.checkItem.state === "complete"
                 if (boolean) {
                     const nameSearch = webhook.data.card.name
                     const person = await prisma.person.findUnique({
-                        where: { contrato: nameSearch }
+                        where: { name: nameSearch }
                     })
 
 
