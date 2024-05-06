@@ -56,10 +56,10 @@ class TrelloWebhook {
                         })
                 }
 
+                console.log(webhook)
+                // console.log(boolean)
                 const boolean = webhook.data.checklist.name === "Primeira aula ?" || webhook.data.checkItem.name === "Primeira aula ?" && webhook.data.checkItem.state === "complete"
-                console.log(boolean)
                 if (boolean) {
-                    console.log(webhook)
                     const nameSearch = webhook.data.card.name
                     const person = await prisma.person.findUnique({
                         where: { name: nameSearch }
