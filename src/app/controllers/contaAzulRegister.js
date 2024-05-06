@@ -300,8 +300,9 @@ class RegisterContaAzulController {
 
 
                             let roundedValue = valorMd - descontoMd
+                            ////////////////
                             const teachingmaterial = {
-                                "emission": data.data[0].created_at,
+                                "emission": new Date(),
                                 "status": "PENDING",
                                 "customer_id": data.data[0].id,
                                 "products": productsSale,
@@ -441,7 +442,7 @@ class RegisterContaAzulController {
 
 
                         const taxCell = {
-                            "emission": data.data[0].created_at,
+                            "emission": new Date(),
                             "status": "PENDING",
                             "customer_id": data.data[0].id,
                             "seller_id": related.length === 0 ? "" : related[0].id,
