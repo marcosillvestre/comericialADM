@@ -140,7 +140,7 @@ class RegisterContaAzulController {
                             let value = parseFloat(valorCurso) / parseInt(numeroParcelas)
 
                             const body = {
-                                "emission": new Date(`${ppVencimento.split("/")[1]} / ${ppVencimento.split("/")[0]} / ${ppVencimento.split("/")[2]}`),
+                                "emission": new Date(`${ppVencimento.split("/")[1]}/${ppVencimento.split("/")[0]}/${ppVencimento.split("/")[2]}`),
                                 "status": "COMMITTED",
                                 "customer_id": data.data[0]?.id,
                                 "services": [
