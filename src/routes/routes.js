@@ -8,6 +8,9 @@ import UnityController from "../app/controllers/unitiesController.js";
 import UserController from "../app/controllers/userController.js";
 import TrelloWebhook from '../app/webhooks/trello.js';
 
+import ContractsController from '../app/controllers/contractsController.js';
+import CustomFieldsController from '../app/controllers/customFieldsController.js';
+
 import auth from "../middleware/auth.js";
 const routes = Router();
 
@@ -27,8 +30,22 @@ routes.post('/redefinir-senha', SessionController.forgetPassword)
 routes.post('/nova-senha', SessionController.redefinePassword)
 
 
-// autenticated routes
-routes.use(auth)
+
+routes.use(auth) // autenticated routes
+
+routes.get('/campos-personalizados', CustomFieldsController.index)
+routes.post('/campos-personalizados', CustomFieldsController.store)
+routes.delete('/campos-personalizados/:id', CustomFieldsController.delete)
+routes.put('/campos-personalizados', CustomFieldsController.update)
+
+
+routes.get('/novos-contratos', ContractsController.index)
+routes.post('/novos-contratos', ContractsController.store)
+routes.delete('/novos-contratos/:id', ContractsController.delete)
+routes.put('/novos-contratos', ContractsController.update)
+
+
+
 
 routes.post('/cliente', RegisterContaAzulController.storeCostumer)
 routes.post('/registro-conta-azul', RegisterContaAzulController.storeContract)

@@ -94,6 +94,7 @@ model person {
   curso               String
 }
 
+
 model unities {
   id         String    @id @default(uuid())
   name       String
@@ -104,4 +105,72 @@ model historic {
   responsible    String
   date           DateTime  @default(now())
   information    Json
+}
+
+enum TYPE {
+String
+Number
+Date 
+Select
+MultiSelect
+}
+
+model customFields {
+  id          String   @id  @default(uuid())
+  label       String
+  type        TYPE     @default(String)
+  order       Int
+  required    Boolean  @default(false)
+  created_at  DateTime @default(now())
+  options     Json?
+  for         String
+}
+
+
+
+model logs {
+id       String  @id @default(uuid()) 
+name     String
+email    String   @unique
+password String
+admin    Boolean  @default(false)
+role     String
+unity    String[]
+created_at DateTime  @default(now())
+updated_at DateTime  @updatedAt
+
+
+persons  contracts[]
+}
+model contracts {
+id      String  @id @default(uuid()) 
+name    String 
+
+customFields  Json
+
+created_at DateTime  @default(now())
+updated_at DateTime  @updatedAt
+
+userId  String 
+user    logs  @relation(fields: [userId], references: [id])
+
+servicesId  servicesOrProducts[]
+}
+
+enum TYPESERVICE {
+  Service
+  Product
+}
+model servicesOrProducts {
+id      String  @id @default(uuid()) 
+name    String 
+description String?
+value       Decimal?
+type      TYPESERVICE
+created_at DateTime  @default(now())
+updated_at DateTime  @updatedAt
+
+
+contractId String?
+contracts contracts? @relation(fields: [contractId], references: [id])
 }
