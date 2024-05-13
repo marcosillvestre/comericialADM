@@ -21,8 +21,6 @@ routes.post('/contrato', parser, PostConttroller.sender)
 
 routes.post('/webhook-trello', TrelloWebhook.capture)
 
-
-
 routes.post('/login', SessionController.store)
 
 routes.post('/redefinir-senha', SessionController.forgetPassword)
