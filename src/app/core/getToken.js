@@ -18,7 +18,6 @@ async function refreshToken(id, token) {
     try {
         const data = await axios.post("https://api.contaazul.com/oauth2/token",
             body, { headers: header })
-        console.log(`token ${id} atualizado`)
 
         await prisma.conec.update({
             where: { id: id },
@@ -31,21 +30,24 @@ async function refreshToken(id, token) {
         return data.data.access_token
 
     } catch (error) {
-        console.log(error)
+        console.log("error")
         return error
     }
 }
 
 
 
-export const getToken = async (unity) => {
+export const getToken = async (unity, action) => {
 
-    const { id, refresh_token } = await prisma.conec.findUnique({
-        where: {
-            id: unity === "Centro" ? 1 : 2
-        }
-    })
-
-    const access = await refreshToken(id, refresh_token)
-    return access
+    const { id, refresh_token, access_token } =
+        await prisma.conec.findUnique({
+            where: {
+                id: unity === "Centro" ? 1 : 2
+            }
+        })
+    if (action === 'refresh') {
+        const access = await refreshToken(id, refresh_token)
+        return access
+    }
+    return access_token
 }

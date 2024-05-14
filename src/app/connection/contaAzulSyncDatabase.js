@@ -117,7 +117,7 @@ const syncContaAzul = async () => {
 
     for (const realToken of unities) {
         const header = {
-            "Authorization": `Bearer ${await getToken(realToken)}`
+            "Authorization": `Bearer ${await getToken(realToken, 'refresh')}`
         }
         await SyncContaAzulAndDatabase(header)
     }

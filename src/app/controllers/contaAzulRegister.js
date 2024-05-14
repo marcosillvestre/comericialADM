@@ -6,6 +6,8 @@ import { getToken } from '../core/getToken.js';
 
 class RegisterContaAzulController {
 
+
+
     async storeCostumer(req, res) {
 
         const {
@@ -18,7 +20,7 @@ class RegisterContaAzulController {
         } = req.body
 
         var header = {
-            "Authorization": `Bearer ${await getToken(unidade)}`,
+            "Authorization": `Bearer ${await getToken(unidade, 'refresh')}`,
             "Content-Type": "application/json"
         }
 
