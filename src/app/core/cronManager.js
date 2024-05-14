@@ -1,5 +1,5 @@
 import { CronJob } from "cron";
-import token from '../connection/contaAzulDBSearch.js';
+// import token from '../connection/contaAzulDBSearch.js';
 import syncContaAzul from "../connection/contaAzulSyncDatabase.js";
 import searchSync from '../connection/engineSearch.js';
 import renewContracts from '../connection/searchEndContractsRd.js';
@@ -17,10 +17,10 @@ const functionsArray = [
         time: "0 12 1 * *",
         fn: renewContracts
     },
-    {
-        time: "0 */30 * * * *",
-        fn: token
-    }
+    // {
+    //     time: "0 */30 * * * *",
+    //     fn: token
+    // }
 
 ]
 
