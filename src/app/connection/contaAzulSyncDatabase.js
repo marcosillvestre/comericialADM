@@ -47,11 +47,12 @@ async function SyncContaAzulAndDatabase(header) {
                 unidade: note.Unidade
             }
         } catch (error) {
-            console.log(res.customer.name)
+            console.log(`${res.customer.name} => erro `)
         }
 
     })
 
+    console.log(notes)
 
     for (const response of notes) {
         if (response !== undefined) {
@@ -124,6 +125,7 @@ const syncContaAzul = async () => {
 }
 
 
+syncContaAzul()
 export default syncContaAzul
 
 

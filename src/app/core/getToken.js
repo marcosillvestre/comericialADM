@@ -30,15 +30,14 @@ async function refreshToken(id, token) {
         return data.data.access_token
 
     } catch (error) {
-        console.log("error")
-        return error
+        console.log(error)
+        // return error
     }
 }
 
 
 
 export const getToken = async (unity, action) => {
-
     const { id, refresh_token, access_token } =
         await prisma.conec.findUnique({
             where: {

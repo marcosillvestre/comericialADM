@@ -51,10 +51,18 @@ routes.post('/grafico', PostConttroller.graphData)
 routes.get('/comissao', PostConttroller.comissionData)
 
 
+
+
+
+
+
+
 routes.get('/unidades', UnityController.unities)
 routes.post('/unidades', UnityController.storeUnities)
-
 routes.delete('/unidades/:id', UnityController.deleteUnities)
+
+
+
 
 routes.get('/periodo', PostConttroller.indexPeriod)
 
