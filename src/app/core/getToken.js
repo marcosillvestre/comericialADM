@@ -32,21 +32,23 @@ async function refreshToken(id, token) {
 
     } catch (error) {
         console.log(error)
-        return error
+        // return error
     }
 }
 
 
 
-export const getToken = async (unity) => {
+export const getToken = async (unity, action) => {
 
-    const { id, refresh_token } = await prisma.conec.findUnique({
+    const { id, refresh_token, access_token } = await prisma.conec.findUnique({
         where: {
             id: unity === "Centro" ? 1 : 2
         }
     })
-
-    const access = await refreshToken(id, refresh_token)
-    return access
+    if (action === 'refresh') {
+        const refreshed = await refreshToken(id, refresh_token)
+        return refreshed
+    }
+    return access_token
 }
 

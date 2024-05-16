@@ -18,7 +18,7 @@ class UserController {
         try {
             await schema.validateSync(req.body, { abortEarly: false })
         } catch (err) {
-            return res.status(400).json({ error: "Erro nos dados enviados" })
+            return res.status(400).json({ message: err.errors })
         }
 
         const { name, email, password, admin, role, unity, responsible } = req.body
@@ -45,14 +45,14 @@ class UserController {
                 }
 
             } catch (error) {
+                console.log(error)
                 return res.status(401).json({ error })
             }
             return res.status(201).json({ name, email })
         }
 
-        if (permissionTest.role !== 'direcao') {
-            return res.status(403).json({ message: "No permission" })
-        }
+        return res.status(403).json({ message: "No permission" })
+
     }
 
     async index(req, res) {

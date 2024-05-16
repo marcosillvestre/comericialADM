@@ -138,7 +138,7 @@ role     String
 unity    String[]
 created_at DateTime  @default(now())
 updated_at DateTime  @updatedAt
-
+active   Boolean @default(true)
 
 persons  contracts[]
 }
@@ -171,6 +171,6 @@ created_at DateTime  @default(now())
 updated_at DateTime  @updatedAt
 
 
-contractId String?
-contracts contracts? @relation(fields: [contractId], references: [id])
+// contractId String?
+contracts contracts[] 
 }

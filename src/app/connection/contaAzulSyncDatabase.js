@@ -88,7 +88,7 @@ async function SyncContaAzulAndDatabase(header) {
                                         .then((res) => {
                                             console.log(`${response.aluno} success updated / ${where} / ${response.unidade}`)
 
-                                            let message = `${res.name} -- realizou o pagemento do material didático || ${res.materialDidatico}`
+                                            let message = `${res.name} -- realizou o pagamento do material didático || ${res.materialDidatico}`
                                             where === "mdStatus" && SendtoWpp(message, response.unidade)
                                         })
 
@@ -124,7 +124,7 @@ const syncContaAzul = async () => {
 
     for (const realToken of unities) {
         const header = {
-            "Authorization": `Bearer ${await getToken(realToken)}`
+            "Authorization": `Bearer ${await getToken(realToken, 'refresh')}`
         }
         await SyncContaAzulAndDatabase(header)
     }
