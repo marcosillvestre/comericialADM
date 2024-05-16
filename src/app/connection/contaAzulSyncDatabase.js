@@ -125,7 +125,7 @@ const syncContaAzul = async () => {
 }
 
 
-syncContaAzul()
+// syncContaAzul()
 export default syncContaAzul
 
 
