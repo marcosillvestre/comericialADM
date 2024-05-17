@@ -53,7 +53,6 @@ async function SyncContaAzulAndDatabase(header) {
 
     })
 
-    console.log(notes.length)
 
     for (const response of notes) {
         if (response !== undefined) {
@@ -129,7 +128,6 @@ const syncContaAzul = async () => {
         await SyncContaAzulAndDatabase(header)
     }
 }
-// syncContaAzul()
 
 export default syncContaAzul
 
