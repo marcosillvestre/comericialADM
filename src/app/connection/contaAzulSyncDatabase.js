@@ -1,8 +1,10 @@
+
 import axios from "axios"
 import { getToken } from "../core/getToken.js"
 
 import prisma from "../../database/database.js"
 import { Historic } from "../../database/historic/properties.js"
+import { SendtoWpp } from "./externalConnections/wpp.js"
 const historic = new Historic()
 
 
@@ -15,7 +17,7 @@ const routes = {
 
 async function SyncContaAzulAndDatabase(header) {
 
-    const comebackDays = 5
+    const comebackDays = 25
     const backDay = new Date()
     backDay.setDate(backDay.getDate() - comebackDays)
     const startDate = backDay.toISOString()
@@ -29,13 +31,12 @@ async function SyncContaAzulAndDatabase(header) {
         const status = res.payment.installments[0]?.status
         let notes = res.notes
         let cleanData = notes.replace(/\\n/g, "")
-        return status === "ACQUITTED" && JSON.parse(!(cleanData.includes("(")))
+        return status === "ACQUITTED" && notes !== '' && JSON.parse(!(cleanData.includes("(")))
     })
-
 
     let notes = filtered.map(res => {
         try {
-            let note = res.notes
+            let note = JSON.parse(res.notes)
 
             return {
                 aluno: note.Aluno,
@@ -47,12 +48,12 @@ async function SyncContaAzulAndDatabase(header) {
                 unidade: note.Unidade
             }
         } catch (error) {
-            console.log(`${res.customer.name} => erro `)
+            // console.log(res)
+            console.log(`${res.customer.name} => error`)
         }
 
     })
 
-    console.log(notes)
 
     for (const response of notes) {
         if (response !== undefined) {
@@ -84,17 +85,22 @@ async function SyncContaAzulAndDatabase(header) {
                                             [where]: "Ok"
                                         }
                                     })
-                                        .then(() => {
+                                        .then((res) => {
                                             console.log(`${response.aluno} success updated / ${where} / ${response.unidade}`)
 
+                                            let message = `${res.name} -- realizou o pagamento do material didático || ${res.materialDidatico}`
+                                            where === "mdStatus" && SendtoWpp(message, response.unidade)
                                         })
+
                                         .catch(e => console.log(e))
                                 }
+
                                 const storeHistoric = async () => {
                                     await historic._store("Automatização", where, "Ok", data[0].contrato)
                                 }
 
-                                Promise.all([storeHistoric(), update()])
+
+                                Promise.all([storeHistoric(), update(),])
 
                             } catch (error) {
                                 console.log(error)
@@ -124,8 +130,8 @@ const syncContaAzul = async () => {
     }
 }
 
+syncContaAzul()
 
-// syncContaAzul()
 export default syncContaAzul
 
 
