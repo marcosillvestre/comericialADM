@@ -1,5 +1,8 @@
 import axios from "axios";
 import "dotenv/config";
+import { SendtoWpp } from '../connection/externalConnections/wpp.js';
+
+
 class TrelloWebhook {
 
 
@@ -13,7 +16,7 @@ class TrelloWebhook {
                 let body = {
                     nameEvent: webhook.data.card.name,
                 }
-                if (webhook.data.checklist.name === "Reunião aceita pelo cliente:") {
+                if (webhook.data.checklist.name === "Reunião aceita pelo cliente:" && webhook.data.checkItem.state === "complete") {
                     let id = webhook.data.card.id
                     const customFields = async () => {
                         await axios.get(`https://api.trello.com/1/cards/${id}/customFieldItems?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`)
@@ -47,8 +50,11 @@ class TrelloWebhook {
                                 "https://hook.us1.make.com/gjazk2ejong10c7ewustyjfwu93yej0s";
 
                             await axios.post(hook, body)
-                                .then((response) => {
-                                    console.log(response.data)
+                                .then(() => {
+                                    let message = `**${body.nameEvent}** --> a reunião de rematrícula foi marcada para o dia ${body["Data de fim"]}`
+                                    body["descrição"].includes("Centro") ?
+                                        SendtoWpp(message, "Centro") :
+                                        SendtoWpp(message, "PTB")
                                 })
                         })
                         .catch(err => {
@@ -72,7 +78,7 @@ class TrelloWebhook {
                             data: {
                                 paStatus: "Ok"
                             }
-                        })
+                        }).then(() => console.log('pa updated'))
                     }
                 }
 
