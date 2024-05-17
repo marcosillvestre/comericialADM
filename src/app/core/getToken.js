@@ -38,6 +38,7 @@ async function refreshToken(id, token) {
 
 
 export const getToken = async (unity, action) => {
+
     const { id, refresh_token, access_token } =
         await prisma.conec.findUnique({
             where: {
@@ -45,8 +46,8 @@ export const getToken = async (unity, action) => {
             }
         })
     if (action === 'refresh') {
-        const access = await refreshToken(id, refresh_token)
-        return access
+        const refreshed = await refreshToken(id, refresh_token)
+        return refreshed
     }
     return access_token
 }

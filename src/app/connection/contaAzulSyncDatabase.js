@@ -5,8 +5,8 @@ import { getToken } from "../core/getToken.js"
 import prisma from "../../database/database.js"
 import { Historic } from "../../database/historic/properties.js"
 import { SendtoWpp } from "./externalConnections/wpp.js"
-const historic = new Historic()
 
+const historic = new Historic()
 
 const routes = {
     "parcela": "ppStatus",

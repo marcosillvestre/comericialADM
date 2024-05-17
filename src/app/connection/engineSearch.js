@@ -1,6 +1,8 @@
 import axios from 'axios';
 import "dotenv/config";
 import prisma from '../../database/database.js';
+import { CardCreationOnTrello } from './externalConnections/trello.js';
+import { SendtoWpp } from './externalConnections/wpp.js';
 
 const comebackDays = 2
 const options = { method: 'GET', headers: { accept: 'application/json' } };
@@ -220,7 +222,7 @@ export function addUsefullDays(data, diasUteis) {
     return dataAtual;
 }
 
-export async function trelloCreateCard(object) {
+async function trelloCreateCard(object) {
     let today = new Date();
     let futureDate = addUsefullDays(today, 7);
 
@@ -237,10 +239,7 @@ export async function trelloCreateCard(object) {
         'PTB': process.env.PTB_LIST,
         'Centro': process.env.CENTRO_LIST
     }
-
-    const body = {
-        name: data.name,
-        desc: `
+    const description = `
         background:${data.background},
         nome do aluno:${data.aluno},
         idade : ${data.idadeAluno},
@@ -263,8 +262,13 @@ export async function trelloCreateCard(object) {
         Valor do material: ${data.mdValor},
         Vaor da taxa de matricula: ${data.tmValor},
         Valor da mensalidade: ${data.ppValor},
-        `,
-        pos: 'top',
+        `
+
+
+    const body = {
+        name: data.name,
+        desc: JSON.stringify(description, null, 2).replace("{", "").replace("}", ""),
+        pos: 'bottom',
         due: futureDate,
         start: today,
         idList: idList[data.unidade],
@@ -273,10 +277,38 @@ export async function trelloCreateCard(object) {
 
     let list = idList[data.unidade]
 
-    await axios.post(`https://api.trello.com/1/cards?idList=${list}&key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`, body)
-        .then(() => console.log(`${body.name} foi enviado ao trello`))
-        .catch((err) => console.log(err))
+    await CardCreationOnTrello(list, body)
+        .then(url => {
+            let message = `${body.name} -- foi cadastrado no sistema de comissão, voce pode encontra-lo também no trello por esse link: ${url}`
+            SendtoWpp(message, data.unidade)
+
+        })
 }
 
+
+
 export default searchSync
+
+
+// const kk = async () => {
+//     await prisma.login.findMany()
+//         .then(result => {
+//             result.map(async res => {
+//                 await prisma.logs.create({
+//                     data: {
+//                         name: res.name,
+//                         email: res.email,
+//                         password: res.password,
+//                         admin: res.admin,
+//                         role: res.role,
+//                         unity: res.unity,
+//                     }
+//                 })
+//             })
+
+//         })
+// }
+// kk()
+
+
 
