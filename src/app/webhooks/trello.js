@@ -67,14 +67,27 @@ class TrelloWebhook {
                     webhook.data.checkItem.name === "Primeira aula ?" && webhook.data.checkItem.state === "complete"
                 if (boolean) {
                     const nameSearch = webhook.data.card.name
-                    const person = await prisma.person.findUnique({
-                        where: { name: nameSearch }
+                    const person = await prisma.person.findMany({
+                        where: {
+                            AND: [
+                                {
+                                    name: {
+                                        contains: nameSearch,
+                                    },
+                                },
+                                {
+                                    paStatus: {
+                                        contains: "Pendente",
+                                    },
+                                },
+                            ],
+                        }
                     })
 
 
                     if (person) {
                         await prisma.person.update({
-                            where: { contrato: person.contrato },
+                            where: { contrato: person[0].contrato },
                             data: {
                                 paStatus: "Ok"
                             }
