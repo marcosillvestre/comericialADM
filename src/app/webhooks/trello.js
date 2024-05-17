@@ -1,8 +1,10 @@
 import axios from "axios";
 import "dotenv/config";
 import prisma from "../../database/database.js";
+import { Historic } from '../../database/historic/properties.js';
 import { SendtoWpp } from '../connection/externalConnections/wpp.js';
 
+const historic = new Historic()
 class TrelloWebhook {
 
 
@@ -67,7 +69,7 @@ class TrelloWebhook {
                     webhook.data.checkItem.name === "Primeira aula ?" && webhook.data.checkItem.state === "complete"
                 if (boolean) {
                     const nameSearch = webhook.data.card.name
-                    const person = await prisma.person.findMany({
+                    const data = await prisma.person.findMany({
                         where: {
                             AND: [
                                 {
@@ -85,13 +87,24 @@ class TrelloWebhook {
                     })
 
 
-                    if (person) {
-                        await prisma.person.update({
-                            where: { contrato: person[0].contrato },
-                            data: {
-                                paStatus: "Ok"
-                            }
-                        }).then(() => console.log('pa updated'))
+                    if (data) {
+                        const update = async () => {
+
+                            await prisma.person.update({
+                                where: { contrato: data[0].contrato },
+                                data: {
+                                    paStatus: "Ok"
+                                }
+                            }).then(() => console.log('pa updated'))
+                        }
+
+
+                        const storeHistoric = async () => {
+                            await historic._store("Automatização", "paStatus", "Ok", data[0].contrato)
+                        }
+
+
+                        Promise.all([storeHistoric(), update(),])
                     }
                 }
 
