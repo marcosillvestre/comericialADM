@@ -1,7 +1,7 @@
 import axios from "axios";
 import "dotenv/config";
+import prisma from "../../database/database.js";
 import { SendtoWpp } from '../connection/externalConnections/wpp.js';
-
 
 class TrelloWebhook {
 
