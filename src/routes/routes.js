@@ -8,14 +8,18 @@ import UnityController from "../app/controllers/unitiesController.js";
 import UserController from "../app/controllers/userController.js";
 import TrelloWebhook from '../app/webhooks/trello.js';
 
+import multer from 'multer';
+import AutentiqueController from '../app/controllers/autentiqueController.js';
 import ContractsController from '../app/controllers/contractsController.js';
 import CustomFieldsController from '../app/controllers/customFieldsController.js';
-
+import { storage } from '../config/multer.js';
 import auth from "../middleware/auth.js";
+
 const routes = Router();
-
-
 const parser = bodyParser.urlencoded({ extended: false })
+const upload = multer({ storage: storage })
+
+
 
 routes.post('/contrato', parser, PostConttroller.sender)
 
@@ -28,9 +32,11 @@ routes.post('/redefinir-senha', SessionController.forgetPassword)
 routes.post('/nova-senha', SessionController.redefinePassword)
 
 
+routes.post('/uploads', upload.single('file'), AutentiqueController.store)
 
 routes.use(auth) // autenticated routes
 ///////////////////
+
 routes.get('/campos-personalizados', CustomFieldsController.index)
 routes.post('/campos-personalizados', CustomFieldsController.store)
 routes.delete('/campos-personalizados/:id', CustomFieldsController.delete)
