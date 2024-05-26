@@ -54,6 +54,7 @@ async function SyncContaAzulAndDatabase(header) {
 
     })
 
+    console.log(notes.length)
 
     for (const response of notes) {
         if (response !== undefined) {

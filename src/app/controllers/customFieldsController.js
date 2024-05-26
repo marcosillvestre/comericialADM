@@ -7,7 +7,7 @@ class CustomFieldsController {
             const response = await prisma.customFields.findMany()
             return res.status(200).json(response)
         } catch (error) {
-            return res.status(200).json(response)
+            return res.status(400).json({ error })
         }
     }
 
@@ -57,8 +57,6 @@ class CustomFieldsController {
                 .catch((err) => {
                     return res.status(201).json({ message: err })
                 })
-
-            return
         }
 
         try {
