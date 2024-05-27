@@ -49,7 +49,7 @@ class TrelloWebhook {
                     Promise.all([customFields(), description()])
                         .then(async () => {
                             let hook = webhook.data.board.id === "65ef31794aa709ef4baaa3f5" && // aqui vai o quadro do ptb, por enquanto so tem um 
-                                "https://hook.us1.make.com/gjazk2ejong10c7ewustyjfwu93yej0s";
+                                `${process.env.CALENDAR_WEBHOOK}`;
 
                             await axios.post(hook, body)
                                 .then(() => {

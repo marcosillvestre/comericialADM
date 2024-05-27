@@ -23,7 +23,7 @@ class UserController {
 
         const { name, email, password, admin, role, unity, responsible } = req.body
 
-        const permissionTest = await prisma.login.findFirst({ where: { name: responsible.name } })
+        const permissionTest = await prisma.login.findFirst({ where: { name: responsible } })
 
         if (permissionTest.role === 'direcao') {
 
