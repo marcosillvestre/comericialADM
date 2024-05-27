@@ -34,8 +34,8 @@ routes.post('/nova-senha', SessionController.redefinePassword)
 
 
 routes.use(auth) // autenticated routes
-///////////////////
 routes.post('/uploads', upload.single('file'), AutentiqueController.store)
+///////////////////
 
 routes.get('/campos-personalizados', CustomFieldsController.index)
 routes.post('/campos-personalizados', CustomFieldsController.store)

@@ -8,6 +8,7 @@ const headers = {
 }
 
 export async function SendtoWpp(message, unity) {
+
     const messageBody = {
         message: message,
         chatId: unity === "Centro" ? process.env.UMBLER_CHAT_REM_ID_CENTRO : process.env.UMBLER_CHAT_REM_ID_PTB,
@@ -21,6 +22,7 @@ export async function SendtoWpp(message, unity) {
 
     await axios.post("https://app-utalk.umbler.com/api/v1/messages", messageBody, { headers })
         .then(() => console.log('enviado com sucesso'))
+        .catch((err) => console.log(err.response.data))
 }
 
 
