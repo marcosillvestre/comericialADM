@@ -26,7 +26,7 @@ export async function SendtoWpp(message, unity) {
 }
 
 
-export async function SendSimpleWpp(phone, message) {
+export async function SendSimpleWpp(name, phone, message) {
     const messageBody = {
         "toPhone": phone,
         "fromPhone": "+5531987371953",
@@ -34,7 +34,7 @@ export async function SendSimpleWpp(phone, message) {
         "message": message,
         "file": null,
         "skipReassign": false,
-        "contactName": "string"
+        "contactName": name
     }
 
     await axios.post("https://app-utalk.umbler.com/api/v1/messages/simplified", messageBody, { headers })

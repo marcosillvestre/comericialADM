@@ -69,8 +69,8 @@ class AutentiqueController {
                     const customerLink = response.data.data.createDocument.signatures[1].link.short_link
                     const school = response.data.data.createDocument.signatures[2].link.short_link
 
-                    SendSimpleWpp(number, `Olá ${name}, a American Way está te enviando um contrato neste link: ${customerLink}`)
-                    SendSimpleWpp(`${process.env.VICTOR}`, `Victor, a American Way está te enviando um contrato em nome de ${name} neste link: ${school}`)
+                    SendSimpleWpp(name, number, `Olá ${name}, a American Way está te enviando um contrato neste link: ${customerLink}`)
+                    SendSimpleWpp("Victor", `${process.env.VICTOR}`, `Victor, a American Way está te enviando um contrato em nome de ${name} neste link: ${school}`)
 
                     return res.status(200).json({
                         message: {
