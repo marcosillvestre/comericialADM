@@ -524,7 +524,7 @@ class PostController {
             const settledPeriod = {
                 "Mês passado": 1, //
                 "Mês retrasado": 2, //
-                "Período personalizado": 0,//
+                "Personalizado": 0,//
                 "Este mês": 3,
             }
             const rangePeriod = {
@@ -713,7 +713,7 @@ class PostController {
         const settledPeriod = {
             "Mês passado": 1,
             "Mês retrasado": 2,
-            "Período personalizado": 0,
+            "Personalizado": 0,
             "Este mês": 3,
         }
         const rangePeriod = {
