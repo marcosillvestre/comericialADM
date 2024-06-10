@@ -110,7 +110,6 @@ async function SendToTrello(data, unity) {
         .then(url => {
             let message = `${body.name} -- está a dois meses de vencer seu contrato, acesse o link do trello para começar o processo de rematrícula : ${url}`
             SendtoWpp(message, unity)
-
         })
 
 }

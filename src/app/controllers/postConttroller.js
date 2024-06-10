@@ -518,6 +518,7 @@ class PostController {
         const skipParsed = parseInt(skip)
         const dbData = await prisma.person.findMany()
 
+
         try {
             const endData = take !== 'all' ? parseInt(take) : dbData.length
 
@@ -649,8 +650,34 @@ class PostController {
             }
 
         } catch (error) {
+            console.log(error)
             return res.status(400).json({ message: "Erro" })
 
+        }
+
+    }
+    async query(req, res) {
+        const { param, value } = req.query
+        try {
+
+
+            const dbData = await prisma.person.findMany({
+                where: {
+                    [param]: {
+                        contains: value
+                    }
+                }
+            })
+
+
+            if (dbData) return res.status(200).json({
+                period: dbData[0].name,
+                total: dbData.length,
+                deals: dbData
+            })
+        } catch (error) {
+            console.log(error)
+            return res.status(400).json({ message: "Erro" })
         }
     }
 

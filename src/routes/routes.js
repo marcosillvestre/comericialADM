@@ -89,6 +89,7 @@ routes.delete('/unidades/:id', UnityController.deleteUnities)
 
 
 routes.get('/periodo', PostConttroller.indexPeriod)
+routes.get('/query', PostConttroller.query)
 
 
 routes.get('/contrato/:unity', PostConttroller.getRecent)

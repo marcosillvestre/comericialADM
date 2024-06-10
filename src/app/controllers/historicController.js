@@ -19,11 +19,14 @@ class Historic {
 
     }
     async index(req, res) {
+
+        const { take } = req.query
         try {
             const data = await prisma.historic.findMany({
                 orderBy: {
                     date: "desc"
-                }
+                },
+                take: parseInt(take)
             })
 
             return res.status(200).json(data)
