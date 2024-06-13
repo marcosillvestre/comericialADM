@@ -39,13 +39,13 @@ async function SyncContaAzulAndDatabase(header) {
             let note = JSON.parse(res.notes)
 
             return {
-                aluno: note.Aluno,
+                aluno: note["Aluno"],
                 responsavel: note["Responsável"],
-                contract: note.contrato,
-                service: note.serviço,
+                contract: note["contrato"],
+                service: note["serviço"],
                 tm: note['TM Valor'],
                 value: res.total,
-                unidade: note.Unidade
+                unidade: note["Unidade"]
             }
         } catch (error) {
             // console.log(res)

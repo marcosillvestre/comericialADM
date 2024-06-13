@@ -250,6 +250,8 @@ class PostController {
                             valorCurso: index.deal_products[0]?.total,
                             dataUltimaParcelaMensalidade: deal.filter(res => res.custom_field.label.includes('Data de vencimento da última parcela')).map(res => res.value)[0],
 
+                            acFormato: deal.filter(res => res.custom_field.label.includes('Tipo de assinatura')).map(res => res.value)[0],
+
                             vendedor: index.user.name,
                             dataMatricula: deal.filter(res => res.custom_field.label.includes('Data de emissão da venda')).map(res => res.value)[0],
                             cidade: deal.filter(res => res.custom_field.label.includes('Cidade')).map(res => res.value)[0],
