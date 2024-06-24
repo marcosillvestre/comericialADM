@@ -527,12 +527,12 @@ class PostController {
             const settledPeriod = {
                 "Mês passado": 1, //
                 "Mês retrasado": 2, //
-                "Personalizado": 0,//
                 "Este mês": 3,
+                "Personalizado": 0,//
             }
             const rangePeriod = {
                 "Últimos 7 dias": 7,
-                "Todo período": 365,
+                "Todo período": dbData.length,
             }
 
             const currentDay = new Date()
@@ -545,7 +545,7 @@ class PostController {
 
                 const generalMonthsBefore = filtered?.filter(res => {
                     const date = res[types].split("/")
-                    return new Date(`${date[1]}-${date[0]}-${date[2]}`) >= firstDayThisMonth
+                    return new Date(`${date[1]}-${date[0]}-${date[2]}`).setUTCHours(0, 0, 0, 0) >= firstDayThisMonth
                 })
 
 
@@ -586,9 +586,9 @@ class PostController {
 
                 const generalMonthsBefore = filtered?.filter(res => {
                     const date = res[types].split("/")
-                    return new Date(`${date[1]}-${date[0]}-${date[2]}`) >=
+                    return new Date(`${date[1]}-${date[0]}-${date[2]}`).setUTCHours(0, 0, 0, 0) >=
                         firstDayLastMonth &&
-                        new Date(`${date[1]}-${date[0]}-${date[2]}`) <=
+                        new Date(`${date[1]}-${date[0]}-${date[2]}`).setUTCHours(0, 0, 0, 0) <=
                         lastDayLastMonth
                 })
 
@@ -605,20 +605,19 @@ class PostController {
                 const dbData = await prisma.person.findMany()
                 const mixedDates = dates.split("~")
 
-                if (!(mixedDates.some(res => res === 'null'))) {
+                if (!(mixedDates.some(res => res === 'undefined'))) {
 
                     const filtered = role === 'comercial' ? dbData.filter(res => res.owner.toLowerCase().includes(name.toLowerCase())) : dbData
 
                     const generalRangeDates = filtered?.filter(res => {
                         const date = res[types].split("/")
-                        return new Date(`${date[1]}-${date[0]}-${date[2]}`).setUTCHours(0, 0, 0, 0) >=
-                            new Date(mixedDates[0]).setUTCHours(0, 0, 0, 0) &&
-                            new Date(`${date[1]}-${date[0]}-${date[2]}`).setUTCHours(0, 0, 0, 0) <=
-                            new Date(mixedDates[1]).setUTCHours(0, 0, 0, 0)
+
+
+                        return new Date(`${date[1]}-${date[0]}-${date[2]}`) >= new Date(mixedDates[0]) &&
+                            new Date(`${date[1]}-${date[0]}-${date[2]}`) <= new Date(mixedDates[1])
                     })
 
                     const slicedData = generalRangeDates.slice(skipParsed, endData + skipParsed)
-
 
                     return res.status(200).json({
                         period: range,
@@ -636,7 +635,7 @@ class PostController {
 
                 const generalRangePeriod = filtered?.filter(res => {
                     const date = res[types].split("/")
-                    return new Date(`${date[1]}-${date[0]}-${date[2]}`) >= periodDate
+                    return new Date(`${date[1]}-${date[0]}-${date[2]}`).setUTCHours(0, 0, 0, 0) >= periodDate
                 })
 
 
@@ -650,6 +649,8 @@ class PostController {
                 })
 
             }
+
+
 
         } catch (error) {
             console.log(error)
@@ -760,7 +761,7 @@ class PostController {
 
                 const generalMonthsBefore = selectedDbData.filter(res => {
                     const date = res["dataMatricula"].split("/")
-                    return new Date(`${date[1]}-${date[0]}-${date[2]}`) >= firstDayThisMonth
+                    return new Date(`${date[1]}-${date[0]}-${date[2]}`).setUTCHours(0, 0, 0, 0) >= firstDayThisMonth
                 })
 
                 return res.status(200).json({
@@ -794,9 +795,9 @@ class PostController {
 
                 const generalMonthsBefore = selectedDbData.filter(res => {
                     const date = res["dataMatricula"].split("/")
-                    return new Date(`${date[1]}-${date[0]}-${date[2]}`) >=
+                    return new Date(`${date[1]}-${date[0]}-${date[2]}`).setUTCHours(0, 0, 0, 0) >=
                         firstDayLastMonth &&
-                        new Date(`${date[1]}-${date[0]}-${date[2]}`) <=
+                        new Date(`${date[1]}-${date[0]}-${date[2]}`).setUTCHours(0, 0, 0, 0) <=
                         lastDayLastMonth
                 })
 
@@ -815,11 +816,11 @@ class PostController {
                 const generalRangeDates = selectedDbData.filter(res => {
                     const date = res["dataMatricula"].split("/")
 
-                    return new Date(`${date[1]}-${date[0]}-${date[2]}`) >=
-                        new Date(mixedDates[0]) &&
-                        new Date(`${date[1]}-${date[0]}-${date[2]}`) <=
-                        new Date(mixedDates[1])
+                    return new Date(`${date[1]}-${date[0]}-${date[2]}`) >= new Date(mixedDates[0]) &&
+                        new Date(`${date[1]}-${date[0]}-${date[2]}`) <= new Date(mixedDates[1])
+
                 })
+
 
 
                 return res.status(200).json({
@@ -836,7 +837,7 @@ class PostController {
 
                 const generalRangePeriod = selectedDbData.filter(res => {
                     const date = res["dataMatricula"].split("/")
-                    return new Date(`${date[1]}-${date[0]}-${date[2]}`) >= periodDate
+                    return new Date(`${date[1]}-${date[0]}-${date[2]}`).setUTCHours(0, 0, 0, 0) >= periodDate
                 })
 
 

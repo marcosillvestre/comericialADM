@@ -279,10 +279,10 @@ async function trelloCreateCard(object) {
     let list = idList[data.unidade]
 
     await CardCreationOnTrello(list, body)
-        .then(url => {
+        .then(async url => {
             let message = `${body.name} -- foi cadastrado no sistema de comissão, voce pode encontra-lo também no trello por esse link: ${url}`
 
-            SendtoWpp(message, data.unidade)
+            await SendtoWpp(message, data.unidade)
 
         })
 }
@@ -294,14 +294,20 @@ export default searchSync
 
 // const kk = async () => {
 //     await prisma.person.findMany({
-//         where: {
-//             contrato: {
-//                 contains: "P1-3004"
-//             }
-//         }
+//         // where: {
+//         //     contrato: {
+//         //         contains: "P1-3004"
+//         //     }
+//         // }
 //     })
 //         .then(result => {
-//             console.log(result)
+//             const date = result[0].dataMatricula.split('/')
+//             const datess = result[2].dataMatricula.split('/')
+
+//             console.log(
+//                 new Date(`${date[2]}-${date[1]}-${date[0]}`).setUTCHours(0, 0, 0, 0) >=
+//                 new Date(`${datess[1]}-${datess[0]}-${datess[2]}`).setUTCHours(0, 0, 0, 0)
+//             )
 
 //         })
 // }
