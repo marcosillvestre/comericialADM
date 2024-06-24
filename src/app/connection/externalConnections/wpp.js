@@ -38,7 +38,7 @@ export async function SendSimpleWpp(name, phone, message) {
     }
 
     await axios.post("https://app-utalk.umbler.com/api/v1/messages/simplified", messageBody, { headers })
-        .then((res) => console.log("enviado com sucesso"))
+        .then(() => console.log('enviado com sucesso'))
         .catch(err => console.log(err.response.data))
 
 }

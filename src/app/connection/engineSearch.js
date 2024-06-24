@@ -188,6 +188,7 @@ async function searchSync() {
                                 })
                                 .catch((err) => {
                                     if (err.meta) {
+
                                         // res.name.includes("Evelyn Nayane de Almeida") && trelloCreateCard(res)
                                         console.log(`${res.name} está com o contrato repetido : ${res.contrato}, ${res.dataMatricula}, ${res.unidade} `)
                                     }
@@ -280,6 +281,7 @@ async function trelloCreateCard(object) {
     await CardCreationOnTrello(list, body)
         .then(url => {
             let message = `${body.name} -- foi cadastrado no sistema de comissão, voce pode encontra-lo também no trello por esse link: ${url}`
+
             SendtoWpp(message, data.unidade)
 
         })
@@ -291,20 +293,15 @@ export default searchSync
 
 
 // const kk = async () => {
-//     await prisma.login.findMany()
+//     await prisma.person.findMany({
+//         where: {
+//             contrato: {
+//                 contains: "P1-3004"
+//             }
+//         }
+//     })
 //         .then(result => {
-//             result.map(async res => {
-//                 await prisma.logs.create({
-//                     data: {
-//                         name: res.name,
-//                         email: res.email,
-//                         password: res.password,
-//                         admin: res.admin,
-//                         role: res.role,
-//                         unity: res.unity,
-//                     }
-//                 })
-//             })
+//             console.log(result)
 
 //         })
 // }
