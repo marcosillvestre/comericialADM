@@ -294,19 +294,22 @@ export default searchSync
 
 // const kk = async () => {
 //     await prisma.person.findMany({
-//         // where: {
-//         //     contrato: {
-//         //         contains: "P1-3004"
-//         //     }
-//         // }
+//         where: {
+//             name: {
+//                 contains: "Ana Claudia Ferraz Franca"
+//             }
+//         }
 //     })
 //         .then(result => {
 //             const date = result[0].dataMatricula.split('/')
-//             const datess = result[2].dataMatricula.split('/')
+//             // const datess = result[2].dataMatricula.split('/')
 
 //             console.log(
-//                 new Date(`${date[2]}-${date[1]}-${date[0]}`).setUTCHours(0, 0, 0, 0) >=
-//                 new Date(`${datess[1]}-${datess[0]}-${datess[2]}`).setUTCHours(0, 0, 0, 0)
+//                 result[0].dataMatricula,
+//                 new Date(`${date[1]}-${date[0]}-${date[2]}`)
+//                 .setUTCHours(0, 0, 0, 0) 
+//                 // >=
+//                 // new Date(`${datess[1]}-${datess[0]}-${datess[2]}`).setUTCHours(0, 0, 0, 0)
 //             )
 
 //         })

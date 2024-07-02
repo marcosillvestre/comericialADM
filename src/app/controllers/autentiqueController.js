@@ -68,7 +68,7 @@ class AutentiqueController {
                     const customerLink = response.data.data.createDocument.signatures[1].link.short_link
                     const school = response.data.data.createDocument.signatures[2].link.short_link
 
-                    new Promise.all([
+                    Promise.all([
                         SendSimpleWpp(name, number, `Olá ${name}, a American Way está te enviando um contrato neste link: ${customerLink}`),
                         SendSimpleWpp("Victor", `${process.env.VICTOR}`, `Victor, a American Way está te enviando um contrato em nome de ${name} neste link: ${school}`)
                     ])
@@ -92,7 +92,7 @@ class AutentiqueController {
                 })
 
         } catch (error) {
-            console.log(error)
+            console.log("autentique error "+error)
             return res.status(400).json({ message: "Erro no arquivo" })
         }
 
