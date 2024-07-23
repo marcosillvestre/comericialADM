@@ -19,10 +19,12 @@ class RegisterContaAzulController {
             email, nameResponsible, cep,
         } = req.body
 
+
         var header = {
             "Authorization": `Bearer ${await getToken(unidade, 'refresh')}`,
             "Content-Type": "application/json"
         }
+
 
         try {
 
@@ -60,8 +62,12 @@ class RegisterContaAzulController {
                         customerBody, { headers: header })
                 )
             })
-                .then(() => { return res.status(201).json({ message: "Success" }) })
+                .then((response) => {
+                    // if(res )
+                    return res.status(201).json({ message: "Success" })
+                })
                 .catch(error => {
+
                     if (error.response.data.message === 'CPF/CPNJ já utilizado por outro cliente.') {
                         return res.status(201).json({ message: "Success" })
                     }
@@ -72,6 +78,7 @@ class RegisterContaAzulController {
                 })
 
         } catch (error) {
+            console.log(error)
             return res.status(400).json({ message: error })
         }
 
@@ -187,6 +194,9 @@ class RegisterContaAzulController {
                         })
 
                 }
+                if (data.data.length === 0) {
+                    return res.status(400).json({ message: `Erro no cpf digitado: ${cpf}` })
+                }
             })
 
         } catch (error) {
@@ -213,12 +223,11 @@ class RegisterContaAzulController {
                 "Content-Type": "application/json"
             }
 
-
             await new Promise(resolve => {
                 resolve(axios.get(`https://api.contaazul.com/v1/customers?document=${cpf}`,
                     { headers: header }))
             }).then(async data => {
-                if (data.data[0]) {
+                if (data.data[0] !== undefined) {
 
                     const sellers = await axios.get("https://api.contaazul.com/v1/sales/sellers", { headers: header })
 
@@ -341,7 +350,6 @@ class RegisterContaAzulController {
                                                 if (data.status === 201 || data.status === 200) {
                                                     console.log("O md foi lançado")
                                                     return res.status(200).json({ message: "O md foi lançado" })
-
                                                 }
 
                                             }).catch((err) => {
@@ -368,11 +376,13 @@ class RegisterContaAzulController {
 
                     }
                 }
+                if (data.data.length === 0) {
+                    return res.status(400).json({ message: `Erro no cpf digitado: ${cpf}` })
+                }
             })
                 .catch(err => {
                     console.log(err)
                     return res.status(400).json({ message: `Erro no cpf digitado: ${cpf}` })
-
 
                 })
         } catch (error) {
@@ -510,6 +520,10 @@ class RegisterContaAzulController {
                         }
                     }
 
+                }
+
+                if (data.data.length === 0) {
+                    return res.status(400).json({ message: `Erro no cpf digitado: ${cpf}` })
                 }
             })
                 .catch(err => {
