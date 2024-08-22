@@ -276,11 +276,11 @@ async function trelloCreateCard(object) {
         idCardSource: templates[data.unidade]
     }
 
-    let list = idList[data.unidade]
 
-    await CardCreationOnTrello(list, body)
+    await CardCreationOnTrello(body)
         .then(async url => {
-            let message = `${body.name} -- foi cadastrado no sistema de comissão, voce pode encontra-lo também no trello por esse link: ${url}`
+            let message = `${body.name} -- foi cadastrado no sistema de comissão,
+             voce pode encontra-lo também no trello por esse link: ${url}`
 
             await SendtoWpp(message, data.unidade)
 
@@ -293,6 +293,19 @@ export default searchSync
 
 
 // const kk = async () => {
+
+//     let token = "6OJf8gPwzAT8T2HWAAEddPVCYFKyMrDe"
+
+//     const header = {
+//         "Authorization": `Bearer ${token}`,
+//         "Content-Type": "application/json"
+//     }
+//     let id = "8462be76-2aab-4ddc-84d7-77d696fa05a0"
+//     const response = await axios.get(`https://api.contaazul.com/v1/sales/${id}/pdf`, {
+//         headers: header
+//     })
+
+//     console.log(response)
 //     await prisma.person.findMany({
 //         where: {
 //             name: {
@@ -307,7 +320,7 @@ export default searchSync
 //             console.log(
 //                 result[0].dataMatricula,
 //                 new Date(`${date[1]}-${date[0]}-${date[2]}`)
-//                 .setUTCHours(0, 0, 0, 0) 
+//                 .setUTCHours(0, 0, 0, 0)
 //                 // >=
 //                 // new Date(`${datess[1]}-${datess[0]}-${datess[2]}`).setUTCHours(0, 0, 0, 0)
 //             )
@@ -316,5 +329,21 @@ export default searchSync
 // }
 // kk()
 
+// const kk = async () => {
 
+//     let token = "6OJf8gPwzAT8T2HWAAEddPVCYFKyMrDe"
+
+//     const header = {
+//         "Authorization": `Bearer ${await getToken("Centro", "_")}`,
+//         "Content-Type": "application/json"
+//     }
+//     let id = "8462be76-2aab-4ddc-84d7-77d696fa05a0"
+//     const response = await axios.get(`https://api.contaazul.com/v1/sales/${id}/pdf`, {
+//         headers: header
+//     })
+//     atob(response.data)
+
+//     // upload.fields(response.data)
+// }
+// kk()
 

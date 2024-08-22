@@ -13,15 +13,17 @@ export async function SendtoWpp(message, unity) {
         message: message,
         chatId: unity === "Centro" ? process.env.UMBLER_CHAT_REM_ID_CENTRO : process.env.UMBLER_CHAT_REM_ID_PTB,
         organizationId: process.env.UMBLER_ORG_ID,
-        tempId: null,
-        file: null,
-        prefix: null,
-        isPrivate: false,
-        skipReassign: false,
+
+        "tempId": null,
+        "file": null,
+        "prefix": null,
+        "isPrivate": false,
+        "skipReassign": false,
+        "automated": false,
     }
 
     await axios.post("https://app-utalk.umbler.com/api/v1/messages", messageBody, { headers })
-        .then(() => console.log('enviado com sucesso'))
+        .then((data) => console.log(`enviado para o grupo ${unity} com sucesso`))
         .catch((err) => console.log(err.response.data))
 }
 
@@ -38,7 +40,7 @@ export async function SendSimpleWpp(name, phone, message) {
     }
 
     await axios.post("https://app-utalk.umbler.com/api/v1/messages/simplified", messageBody, { headers })
-        .then(() => console.log('enviado com sucesso'))
+        .then(() => console.log(`enviado para ${name} com sucesso`))
         .catch(err => console.log(err.response.data))
 
 }

@@ -15,7 +15,7 @@ const functionsArray = [
         fn: syncContaAzul
     },
     {
-        time: "0 12 1 * *",
+        time: "0 12 * * 1",
         fn: renewContracts
     },
 ]

@@ -107,6 +107,45 @@ model historic {
   information    Json
 }
 
+model Orders {
+  id          String   @id  @default(uuid())
+  customer    String
+  order      Json[]
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 enum TYPE {
 String
 Number
@@ -125,8 +164,6 @@ model customFields {
   options     Json?
   for         String
 }
-
-
 
 model logs {
 id       String  @id @default(uuid()) 

@@ -3,6 +3,7 @@ import "dotenv/config";
 import { addUsefullDays } from './engineSearch.js';
 import { CardCreationOnTrello } from './externalConnections/trello.js';
 import { SendtoWpp } from './externalConnections/wpp.js';
+
 const funis = {
     "Centro": "64badc42874ccc000dd4ed2e",
     "PTB": "64bacb30693f48000d576869",
@@ -49,7 +50,7 @@ async function updateRdData(unity) {
             }
 
         })
-        .catch(err => console.log(err))
+        .catch(err => console.log("err"))
 }
 
 
@@ -61,7 +62,7 @@ async function updateStageRd(data, unity) {
         .then(async (res) => {
             SendToTrello(res.data, unity)
         })
-        .catch((err) => console.log("rd, ", err))
+        .catch((err) => console.log("rd, ", err.response.data))
 }
 
 async function SendToTrello(data, unity) {
@@ -76,10 +77,11 @@ async function SendToTrello(data, unity) {
         "Golfinho Azul": ""
     }
     const template = {
-        "Centro": "65ef349153693a762000eaef",
+        "Centro": "65ef31794aa709ef4baaa3f5",
         "PTB": "",
         "Golfinho Azul": ""
     }
+
     const description = {
         'id': data.id,
         'Nome do Aluno': data.name,
@@ -101,16 +103,17 @@ async function SendToTrello(data, unity) {
         desc: JSON.stringify(description, null, 2).replace("{", "").replace("}", ""),
         pos: 'bottom',
         due: futureDate,
-        idList: list[unity], start: today,
-        idCardSource: template[unity]
-        // "Número do responsável": `${data.contacts.map(res => res.phones).map(res => res[0]?.phone)[0]}`,
+        idList: list[unity],
+        start: today,
     }
 
-    await CardCreationOnTrello(list[unity], body)
+    await CardCreationOnTrello(body)
         .then(url => {
-            let message = `${body.name} -- está a dois meses de vencer seu contrato, acesse o link do trello para começar o processo de rematrícula : ${url}`
-            SendtoWpp(message, unity)
+            let message = `${body.name} -- está a dois meses de vencer seu contrato,acesse o link do trello para começar o processo de rematrícula : ${url}`;
+
+            if (url) SendtoWpp(message, unity);
         })
+        .catch(err => console.log(err))
 
 }
 
@@ -121,5 +124,6 @@ const renewContracts = async () => {
         await updateRdData(unity)
     }
 }
+
 
 export default renewContracts

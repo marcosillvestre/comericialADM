@@ -19,6 +19,8 @@ async function refreshToken(id, token) {
         const data = await axios.post("https://api.contaazul.com/oauth2/token",
             body, { headers: header })
 
+        const { access_token } = data.data;
+
         await prisma.conec.update({
             where: { id: id },
             data: {
@@ -27,10 +29,10 @@ async function refreshToken(id, token) {
             }
         })
 
-        return data.data.access_token
+        return access_token
 
     } catch (error) {
-        console.log(error)
+        console.log(error.response.data)
         // return error
     }
 }

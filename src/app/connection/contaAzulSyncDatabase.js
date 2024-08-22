@@ -4,6 +4,7 @@ import { getToken } from "../core/getToken.js"
 
 import prisma from "../../database/database.js"
 import { Historic } from "../../database/historic/properties.js"
+import { CreateCommentOnTrello } from "./externalConnections/trello.js"
 import { SendtoWpp } from "./externalConnections/wpp.js"
 
 const historic = new Historic()
@@ -11,7 +12,10 @@ const historic = new Historic()
 const routes = {
     "parcela": "ppStatus",
     "taxa de matricula": "tmStatus",
-    "material didatico": "mdStatus"
+    "material didatico": "mdStatus",
+    "ppStatus": "parcela",
+    "tmStatus": "taxa de matricula",
+    "mdStatus": "material didatico"
 }
 
 
@@ -45,7 +49,10 @@ async function SyncContaAzulAndDatabase(header) {
                 service: note["serviço"],
                 tm: note['TM Valor'],
                 value: res.total,
-                unidade: note["Unidade"]
+                unidade: note["Unidade"],
+                ppFPG: note["PP Forma PG"],
+                mdFPG: note["MD forma pg"],
+                tmFPG: note["TM forma de pg"]
             }
         } catch (error) {
             // console.log(res)
@@ -89,8 +96,22 @@ async function SyncContaAzulAndDatabase(header) {
                                         .then((res) => {
                                             console.log(`${response.aluno} success updated / ${where} / ${response.unidade}`)
 
-                                            let message = `${res.name} -- realizou o pagamento do material didático || ${res.materialDidatico}`
-                                            where === "mdStatus" && SendtoWpp(message, response.unidade)
+                                            let type = {
+                                                "ppStatus": response.ppFPG,
+                                                "tmStatus": response.tmFPG,
+                                                "mdStatus": response.mdFPG
+                                            }
+
+                                            let trelloMessage = `${res.name} -- realizou o pagamento da(o) ${routes[where]} via ${type[where]} no valor de ${response.value} no dia ${new Date().toLocaleDateString()}`
+
+                                            CreateCommentOnTrello(res.name, response.unidade, trelloMessage)
+
+
+                                            if (where === "mdStatus") {
+                                                let message = `${res.name} -- realizou o pagamento do material didático || ${res.materialDidatico}`
+                                                SendtoWpp(message, response.unidade)
+
+                                            }
                                         })
 
                                         .catch(e => console.log(e))

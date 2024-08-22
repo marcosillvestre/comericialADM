@@ -5,6 +5,7 @@ import { stages } from "../../utils/stage.js";
 
 import prisma from '../../database/database.js';
 import { Historic } from "../../database/historic/properties.js";
+import { CreateCommentOnTrello } from '../connection/externalConnections/trello.js';
 const historic = new Historic()
 const limit = 200
 const comebackDays = 3
@@ -354,8 +355,8 @@ class PostController {
                             await historic._store("Automatização", "acStatus", "Ok", data[0].contrato)
                         }
 
-                        Promise.all([storeHistoric(), signing()])
 
+                        Promise.all([storeHistoric(), CreateCommentOnTrello(data[0].name, data[0].unidade, `${data[0].name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`), signing()])
 
 
                     } catch (error) {
