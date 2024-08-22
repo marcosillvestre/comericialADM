@@ -331,7 +331,7 @@ class PostController {
         const newArr = []
 
 
-
+        console.log("name1" + name1)
         await prisma.person.findMany({
             where: {
                 acStatus: "Pendente"
@@ -339,7 +339,7 @@ class PostController {
         })
             .then(async res => {
                 newArr.push(Status)
-                let data = res.filter(item => item.name.toLowerCase().includes(body1.name1.toLowerCase()))
+                let data = res.filter(item => item.name.toLowerCase().includes(name1.toLowerCase()))
                 if (data.length > 0) {
                     try {
                         const signing = async () => {
@@ -355,6 +355,7 @@ class PostController {
                             await historic._store("Automatização", "acStatus", "Ok", data[0].contrato)
                         }
 
+                        console.log("data" + data[0].name)
 
                         Promise.all([storeHistoric(), CreateCommentOnTrello(data[0].name, data[0].unidade, `${data[0].name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`), signing()])
 
