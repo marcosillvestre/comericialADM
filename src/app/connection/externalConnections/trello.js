@@ -49,7 +49,7 @@ async function filteredData(name, array) {
     const filtered = array.filter(res => {
         const md = res.desc.replace(/^\s*-\s*\*\*.*(\n|\r\n|\r)?/gm, '');
         const material = JSON.parse("{" + md + "}")
-        return res.name.includes(name) && material.Material.length > 1
+        return res.name.toLowerCase().includes(name.toLowerCase()) && !material.Material.every(res => res === "Outros" || res === "Office")
     })
 
     return filtered
@@ -87,3 +87,5 @@ export async function CreateCommentOnTrello(name, unity, message) {
     await axios.post(`https://api.trello.com/1/cards/${id}/actions/comments?text=${message}&key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`)
     return message
 }
+
+// console.log(await GotIdFromCardOnList("Marcos vinicius", "Centro"))

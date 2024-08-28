@@ -357,7 +357,11 @@ class PostController {
 
                         console.log("data" + data[0].name)
 
-                        Promise.all([storeHistoric(), CreateCommentOnTrello(data[0].name, data[0].unidade, `${data[0].name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`), signing()])
+                        Promise.all([
+                            storeHistoric(),
+                            signing(),
+                            CreateCommentOnTrello(data[0].name, data[0].unidade, `${data[0].name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`),
+                        ])
 
 
                     } catch (error) {

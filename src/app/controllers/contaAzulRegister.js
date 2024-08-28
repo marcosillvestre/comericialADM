@@ -148,8 +148,13 @@ class RegisterContaAzulController {
 
                             let value = parseFloat(valorCurso) / parseInt(numeroParcelas)
 
+                            let venc = new Date(`${ppVencimento.split("/")[1]}/${ppVencimento.split("/")[0]}/${ppVencimento.split("/")[2]}`)
+                            venc.setDate(venc.getDate() - 20)
+
+                            let less20Days = venc.toISOString()
+
                             const body = {
-                                "emission": new Date(`${ppVencimento.split("/")[1]}/${ppVencimento.split("/")[0]}/${ppVencimento.split("/")[2]}`),
+                                "emission": less20Days,
                                 "status": "COMMITTED",
                                 "customer_id": data.data[0]?.id,
                                 "services": [

@@ -109,40 +109,12 @@ model historic {
 
 model Orders {
   id          String   @id  @default(uuid())
-  customer    String
-  order      Json[]
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
+  code        String
+  orders      Json[]
+  arrived     Boolean @default(false)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -165,49 +137,49 @@ model customFields {
   for         String
 }
 
-model logs {
-id       String  @id @default(uuid()) 
-name     String
-email    String   @unique
-password String
-admin    Boolean  @default(false)
-role     String
-unity    String[]
-created_at DateTime  @default(now())
-updated_at DateTime  @updatedAt
-active   Boolean @default(true)
+// model logs {
+// id       String  @id @default(uuid()) 
+// name     String
+// email    String   @unique
+// password String
+// admin    Boolean  @default(false)
+// role     String
+// unity    String[]
+// created_at DateTime  @default(now())
+// updated_at DateTime  @updatedAt
+// active   Boolean @default(true)
 
-persons  contracts[]
-}
-model contracts {
-id      String  @id @default(uuid()) 
-name    String 
+// persons  contracts[]
+// }
+// model contracts {
+// id      String  @id @default(uuid()) 
+// name    String 
 
-customFields  Json
+// customFields  Json
 
-created_at DateTime  @default(now())
-updated_at DateTime  @updatedAt
+// created_at DateTime  @default(now())
+// updated_at DateTime  @updatedAt
 
-userId  String 
-user    logs  @relation(fields: [userId], references: [id])
+// userId  String 
+// user    logs  @relation(fields: [userId], references: [id])
 
-servicesId  servicesOrProducts[]
-}
+// servicesId  servicesOrProducts[]
+// }
 
-enum TYPESERVICE {
-  Service
-  Product
-}
-model servicesOrProducts {
-id      String  @id @default(uuid()) 
-name    String 
-description String?
-value       Decimal?
-type      TYPESERVICE
-created_at DateTime  @default(now())
-updated_at DateTime  @updatedAt
+// enum TYPESERVICE {
+//   Service
+//   Product
+// }
+// model servicesOrProducts {
+// id      String  @id @default(uuid()) 
+// name    String 
+// description String?
+// value       Decimal?
+// type      TYPESERVICE
+// created_at DateTime  @default(now())
+// updated_at DateTime  @updatedAt
 
 
-// contractId String?
-contracts contracts[] 
-}
+// // contractId String?
+// contracts contracts[] 
+// }

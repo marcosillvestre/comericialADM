@@ -10,8 +10,9 @@ import TrelloWebhook from '../app/webhooks/trello.js';
 
 import multer from 'multer';
 import AutentiqueController from '../app/controllers/autentiqueController.js';
-import ContractsController from '../app/controllers/contractsController.js';
+// import ContractsController from '../app/controllers/contractsController.js';
 import CustomFieldsController from '../app/controllers/customFieldsController.js';
+import OrdersController from '../app/controllers/ordersController.js';
 import { storage } from '../config/multer.js';
 import auth from "../middleware/auth.js";
 
@@ -46,12 +47,14 @@ routes.put('/campos-personalizados', CustomFieldsController.update)
 
 
 
-routes.get('/novos-contratos', ContractsController.index)
-routes.post('/novos-contratos', ContractsController.store)
-routes.delete('/novos-contratos/:id', ContractsController.delete)
-routes.put('/novos-contratos', ContractsController.update)
+// routes.get('/novos-contratos', ContractsController.index)
+// routes.post('/novos-contratos', ContractsController.store)
+// routes.delete('/novos-contratos/:id', ContractsController.delete)
+// routes.put('/novos-contratos', ContractsController.update)
 
 
+routes.get('/pedidos', OrdersController.index)
+routes.put('/pedidos', OrdersController.update)
 
 
 routes.post('/cliente', RegisterContaAzulController.storeCostumer)
