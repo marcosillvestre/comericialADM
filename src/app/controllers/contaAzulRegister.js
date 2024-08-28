@@ -154,7 +154,7 @@ class RegisterContaAzulController {
                             let less20Days = venc.toISOString()
 
                             const body = {
-                                "emission": less20Days,
+                                "emission": new Date(`${ppVencimento.split("/")[1]}/${ppVencimento.split("/")[0]}/${ppVencimento.split("/")[2]}`),
                                 "status": "COMMITTED",
                                 "customer_id": data.data[0]?.id,
                                 "services": [
