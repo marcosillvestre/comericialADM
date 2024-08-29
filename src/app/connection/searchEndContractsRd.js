@@ -15,16 +15,24 @@ const stages = {
 const stageToBeUpdated = {
     "Centro": "64badc42874ccc000dd4ed37",
     "PTB": "64bacb30693f48000d57686d",
+
+    "backCentro": "64badc42874ccc000dd4ed34",
+    "backPTB": "64bacb30693f48000d57686a",
 }
 
 
 const unities = ["Centro", "PTB"]
 
-async function updateRdData(unity) {
 
-    await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=100&token=${process.env.RD_TOKEN}&deal_pipeline_id=${funis[unity]}&deal_stage_id=${stages[unity]}`)
+let page = 1
+
+async function updateRdData(unity, page) {
+    console.log(unity)
+
+    await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=500&page=${page}&token=${process.env.RD_TOKEN}&deal_pipeline_id=${funis[unity]}&deal_stage_id=${stages[unity]}`)
         .then(async response => {
             const deals = response.data.deals
+
             let array = []
             for (const data of deals) {
                 let index = data.deal_custom_fields.findIndex(item => item.custom_field.label === "Data de fim do contrato")
@@ -45,12 +53,17 @@ async function updateRdData(unity) {
                 const newValue = `${value[1]}/${value[2]}`
 
                 if (newValue === monthAndYear) {
+                    // console.log(data.name)
                     updateStageRd(array[i], unity)
                 }
             }
 
+            if (deals.length === 200) {
+                page = page + 1
+                updateRdData(unity, page)
+            }
         })
-        .catch(err => console.log("err"))
+        .catch(err => console.log(err))
 }
 
 
@@ -60,9 +73,10 @@ async function updateStageRd(data, unity) {
     await axios.put(`https://crm.rdstation.com/api/v1/deals/${data.id}?token=${process.env.RD_TOKEN}`,
         { deal_stage_id: stageToBeUpdated[unity] })
         .then(async (res) => {
-            SendToTrello(res.data, unity)
+            if (unity.includes("back")) return
+            await SendToTrello(res.data, unity)
         })
-        .catch((err) => console.log("rd, ", err.response.data))
+        .catch((err) => console.log("rd, ", { name: err.response.data.name, errors: err.response.data.errors }))
 }
 
 async function SendToTrello(data, unity) {
@@ -105,7 +119,7 @@ async function SendToTrello(data, unity) {
         due: futureDate,
         idList: list[unity],
         start: today,
-        idCardSource: template[unity]
+        // idCardSource: template[unity]
     }
 
     await CardCreationOnTrello(body)
@@ -114,17 +128,20 @@ async function SendToTrello(data, unity) {
 
             if (url) SendtoWpp(message, unity);
         })
-        .catch(err => console.log(err))
+        .catch(async err => {
+            console.log(err)
+            await updateStageRd(data, "back" + unity)
+        })
 
 }
+
 
 
 const renewContracts = async () => {
     console.log("renew")
     for (const unity of unities) {
-        await updateRdData(unity)
+        await updateRdData(unity, page)
     }
 }
-
 
 export default renewContracts
