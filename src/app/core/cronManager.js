@@ -18,7 +18,9 @@ const functionsArray = [
         time: "0 12 * * 1",
         fn: renewContracts
     },
+
 ]
+
 
 
 
