@@ -91,7 +91,7 @@ async function SendToTrello(data, unity) {
         "Golfinho Azul": "66cf89c6a58c322658c69e78"
     }
     const template = {
-        "Centro": "65ef31794aa709ef4baaa3f5",
+        "Centro": "6638fc5b9626084978caff3d",
         "PTB": "66cf8d660197a91687bb7b09",
         "Golfinho Azul": "66cf8d660197a91687bb7b09"
     }
@@ -119,7 +119,7 @@ async function SendToTrello(data, unity) {
         due: futureDate,
         idList: list[unity],
         start: today,
-        // idCardSource: template[unity]
+        idCardSource: template[unity]
     }
 
     await CardCreationOnTrello(body)
@@ -143,5 +143,6 @@ const renewContracts = async () => {
         await updateRdData(unity, page)
     }
 }
+
 
 export default renewContracts

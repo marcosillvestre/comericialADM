@@ -78,7 +78,7 @@ class SessionsController {
             transporter.sendMail({
                 from: `American Way ${process.env.GMAIL_CLIENT}`,
                 to: email,
-                subject: `Recuperação de Senha: ${email_hash}`,
+                subject: `Recuperação de Senha`,
                 html: `<h2>Esqueceu a senha?</h2> <br/> <p>Copie e cole esse código: <br/>${email_hash}<br/> Na página de recuperação você vai poder redefinir a sua senha </p>`
             })
 

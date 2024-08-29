@@ -31,42 +31,48 @@ async function SyncContaAzulAndDatabase(header) {
 
     const currentDate = new Date()
     const endDate = currentDate.toISOString()
+    try {
 
-    const sales = await axios.get(`https://api.contaazul.com/v1/sales?emission_start=${startDate}&emission_end=${endDate}&size=1000`, { headers: header })
 
-    const filtered = sales.data.filter(res => {
-        const status = res.payment.installments[0]?.status
-        let notes = res.notes
-        let cleanData = notes.replace(/\\n/g, "")
-        return status === "ACQUITTED" && notes !== '' && JSON.parse(!(cleanData.includes("(")))
-    })
+        const sales = await axios.get(`https://api.contaazul.com/v1/sales?emission_start=${startDate}&emission_end=${endDate}&size=1000`, { headers: header })
 
-    let notes = filtered.map(res => {
-        try {
-            let note = JSON.parse(res.notes)
+        const filtered = sales.data.filter(res => {
+            const status = res.payment.installments[0]?.status
+            let notes = res.notes
+            let cleanData = notes.replace(/\\n/g, "")
+            return status === "ACQUITTED" && notes !== '' && JSON.parse(!(cleanData.includes("(")))
+        })
 
-            return {
-                aluno: note["Aluno"],
-                responsavel: note["Responsável"],
-                contract: note["contrato"],
-                service: note["serviço"],
-                tm: note['TM Valor'],
-                value: res.total,
-                unidade: note["Unidade"],
-                ppFPG: note["PP Forma PG"],
-                mdFPG: note["MD forma pg"],
-                tmFPG: note["TM forma de pg"]
+        let notes = filtered.map(res => {
+            try {
+                let note = JSON.parse(res.notes)
+
+                return {
+                    aluno: note["Aluno"],
+                    responsavel: note["Responsável"],
+                    contract: note["contrato"],
+                    service: note["serviço"],
+                    tm: note['TM Valor'],
+                    value: res.total,
+                    unidade: note["Unidade"],
+                    ppFPG: note["PP Forma PG"],
+                    mdFPG: note["MD forma pg"],
+                    tmFPG: note["TM forma de pg"]
+                }
+            } catch (error) {
+                // console.log(res)
+                console.log(`${res.customer.name} => error`)
             }
-        } catch (error) {
-            // console.log(res)
-            console.log(`${res.customer.name} => error`)
-        }
 
-    })
+        })
 
-    console.log(notes.length)
+        console.log(notes.length)
 
-    await SearchEachSync(notes.filter(response => response !== undefined))
+        await SearchEachSync(notes.filter(response => response !== undefined))
+    } catch (error) {
+
+        console.log(error.response.data)
+    }
 }
 
 
