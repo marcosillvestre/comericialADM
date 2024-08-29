@@ -122,8 +122,6 @@ const order = async (name, material, unity) => {
 }
 
 
-
-
 async function UpdateEachOne(where, data) {
     try {
         const update = async () => {
@@ -162,7 +160,7 @@ async function UpdateEachOne(where, data) {
                             }
                         }
 
-                        await OrdersController.store(bodyOrder)
+                        await OrdersController.store(bodyOrder, response.unidade)
 
 
                     }

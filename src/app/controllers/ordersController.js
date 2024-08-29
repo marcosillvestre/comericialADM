@@ -1,3 +1,4 @@
+import { getLastMondayCode } from "../../config/getLastMonday.js";
 import prisma from "../../database/database.js";
 
 class OrderController {
@@ -10,18 +11,10 @@ class OrderController {
 
 
     async store(req, res) {
-        const { orders } = req.body
+        const { orders, unity } = req.body
 
-        function getLastMonday(date = new Date) {
-            const dayOfWeek = date.getDay();
-            const daysSinceMonday = (dayOfWeek + 6) % 7;
-            const lastMonday = new Date(date);
-            lastMonday.setDate(date.getDate() - daysSinceMonday);
-            return lastMonday;
-        }
+        const code = await getLastMondayCode();
 
-        const lastMonday = await getLastMonday();
-        let code = lastMonday.toLocaleDateString("pt-BR").replace("/", "").replace("/", "")
 
         const weekOrders = await prisma.orders.findMany({
             where: {
@@ -56,7 +49,8 @@ class OrderController {
             await prisma.orders.create({
                 data: {
                     code,
-                    orders
+                    orders,
+                    unity
                 }
             })
 

@@ -112,6 +112,7 @@ model Orders {
   code        String
   orders      Json[]
   arrived     Boolean @default(false)
+  unity       String
   created_at  DateTime  @default(now())
   updated_at  DateTime  @updatedAt
 }
