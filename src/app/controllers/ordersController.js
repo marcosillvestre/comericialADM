@@ -18,7 +18,8 @@ class OrderController {
 
         const weekOrders = await prisma.orders.findMany({
             where: {
-                code: code
+                code: code,
+                unity: unity
             }
         })
 
