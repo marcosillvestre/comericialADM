@@ -73,13 +73,13 @@ async function SendToTrello(data, unity) {
 
     const list = {
         "Centro": "65ef33908563ab863429d9be",
-        "PTB": "",
-        "Golfinho Azul": ""
+        "PTB": "66cf89c6a58c322658c69e78",
+        "Golfinho Azul": "66cf89c6a58c322658c69e78"
     }
     const template = {
         "Centro": "65ef31794aa709ef4baaa3f5",
-        "PTB": "",
-        "Golfinho Azul": ""
+        "PTB": "66cf8d660197a91687bb7b09",
+        "Golfinho Azul": "66cf8d660197a91687bb7b09"
     }
 
     const description = {
@@ -105,11 +105,12 @@ async function SendToTrello(data, unity) {
         due: futureDate,
         idList: list[unity],
         start: today,
+        idCardSource: template[unity]
     }
 
     await CardCreationOnTrello(body)
         .then(url => {
-            let message = `${body.name} -- está a dois meses de vencer seu contrato,acesse o link do trello para começar o processo de rematrícula : ${url}`;
+            let message = `${body.name} -- está a dois meses de vencer seu contrato, acesse o link do trello para começar o processo de rematrícula : ${url}`;
 
             if (url) SendtoWpp(message, unity);
         })
