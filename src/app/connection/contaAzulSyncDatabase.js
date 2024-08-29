@@ -160,8 +160,12 @@ async function UpdateEachOne(where, data) {
                             }
                         }
 
-                        await OrdersController.store(bodyOrder, response.unidade)
-
+                        const idList = {
+                            "Golfinho Azul": "PTB",
+                            'PTB': "PTB",
+                            'Centro': "Centro"
+                        }
+                        await OrdersController.store(bodyOrder, idList[response.unidade])
 
                     }
                 })
