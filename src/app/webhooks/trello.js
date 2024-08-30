@@ -57,8 +57,7 @@ class TrelloWebhook {
                                 .then(() => {
                                     let message = `**${body.nameEvent}** --> a reunião de rematrícula foi marcada para o dia ${body["Data de fim"]}`
                                     body["descrição"].includes("Centro") ?
-                                        SendtoWpp(message, "Centro") :
-                                        SendtoWpp(message, "PTB")
+                                        SendtoWpp(message, "Centro") : SendtoWpp(message, "PTB")
                                 })
                         })
                         .catch(err => {
@@ -74,8 +73,10 @@ class TrelloWebhook {
                     await axios.get(`https://api.trello.com/1/cards/${cardId}?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`)
                         .then(response => {
                             let desc = response.data.desc
+                            console.log(desc)
 
                             let parsed = JSON.parse(desc)
+
                             body["id"] = parsed.id
                         })
 
@@ -85,6 +86,7 @@ class TrelloWebhook {
 
 
                 }
+
 
                 const boolean = webhook.data.checklist.name === "Primeira aula ?" ||
                     webhook.data.checkItem.name === "Primeira aula ?" && webhook.data.checkItem.state === "complete"
