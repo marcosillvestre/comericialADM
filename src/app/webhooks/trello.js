@@ -73,9 +73,8 @@ class TrelloWebhook {
                     await axios.get(`https://api.trello.com/1/cards/${cardId}?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`)
                         .then(response => {
                             let desc = response.data.desc
-                            console.log(desc)
 
-                            let parsed = JSON.parse(desc)
+                            let parsed = JSON.parse("{" + desc + "}")
 
                             body["id"] = parsed.id
                         })
