@@ -2,6 +2,7 @@ import axios from "axios";
 import "dotenv/config";
 import prisma from "../../database/database.js";
 import { Historic } from '../../database/historic/properties.js';
+import updateStageRd from "../connection/externalConnections/rdStation.js";
 import { SendtoWpp } from '../connection/externalConnections/wpp.js';
 
 const historic = new Historic()
@@ -18,10 +19,11 @@ class TrelloWebhook {
                 let body = {
                     nameEvent: webhook.data.card.name,
                 }
-                if (webhook.data.checklist.name === "Reunião aceita pelo cliente:" && webhook.data.checkItem.state === "complete") {
-                    let id = webhook.data.card.id
+                let cardId = webhook.data.card.id
+                if (webhook.data.checklist.name === "Reunião aceita pelo cliente:" &&
+                    webhook.data.checkItem.state === "complete") {
                     const customFields = async () => {
-                        await axios.get(`https://api.trello.com/1/cards/${id}/customFieldItems?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`)
+                        await axios.get(`https://api.trello.com/1/cards/${cardId}/customFieldItems?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`)
                             .then(res => {
                                 for (const field of res.data) {
                                     if ("text" in field.value) {
@@ -39,7 +41,7 @@ class TrelloWebhook {
                     }
 
                     const description = async () => {
-                        await axios.get(`https://api.trello.com/1/cards/${id}?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`)
+                        await axios.get(`https://api.trello.com/1/cards/${cardId}?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`)
                             .then(response => {
                                 let desc = response.data.desc
                                 body["descrição"] = desc.replace('"', '')
@@ -63,10 +65,30 @@ class TrelloWebhook {
                             console.log(err)
                         })
                 }
+                if (webhook.data.checklist.name === "Rematriculado:" &&
+                    webhook.data.checkItem.state === "complete") {
+                    let body = {
+                        unidade: webhook.data.board.name.split(" - ")[1]
+                    }
 
+                    await axios.get(`https://api.trello.com/1/cards/${cardId}?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`)
+                        .then(response => {
+                            let desc = response.data.desc
+
+                            let parsed = JSON.parse(desc)
+                            body["id"] = parsed.id
+                        })
+
+
+                    webhook.data.checkItem.name === "Sim" && updateStageRd(body, "win" + body.unidade)
+                    webhook.data.checkItem.name === "Não" && updateStageRd(body, "lose" + body.unidade)
+
+
+                }
 
                 const boolean = webhook.data.checklist.name === "Primeira aula ?" ||
                     webhook.data.checkItem.name === "Primeira aula ?" && webhook.data.checkItem.state === "complete"
+
                 if (boolean) {
                     const nameSearch = webhook.data.card.name
                     const data = await prisma.person.findMany({

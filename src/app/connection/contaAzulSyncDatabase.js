@@ -70,7 +70,6 @@ async function SyncContaAzulAndDatabase(header) {
 
         await SearchEachSync(notes.filter(response => response !== undefined))
     } catch (error) {
-
         console.log(error.response.data)
     }
 }
