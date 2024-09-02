@@ -152,25 +152,25 @@ async function UpdateEachOne(where, data) {
 
 
                     if (where === "mdStatus") {
-                        let message = `>${response.name}` + "-- realizou o pagamento do material didático ||" + "`" + `${response.materialDidatico}` + "`"
+                        let message = ">" + `${response.name}` + "-- realizou o pagamento do material didático ||" + " `" + `${response.materialDidatico}` + "`"
                         SendtoWpp(message, response.unidade)
 
                         let filtered = response.materialDidatico.filter(res => res.includes("BK"))
-
-
-                        let bodyOrder = {
-                            body: {
-                                orders: await order(response.name, filtered, response.unidade)
-
-                            }
-                        }
 
                         const idList = {
                             "Golfinho Azul": "PTB",
                             'PTB': "PTB",
                             'Centro': "Centro"
                         }
-                        await OrdersController.store(bodyOrder, idList[response.unidade])
+
+                        let bodyOrder = {
+                            body: {
+                                orders: await order(response.name, filtered, response.unidade),
+                                unity: idList[response.unidade]
+                            }
+                        }
+
+                        filtered.lenght > 0 && await OrdersController.store(bodyOrder)
 
                     }
                 })
@@ -205,5 +205,8 @@ const syncContaAzul = async () => {
 
     }
 }
+
+syncContaAzul()
+
 
 export default syncContaAzul
