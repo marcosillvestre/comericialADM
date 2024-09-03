@@ -86,14 +86,14 @@ class OrderController {
                         code = res.code
                     })
 
+                await historic._store(responsible, where, value, code)
+
                 if (res) return res.status(201).json({ message: "Pedido editado com sucesso" })
                 console.log("Pedido editado")
             } catch (error) {
 
                 return res.status(400).json({ error })
             }
-
-            await historic._store(responsible, where, value, code)
         }
 
 
