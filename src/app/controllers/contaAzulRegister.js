@@ -19,7 +19,6 @@ class RegisterContaAzulController {
             email, nameResponsible, cep,
         } = req.body
 
-
         var header = {
             "Authorization": `Bearer ${await getToken(unidade, 'refresh')}`,
             "Content-Type": "application/json"
@@ -27,13 +26,12 @@ class RegisterContaAzulController {
 
 
         try {
-
             const customerBody = {
                 "name": nameResponsible || name,
                 "email": email,
                 "business_phone": CelularResponsavel,
                 "mobile_phone": CelularResponsavel,
-                "person_type": cpf.length <= 11 ? "LEGAL" : "NATURAL",
+                "person_type": cpf.length > 11 ? "LEGAL" : "NATURAL",
                 "document": cpf,
                 "identity_document": rg,
                 "date_of_birth": new Date(DatadeNascdoResp.split("/").reverse().join("-")),
@@ -78,7 +76,6 @@ class RegisterContaAzulController {
                 })
 
         } catch (error) {
-            console.log(error)
             return res.status(400).json({ message: error })
         }
 
@@ -182,11 +179,12 @@ class RegisterContaAzulController {
                                         { headers: header })
                                         .then(data => {
                                             if (data.status === 201 || data.status === 200) {
-                                                console.log("O contrato foi lançada")
+                                                console.log("O contrato foi lançado")
                                                 return res.status(200).json({ message: "Success" })
                                             }
                                         }).catch((err) => {
                                             if (err) {
+                                                console.log(err)
                                                 return res.status(401).json({ message: err.response.data.message ? err.response.data.message : "Erro" })
                                             }
                                         })
@@ -194,7 +192,6 @@ class RegisterContaAzulController {
                             })
                         })
                         .catch((err) => {
-                            console.log(err)
                             return res.status(400).json({ message: `Erro no cpf digitado: ${cpf}` })
                         })
 
@@ -364,7 +361,6 @@ class RegisterContaAzulController {
                                                     return res.status(400).json({ message: "Material didático não cadastrado no conta azul!" })
                                                 }
                                                 if (err.response.data.message !== "The sale product's value cannot be null") {
-                                                    console.log(err.response.data)
                                                     return res.status(400).json({ message: err.response.data.message })
                                                 }
                                             })
@@ -386,7 +382,6 @@ class RegisterContaAzulController {
                 }
             })
                 .catch(err => {
-                    console.log(err)
                     return res.status(400).json({ message: `Erro no cpf digitado: ${cpf}` })
 
                 })
