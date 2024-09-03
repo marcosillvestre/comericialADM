@@ -1,6 +1,6 @@
 import { getLastMondayCode } from "../../config/getLastMonday.js";
 import prisma from "../../database/database.js";
-
+import { Historic } from '../../database/historic/properties.js';
 class OrderController {
     async index(req, res) {
 
@@ -67,6 +67,9 @@ class OrderController {
     async update(req, res) {
         const { id, where, value } = req.body
 
+        const historic = new Historic()
+
+        let code;
 
         if (where === "arrived") {
             try {
@@ -79,6 +82,9 @@ class OrderController {
                     }
 
                 })
+                    .then(res => {
+                        code = res.code
+                    })
 
                 if (res) return res.status(201).json({ message: "Pedido editado com sucesso" })
                 console.log("Pedido editado")
@@ -87,7 +93,11 @@ class OrderController {
                 return res.status(400).json({ error })
             }
 
+            await historic._store("Automatização", where, value, code)
         }
+
+
+
 
         try {
             const filter = await prisma.orders.findUnique({
@@ -111,6 +121,8 @@ class OrderController {
                 }
 
             })
+
+            await historic._store("Automatização", "Pedido", "Deletado", filter.code)
 
             if (res) return res.status(201).json({ message: "Pedido removido com sucesso" })
             console.log("Pedido editado")
