@@ -65,7 +65,7 @@ class OrderController {
     }
 
     async update(req, res) {
-        const { id, where, value } = req.body
+        const { id, where, value, responsible } = req.body
 
         const historic = new Historic()
 
@@ -93,7 +93,7 @@ class OrderController {
                 return res.status(400).json({ error })
             }
 
-            await historic._store("Automatização", where, value, code)
+            await historic._store(responsible, where, value, code)
         }
 
 
@@ -107,8 +107,9 @@ class OrderController {
             })
 
 
-            let filtering = filter.orders.filter(res => res === value)
-            let filtered = filter.orders.filter(res => res !== filtering[0])
+            let filtering = filter?.orders.filter(res => res.sku === value.sku && res.nome === value.nome && res.materialDidatico === value.materialDidatico)
+            let filtered = filter?.orders.filter(res => res !== filtering[0])
+
 
             await prisma.orders.update({
                 where: {
@@ -116,13 +117,13 @@ class OrderController {
                 },
                 data: {
                     orders: {
-                        set: filtered
+                        set: filtered ? filtered : []
                     }
                 }
 
             })
 
-            await historic._store("Automatização", "Pedido", "Deletado", filter.code)
+            await historic._store(responsible, "Pedido", "Deletado", filter.code)
 
             if (res) return res.status(201).json({ message: "Pedido removido com sucesso" })
             console.log("Pedido editado")
