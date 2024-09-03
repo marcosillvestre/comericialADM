@@ -38,15 +38,12 @@ class OrderController {
                 .then(() => {
                     if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
                     console.log("Pedido agregado")
+                    return
                 })
                 .catch((err) => {
                     return res.status(400).json({ err })
                 })
-
-
-        }
-        try {
-
+        } else {
             await prisma.orders.create({
                 data: {
                     code,
@@ -55,13 +52,16 @@ class OrderController {
                 }
             })
 
-            console.log("Pedido criado com sucesso")
-            return res.status(201).json({ message: "Order created successfully" })
-
-        } catch (error) {
-            console.log(error)
-            return res.status(400).json({ message: "Order created successfully" })
+                .then(() => {
+                    if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
+                    console.log("Pedido criado com sucesso")
+                })
+                .catch((err) => {
+                    return res.status(400).json({ err })
+                })
         }
+
+
     }
 
     async update(req, res) {
@@ -96,7 +96,9 @@ class OrderController {
                 }
             })
 
-            let filtered = filter.orders.filter(res => res.sku !== value)
+
+            let filtering = filter.orders.filter(res => res === value)
+            let filtered = filter.orders.filter(res => res !== filtering[0])
 
             await prisma.orders.update({
                 where: {

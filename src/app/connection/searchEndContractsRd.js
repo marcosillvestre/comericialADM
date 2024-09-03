@@ -13,7 +13,7 @@ const stages = {
 
 
 
-const unities = ["Centro", "PTB"]
+
 
 
 let page = 1
@@ -21,7 +21,7 @@ let page = 1
 async function updateRdData(unity, page) {
     console.log(unity)
 
-    await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=500&page=${page}&token=${process.env.RD_TOKEN}&deal_pipeline_id=${funis[unity]}&deal_stage_id=${stages[unity]}`)
+    await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=200&page=${page}&token=${process.env.RD_TOKEN}&deal_pipeline_id=${funis[unity]}&deal_stage_id=${stages[unity]}`)
         .then(async response => {
             const deals = response.data.deals
 
@@ -64,7 +64,7 @@ async function updateRdData(unity, page) {
 
 const renewContracts = async () => {
     console.log("renew")
-    for (const unity of unities) {
+    for (const unity of ["Centro", "PTB"]) {
         await updateRdData(unity, page)
     }
 }

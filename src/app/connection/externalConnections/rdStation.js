@@ -26,7 +26,7 @@ async function updateStageRd(data, unity) {
             if (unity.includes("back") || unity.includes("win") || unity.includes("lose")) return
             await SendRematriculaToTrello(res.data, unity)
         })
-        .catch((err) => console.log("rd, ", { name: err.response.data.name, errors: err.response.data.errors }))
+        .catch((err) => console.log("rd, ", { name: err.response?.data.name, errors: err.response?.data.errors } || err))
 }
 
 

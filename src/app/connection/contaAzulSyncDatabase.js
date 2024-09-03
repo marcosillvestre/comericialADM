@@ -157,21 +157,22 @@ async function UpdateEachOne(where, data) {
 
                         let filtered = response.materialDidatico.filter(res => res.includes("BK"))
 
-                        const idList = {
-                            "Golfinho Azul": "PTB",
-                            'PTB': "PTB",
-                            'Centro': "Centro"
-                        }
-
-                        let bodyOrder = {
-                            body: {
-                                orders: await order(response.name, filtered, response.unidade),
-                                unity: idList[response.unidade]
+                        if (filtered.length > 0) {
+                            const idList = {
+                                "Golfinho Azul": "PTB",
+                                'PTB': "PTB",
+                                'Centro': "Centro"
                             }
+
+                            let bodyOrder = {
+                                body: {
+                                    orders: await order(response.name, filtered, response.unidade),
+                                    unity: idList[response.unidade]
+                                }
+                            }
+
+                            await OrdersController.store(bodyOrder)
                         }
-
-                        filtered.lenght > 0 && await OrdersController.store(bodyOrder)
-
                     }
                 })
 
@@ -195,7 +196,7 @@ async function UpdateEachOne(where, data) {
 
 
 const syncContaAzul = async () => {
-    console.log("payments ca updates")
+    console.log("Payments ca updates")
 
     for (const realToken of ["Centro", "PTB"]) {
         const header = {
@@ -205,7 +206,6 @@ const syncContaAzul = async () => {
 
     }
 }
-
 
 
 export default syncContaAzul

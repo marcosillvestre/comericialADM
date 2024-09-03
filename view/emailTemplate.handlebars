@@ -1,0 +1,50 @@
+<html lang='en'>
+    <head>
+        <meta charset='UTF-8' />
+        <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+        <title>Pedido de livros</title>
+        <style>
+            .border { border: 1px solid; width: 100%; border-collapse: collapse;
+            padding: 5px; } .h1 { font-weight: bold;}
+        </style>
+        <script
+            src='https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.min.js'
+        ></script>
+    </head>
+    <body>
+        <h3>Pedido de livros</h3>
+        <br />
+        <p>
+            Olá,
+            <br />
+            <br />
+            Solicitamos os seguintes materiais didáticos:
+            <br />
+        </p>
+        <table class='border'>
+            <thead class='border'>
+                <tr class='border'>
+                    <td class='border h1'>Livro</td>
+                    <td class='border h1'>SKU</td>
+                    <td class='border h1'>Cliente</td>
+                </tr>
+            </thead>
+            <tbody>
+
+                {{#each emailBody}}
+                    <tr class='border'>
+                        <td class='border'>{{this.materialDidatico}}</td>
+                        <td class='border'>{{this.sku}}</td>
+                        <td class='border'>{{this.nome}}</td>
+                    </tr>
+                {{/each}}
+            </tbody>
+        </table>
+        <br />
+        <br />
+        <p>
+            Atenciosamente, American Way.
+        </p>
+
+    </body>
+</html>
