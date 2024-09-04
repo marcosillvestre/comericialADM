@@ -139,6 +139,56 @@ class OrderController {
 
     }
 
+    async putLinkSignature(req, res) {
+        const { id, link, orders } = req.body
+
+
+        const { orders: data } = await prisma.orders.findUnique({
+            where: {
+                id: id
+            }
+        })
+
+        const set = []
+
+        for (let index = 0; index < data.length; index++) {
+
+            const element = data[index];
+
+            const filtered = orders.findIndex(res =>
+                res.materialDidatico === element.materialDidatico &&
+                res.nome === element.nome)
+
+
+            filtered !== -1 ? set.push({ ...element, link }) :
+                set.push(element)
+
+        }
+
+
+        try {
+            await prisma.orders.update({
+                where: {
+                    id: id
+                },
+                data: {
+                    orders: {
+                        set: set
+                    }
+                }
+            })
+
+            return res.status(201).json({ message: "link atribuido com sucesso" })
+
+        } catch (error) {
+            console.log(error)
+            return res.status(201).json({ message: error })
+        }
+
+
+
+    }
+
 }
 
 export default new OrderController
