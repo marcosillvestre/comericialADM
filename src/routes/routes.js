@@ -55,6 +55,7 @@ routes.put('/campos-personalizados', CustomFieldsController.update)
 
 routes.get('/pedidos', OrdersController.index)
 routes.put('/pedidos', OrdersController.update)
+routes.put('/linkpedido', OrdersController.putLinkSignature)
 
 
 routes.post('/cliente', RegisterContaAzulController.storeCostumer)
