@@ -96,7 +96,7 @@ async function SearchEachSync(notes) {
                     ],
                 },
             })
-                .then(data => data && UpdateEachOne(where, data))
+                .then(async data => data && await UpdateEachOne(where, data))
             // .then(data => data && console.log(where, data))
 
         }
@@ -123,6 +123,7 @@ const order = async (name, material, unity) => {
         }
 
     })
+
     return body
 }
 
@@ -148,7 +149,6 @@ async function UpdateEachOne(where, data) {
                     let trelloMessage = `${response.name} -- realizou o pagamento da(o) ${routes[where]} via ${type[where]} no valor de ${response.value} no dia ${new Date().toLocaleDateString('pt-BR')}`
 
                     await CreateCommentOnTrello(response.name, response.unidade, trelloMessage)
-
 
 
                     if (where === "mdStatus") {
