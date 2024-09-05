@@ -147,7 +147,7 @@ async function UpdateEachOne(where, data) {
 
                     let trelloMessage = `${response.name} -- realizou o pagamento da(o) ${routes[where]} via ${type[where]} no valor de ${response.value} no dia ${new Date().toLocaleDateString('pt-BR')}`
 
-                    CreateCommentOnTrello(response.name, response.unidade, trelloMessage)
+                    await CreateCommentOnTrello(response.name, response.unidade, trelloMessage)
 
 
 
