@@ -31,6 +31,10 @@ async function SyncContaAzulAndDatabase(header) {
 
     const currentDate = new Date()
     const endDate = currentDate.toISOString()
+
+    //     const sales = await axios.get(`https://api.contaazul.com/v1/sales?emission_start=${startDate}&emission_end=${endDate}&size=1000`, { headers: header })
+    // console.log(sales)
+    //     return 
     try {
 
 
@@ -119,7 +123,9 @@ const order = async (name, material, unity) => {
             nome: name,
             materialDidatico: splited[0],
             valor: pdFiltered[0].value,
-            data: new Date().toLocaleDateString("pt-BR")
+            data: new Date().toLocaleDateString("pt-BR"),
+            dataRetirada: "",
+            link: ""
         }
 
     })
@@ -141,19 +147,19 @@ async function UpdateEachOne(where, data) {
                     console.log(`${response.aluno} success updated / ${where} / ${response.unidade}`)
 
                     let type = {
-                        "ppStatus": response.ppFPG,
-                        "tmStatus": response.tmFPG,
-                        "mdStatus": response.mdFPG
+                        "ppStatus": data.ppFPG,
+                        "tmStatus": data.tmFPG,
+                        "mdStatus": data.mdFPG
                     }
 
-                    let trelloMessage = `${response.name} -- realizou o pagamento da(o) ${routes[where]} via ${type[where]} no valor de ${response.value} no dia ${new Date().toLocaleDateString('pt-BR')}`
+                    let trelloMessage = `${response.name} -- realizou o pagamento da(o) ${routes[where]} via ${type[where]} no valor de ${data.value} no dia ${new Date().toLocaleDateString('pt-BR')}`
 
                     await CreateCommentOnTrello(response.name, response.unidade, trelloMessage)
 
 
                     if (where === "mdStatus") {
                         let message = ">" + `${response.name}` + "-- realizou o pagamento do material didático ||" + " `" + `${response.materialDidatico}` + "`"
-                        SendtoWpp(message, response.unidade)
+                        await SendtoWpp(message, response.unidade)
 
                         let filtered = response.materialDidatico.filter(res => res.includes("BK"))
 
@@ -206,6 +212,6 @@ const syncContaAzul = async () => {
 
     }
 }
-
+// syncContaAzul()
 
 export default syncContaAzul
