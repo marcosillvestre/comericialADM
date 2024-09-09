@@ -1,16 +1,16 @@
 import nodemailer from 'nodemailer';
 import hbs from 'nodemailer-express-handlebars';
 import path from "path";
-import { getLastMondayCode } from '../../config/getLastMonday.js';
+import { getLastWeekMondayCode } from '../../config/getLastMonday.js';
 import prisma from "../../database/database.js";
 
 import 'dotenv';
-
-
+import { CompleteCheckPointOnTrello } from './externalConnections/trello.js';
 
 
 async function SearchOrders(unity) {
-    let code = await getLastMondayCode()
+    let code = await getLastWeekMondayCode()
+
 
     const order = await prisma.orders.findFirst({
         where: {
@@ -69,12 +69,18 @@ async function SendMail(data, unity) {
 
         const sended = await transporter.sendMail(mail)
 
-        if (sended.messageId) console.log("Pedido de livros enviado")
+        if (sended.messageId) {
+            await CompleteCheckPointOnTrello(data, unity, "Material Didático/Pedido de material didático feito")
+            console.log("Pedido de livros enviado")
+
+        }
 
     } catch (error) {
         console.log(error)
     }
 }
+
+
 
 const orderBooks = async () => {
     console.log("Ordering books")
@@ -82,7 +88,6 @@ const orderBooks = async () => {
         await SearchOrders(unity)
     }
 }
-
 
 
 export default orderBooks

@@ -17,6 +17,8 @@ const secList = {
 
 
 
+
+//create 
 export async function CardCreationOnTrello(body) {
 
     try {
@@ -32,7 +34,7 @@ export async function CardCreationOnTrello(body) {
 
 }
 
-
+//get
 async function getData(listId) {
     try {
         const { data } = await axios.get(`https://api.trello.com/1/lists/${listId}/cards?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`)
@@ -44,22 +46,30 @@ async function getData(listId) {
     }
 }
 
-
+//filter
 async function filteredData(name, array) {
 
-    const filtered = array.filter(res => {
-        const md = res.desc.replace(/^\s*-\s*\*\*.*(\n|\r\n|\r)?/gm, '');
-        const material = JSON.parse("{" + md + "}")
-        return res.name.toLowerCase().includes(name.toLowerCase()) && !material.Material.every(res => res === "Outros" || res === "Office")
-    })
+    const filtered = array.filter(res => res.name.toLowerCase().includes(name.toLowerCase()))
 
+    if (filtered.length > 0) {
+        filtered.map(res => {
+            const md = res.desc.replace(/^\s*-\s*\*\*.*(\n|\r\n|\r)?/gm, '');
+            const material = JSON.parse("{" + md + "}")
+
+            if (!material.Material.every(res => res === "Outros" || res === "Office")) return res
+
+        })
+
+    }
     return filtered
 }
 
+//get
 async function GotIdFromCardOnList(name, unity) {
 
     let data;
     data = await getData(list[unity])
+
     const fill = await filteredData(name, data)
 
 
@@ -67,18 +77,58 @@ async function GotIdFromCardOnList(name, unity) {
         data = await getData(secList[unity])
         const secFill = await filteredData(name, data)
 
-        const { id } = secFill.length !== 0 && secFill[0]
-        return id
+        const object = secFill.length !== 0 && secFill[0]
+        return object
     }
 
-    const { id } = fill.length !== 0 && fill[0]
-    return id
+    const object = fill.length !== 0 && fill[0]
+    return object
 
 }
 
 
+//get
+async function GetIdCheckListCard(name, unity, what) {
+    let { id } = await GotIdFromCardOnList(name, unity)
+
+    const splited = what.split("/")
+
+    try {
+        let { data } = await axios.get(`https://api.trello.com/1/cards/${id}/checklists?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`)
+
+        const filtered = data.find(res => res.name === splited[0])
+        return filtered.checkItems.find(res => res.name === splited[1])
+    } catch (error) {
+        return error.response.data
+    }
+}
+
+
+//action
+export async function CompleteCheckPointOnTrello(array, unity, where) {
+    for (let index = 0; index < array.length; index++) {
+        const element = array[index];
+
+
+        let { id } = await GotIdFromCardOnList(element.nome, unity)
+        const { id: checkItem, state } = await GetIdCheckListCard(element.nome, unity, where)
+        const newState = state === "incomplete" ? "complete" : "incomplete"
+        try {
+            let { data } = await axios.put(`https://api.trello.com/1/cards/${id}/checkItem/${checkItem}?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`, { state: newState })
+            return data.state
+        } catch (error) {
+            return error.response.data
+        }
+
+    }
+
+
+}
+
+
+//action
 export async function CreateCommentOnTrello(name, unity, message) {
-    const id = await GotIdFromCardOnList(name, unity)
+    const { id } = await GotIdFromCardOnList(name, unity)
 
     if (id === undefined) {
         await SendSimpleWpp("Marcos", `${process.env.MARCOS}`, `${name} --> não foi encontrado no trello.`)
@@ -90,6 +140,7 @@ export async function CreateCommentOnTrello(name, unity, message) {
 }
 
 
+//create 
 export async function SendRematriculaToTrello(data, unity) {
 
     let today = new Date();
@@ -148,4 +199,3 @@ export async function SendRematriculaToTrello(data, unity) {
 
 
 
-// console.log(await GotIdFromCardOnList("Marcos vinicius", "Centro"))

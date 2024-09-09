@@ -12,16 +12,16 @@ const functionsArray = [
         fn: searchSync
     },
     {
+        time: "* 16 * * 1",
+        fn: renewContracts
+    },
+    {
         time: "0 8 * * 1",
         fn: orderBooks
     },
     {
         time: "0 */2 * * *",
         fn: syncContaAzul
-    },
-    {
-        time: "0 12 * * 1",
-        fn: renewContracts
     },
 
 ]

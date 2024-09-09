@@ -2,11 +2,11 @@
 import axios from "axios"
 import { getToken } from "../core/getToken.js"
 
+import { v4 } from 'uuid'
 import prisma from "../../database/database.js"
 import { Historic } from "../../database/historic/properties.js"
-import { CreateCommentOnTrello } from "./externalConnections/trello.js"
+import { CompleteCheckPointOnTrello, CreateCommentOnTrello } from "./externalConnections/trello.js"
 import { SendtoWpp } from "./externalConnections/wpp.js"
-
 
 import OrdersController from "../controllers/ordersController.js"
 
@@ -32,12 +32,7 @@ async function SyncContaAzulAndDatabase(header) {
     const currentDate = new Date()
     const endDate = currentDate.toISOString()
 
-    //     const sales = await axios.get(`https://api.contaazul.com/v1/sales?emission_start=${startDate}&emission_end=${endDate}&size=1000`, { headers: header })
-    // console.log(sales)
-    //     return 
     try {
-
-
         const sales = await axios.get(`https://api.contaazul.com/v1/sales?emission_start=${startDate}&emission_end=${endDate}&size=1000`, { headers: header })
 
         const filtered = sales.data.filter(res => {
@@ -119,6 +114,7 @@ const order = async (name, material, unity) => {
         let splited = res.split(" / ")
         const pdFiltered = data.filter(res => res.code.includes(splited[1]))
         return {
+            id: v4().slice(0, 8),
             sku: splited[1],
             nome: name,
             materialDidatico: splited[0],
@@ -146,6 +142,18 @@ async function UpdateEachOne(where, data) {
                 .then(async (response) => {
                     console.log(`${response.aluno} success updated / ${where} / ${response.unidade}`)
 
+
+
+                    let checkup = {
+                        "ppStatus": "AUTOMÁTICO - Confirmação de pagamento da primeira mensalidade.",
+                        "tmStatus": "AUTOMÁTICO - Confirmação pagamento da taxa de matrícula (se haver)",
+                        "mdStatus": "AUTOMÁTICO - Confirmação de pagamento do material didático."
+                    }
+
+
+                    await CompleteCheckPointOnTrello([{ nome: response.name }], response.unity, `ADM - Checkup inicial/${checkup[where]}`)
+
+
                     let type = {
                         "ppStatus": data.ppFPG,
                         "tmStatus": data.tmFPG,
@@ -158,7 +166,7 @@ async function UpdateEachOne(where, data) {
 
 
                     if (where === "mdStatus") {
-                        let message = ">" + `${response.name}` + "-- realizou o pagamento do material didático ||" + " `" + `${response.materialDidatico}` + "`"
+                        let message = `${response.name}` + "-- realizou o pagamento do material didático ||" + " `" + `${response.materialDidatico}` + "`"
                         await SendtoWpp(message, response.unidade)
 
                         let filtered = response.materialDidatico.filter(res => res.includes("BK"))
@@ -190,7 +198,7 @@ async function UpdateEachOne(where, data) {
         }
 
 
-        Promise.all([storeHistoric(), update(),])
+        Promise.all([storeHistoric(), update()])
 
     } catch (error) {
         console.log(error)

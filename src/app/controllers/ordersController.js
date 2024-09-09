@@ -1,6 +1,7 @@
 import { getLastMondayCode } from "../../config/getLastMonday.js";
 import prisma from "../../database/database.js";
 import { Historic } from '../../database/historic/properties.js';
+import { CompleteCheckPointOnTrello } from "../connection/externalConnections/trello.js";
 class OrderController {
     async index(req, res) {
 
@@ -23,27 +24,35 @@ class OrderController {
             }
         })
 
+        for (let index = 0; index < orders.length; index++) {
+            const element = orders[index];
+            element[id] = index
 
-        if (weekOrders.length > 0) {
-            await prisma.orders.update({
-                where: {
-                    id: weekOrders[0].id
-                },
-                data: {
-                    orders: {
-                        push: orders[0]
+
+            if (weekOrders.length > 0) {
+                await prisma.orders.update({
+                    where: {
+                        id: weekOrders[0].id
+                    },
+                    data: {
+                        orders: {
+                            push: element
+                        }
                     }
-                }
-            })
-                .then(() => {
-                    if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
-                    console.log("Pedido agregado")
-                    return
                 })
-                .catch((err) => {
-                    return res.status(400).json({ err })
-                })
-        } else {
+                    .then(() => {
+                        if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
+                        console.log("Pedido agregado")
+                        return
+                    })
+                    .catch((err) => {
+                        return res.status(400).json({ err })
+                    })
+            }
+        }
+
+
+        if (weekOrders.length === 0) {
             await prisma.orders.create({
                 data: {
                     code,
@@ -82,15 +91,24 @@ class OrderController {
                     }
 
                 })
-                    .then(res => {
+                    .then(async res => {
                         code = res.code
+                        Promise.all([
+                            CompleteCheckPointOnTrello(res.orders, res.unity, "Material Didático/Confirmação de disponibilidade para retirada do material na escola"),
+                            historic._store(responsible, where, value, code)
+                        ])
+
+
                     })
 
-                await historic._store(responsible, where, value, code)
+
+
 
                 if (res) return res.status(201).json({ message: "Pedido editado com sucesso" })
                 console.log("Pedido editado")
+
             } catch (error) {
+                console.log(error)
 
                 return res.status(400).json({ error })
             }
@@ -107,8 +125,7 @@ class OrderController {
             })
 
 
-            let filtering = filter?.orders.filter(res => res.sku === value.sku && res.nome === value.nome && res.materialDidatico === value.materialDidatico)
-            let filtered = filter?.orders.filter(res => res !== filtering[0])
+            let filtered = filter?.orders.filter(res => res.id !== value)
 
 
             await prisma.orders.update({
@@ -117,7 +134,7 @@ class OrderController {
                 },
                 data: {
                     orders: {
-                        set: filtered ? filtered : []
+                        set: filtered
                     }
                 }
 
@@ -139,11 +156,12 @@ class OrderController {
 
     }
 
-    async putLinkSignature(req, res) {
-        const { id, link, orders } = req.body
+    async putDataOrders(req, res) {
+        const { id, where, value, order } = req.body
 
+        //orders é um array de ids dos pedidos 
 
-        const { orders: data } = await prisma.orders.findUnique({
+        const data = await prisma.orders.findUnique({
             where: {
                 id: id
             }
@@ -151,19 +169,20 @@ class OrderController {
 
         const set = []
 
-        for (let index = 0; index < data.length; index++) {
+        for (let index = 0; index < data.orders.length; index++) {
 
-            const element = data[index];
+            const element = data.orders[index];
 
-            const filtered = orders.findIndex(res =>
-                res.materialDidatico === element.materialDidatico &&
-                res.nome === element.nome)
+            const filtered = order.findIndex(res => res === element.id)
 
 
-            filtered !== -1 ? set.push({ ...element, link }) :
-                set.push(element)
+            if (filtered !== -1) element[where] = value
+
+
+            set.push(element)
 
         }
+
 
 
         try {
@@ -177,6 +196,10 @@ class OrderController {
                     }
                 }
             })
+                .then(async res => {
+                    if (where === "dataRetirada") await CompleteCheckPointOnTrello(res.orders, res.unity, "Material Didático/Confirmação de retirada pelo aluno ou responsável")
+
+                })
 
             return res.status(201).json({ message: "link atribuido com sucesso" })
 

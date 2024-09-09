@@ -12,10 +12,6 @@ const stages = {
 }
 
 
-
-
-
-
 let page = 1
 
 async function updateRdData(unity, page) {
@@ -57,7 +53,6 @@ async function updateRdData(unity, page) {
         })
         .catch(err => console.log(err))
 }
-
 
 
 
