@@ -42,6 +42,7 @@ async function getData(listId) {
         return data
 
     } catch (error) {
+        console.log(error.response.data)
         throw new Error(error)
     }
 }
@@ -66,6 +67,7 @@ async function filteredData(name, array) {
 
 //get
 async function GotIdFromCardOnList(name, unity) {
+
 
     let data;
     data = await getData(list[unity])
@@ -93,11 +95,13 @@ async function GetIdCheckListCard(name, unity, what) {
 
     const splited = what.split("/")
 
+
     try {
         let { data } = await axios.get(`https://api.trello.com/1/cards/${id}/checklists?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`)
 
         const filtered = data.find(res => res.name === splited[0])
         return filtered.checkItems.find(res => res.name === splited[1])
+
     } catch (error) {
         return error.response.data
     }
@@ -112,6 +116,8 @@ export async function CompleteCheckPointOnTrello(array, unity, where) {
 
         let { id } = await GotIdFromCardOnList(element.nome, unity)
         const { id: checkItem, state } = await GetIdCheckListCard(element.nome, unity, where)
+
+
         const newState = state === "incomplete" ? "complete" : "incomplete"
         try {
             let { data } = await axios.put(`https://api.trello.com/1/cards/${id}/checkItem/${checkItem}?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`, { state: newState })

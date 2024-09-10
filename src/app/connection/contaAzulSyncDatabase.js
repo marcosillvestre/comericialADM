@@ -35,6 +35,7 @@ async function SyncContaAzulAndDatabase(header) {
     try {
         const sales = await axios.get(`https://api.contaazul.com/v1/sales?emission_start=${startDate}&emission_end=${endDate}&size=1000`, { headers: header })
 
+
         const filtered = sales.data.filter(res => {
             const status = res.payment.installments[0]?.status
             let notes = res.notes
@@ -130,6 +131,7 @@ const order = async (name, material, unity) => {
 }
 
 
+
 async function UpdateEachOne(where, data) {
     try {
         const update = async () => {
@@ -140,18 +142,17 @@ async function UpdateEachOne(where, data) {
                 }
             })
                 .then(async (response) => {
-                    console.log(`${response.aluno} success updated / ${where} / ${response.unidade}`)
-
+                    console.log(`${response.name} success updated / ${where} / ${response.unidade}`)
 
 
                     let checkup = {
-                        "ppStatus": "AUTOMÁTICO - Confirmação de pagamento da primeira mensalidade.",
-                        "tmStatus": "AUTOMÁTICO - Confirmação pagamento da taxa de matrícula (se haver)",
-                        "mdStatus": "AUTOMÁTICO - Confirmação de pagamento do material didático."
+                        "ppStatus": "AUTOMÁTICO - Confirmação automática de pagamento da primeira mensalidade",
+                        "tmStatus": "AUTOMÁTICO - Confirmação pagamento da taxa de matrícula (se houver)",
+                        "mdStatus": "AUTOMÁTICO - Confirmar pagamento do material didático"
                     }
 
 
-                    await CompleteCheckPointOnTrello([{ nome: response.name }], response.unity, `ADM - Checkup inicial/${checkup[where]}`)
+                    await CompleteCheckPointOnTrello([{ nome: response.name }], response.unidade, `ADM - Checkup inicial/${checkup[where]}`)
 
 
                     let type = {
@@ -162,12 +163,13 @@ async function UpdateEachOne(where, data) {
 
                     let trelloMessage = `${response.name} -- realizou o pagamento da(o) ${routes[where]} via ${type[where]} no valor de ${data.value} no dia ${new Date().toLocaleDateString('pt-BR')}`
 
+
                     await CreateCommentOnTrello(response.name, response.unidade, trelloMessage)
 
 
                     if (where === "mdStatus") {
                         let message = `${response.name}` + "-- realizou o pagamento do material didático ||" + " `" + `${response.materialDidatico}` + "`"
-                        await SendtoWpp(message, response.unidade)
+                        1 > 2 && await SendtoWpp(message, response.unidade)
 
                         let filtered = response.materialDidatico.filter(res => res.includes("BK"))
 
@@ -198,12 +200,36 @@ async function UpdateEachOne(where, data) {
         }
 
 
-        Promise.all([storeHistoric(), update()])
+        Promise.all([
+            // storeHistoric(), 
+            update()
+        ]
+        )
 
     } catch (error) {
         console.log(error)
     }
 }
+
+
+
+// async function SyncOrdersToContaAzul(header, unity) {
+
+//     const backDay = new Date()
+//     const comebackDays = 5
+//     backDay.setDate(backDay.getDate() - comebackDays)
+//     const startDate = backDay.toISOString()
+
+//     const currentDate = new Date()
+//     const endDate = currentDate.toISOString()
+
+//     const sales = await axios.get(`https://api.contaazul.com/v1/sales?emission_start=${startDate}&emission_end=${endDate}&size=1000`, { headers: header })
+
+//     let fil = sales.data.filter(res => res.notes === "")
+
+
+//     console.log(fil.map(res => res.customer.name))
+// }
 
 
 
@@ -217,6 +243,7 @@ const syncContaAzul = async () => {
             "Authorization": `Bearer ${await getToken(realToken, 'refresh')}`
         }
         await SyncContaAzulAndDatabase(header)
+        // await SyncOrdersToContaAzul(header, realToken)
 
     }
 }

@@ -26,7 +26,6 @@ class OrderController {
 
         for (let index = 0; index < orders.length; index++) {
             const element = orders[index];
-            element[id] = index
 
 
             if (weekOrders.length > 0) {
