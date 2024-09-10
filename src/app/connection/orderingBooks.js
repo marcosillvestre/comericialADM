@@ -19,7 +19,8 @@ async function SearchOrders(unity) {
         }
     })
 
-    if (order?.orders.length > 0) SendMail(order?.orders, unity)
+    const filtered = order?.orders.filter(res => res.dataRetirada === "")
+    if (order?.orders.length > 0) SendMail(filtered, unity)
 }
 
 
