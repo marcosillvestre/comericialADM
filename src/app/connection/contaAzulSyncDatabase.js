@@ -169,7 +169,7 @@ async function UpdateEachOne(where, data) {
 
                     if (where === "mdStatus") {
                         let message = `${response.name}` + "-- realizou o pagamento do material didático ||" + " `" + `${response.materialDidatico}` + "`"
-                        1 > 2 && await SendtoWpp(message, response.unidade)
+                        await SendtoWpp(message, response.unidade)
 
                         let filtered = response.materialDidatico.filter(res => res.includes("BK"))
 
@@ -201,7 +201,7 @@ async function UpdateEachOne(where, data) {
 
 
         Promise.all([
-            // storeHistoric(), 
+            storeHistoric(),
             update()
         ]
         )
