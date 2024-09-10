@@ -22,7 +22,13 @@ const routes = {
     "mdStatus": "material didatico"
 }
 
+const idList = {
+    "Golfinho Azul": "PTB",
+    'PTB': "PTB",
+    'Centro': "Centro"
+}
 async function SyncContaAzulAndDatabase(header) {
+    console.log("db")
 
     const backDay = new Date()
     const comebackDays = 25
@@ -57,16 +63,16 @@ async function SyncContaAzulAndDatabase(header) {
                     unidade: note["Unidade"],
                     ppFPG: note["PP Forma PG"],
                     mdFPG: note["MD forma pg"],
-                    tmFPG: note["TM forma de pg"]
+                    tmFPG: note["TM forma de pg"],
+                    dueDate: res.payment.installments[0].due_date
                 }
             } catch (error) {
                 // console.log(res)
-                console.log(`${res.customer.name} => error`)
+                // console.log(`${res.customer.name} => error`)
             }
 
         })
 
-        console.log(notes.length)
 
         await SearchEachSync(notes.filter(response => response !== undefined))
     } catch (error) {
@@ -109,25 +115,52 @@ const order = async (name, material, unity) => {
         "Authorization": `Bearer ${await getToken(unity)}`
     }
 
-    const { data } = await axios.get("https://api.contaazul.com/v1/products?size=10000", { headers: header })
 
-    const body = material.map(res => {
-        let splited = res.split(" / ")
-        const pdFiltered = data.filter(res => res.code.includes(splited[1]))
-        return {
-            id: v4().slice(0, 8),
-            sku: splited[1],
-            nome: name,
-            materialDidatico: splited[0],
-            valor: pdFiltered[0].value,
-            data: new Date().toLocaleDateString("pt-BR"),
-            dataRetirada: "",
-            link: ""
+
+    if (material[0].id === undefined) {
+        const { data } = await axios.get("https://api.contaazul.com/v1/products?size=10000", { headers: header })
+
+        const body = material.map(res => {
+            let splited = res.split(" / ")
+            const pdFiltered = data.filter(res => res.code.includes(splited[1]))
+            return {
+                id: v4().slice(0, 8),
+                sku: splited[1],
+                nome: name,
+                materialDidatico: splited[0],
+                valor: pdFiltered[0].value,
+                data: new Date().toLocaleDateString("pt-BR"),
+                dataRetirada: "",
+                link: ""
+            }
+
+        })
+
+        return body
+    }
+
+    const body = await Promise.all(material.map(async res => {
+        try {
+
+            const { data } = await axios.get(`https://api.contaazul.com/v1/products/${res.id}`, { headers: header })
+
+            return {
+                id: v4().slice(0, 8),
+                sku: data.code,
+                nome: name,
+                materialDidatico: data.name,
+                valor: data.value,
+                data: new Date().toLocaleDateString("pt-BR"),
+                dataRetirada: "",
+                link: "",
+                type: "manual"
+            }
+        } catch (error) {
+            return error.response.data
         }
-
-    })
-
+    }))
     return body
+
 }
 
 
@@ -174,11 +207,7 @@ async function UpdateEachOne(where, data) {
                         let filtered = response.materialDidatico.filter(res => res.includes("BK"))
 
                         if (filtered.length > 0) {
-                            const idList = {
-                                "Golfinho Azul": "PTB",
-                                'PTB': "PTB",
-                                'Centro': "Centro"
-                            }
+
 
                             let bodyOrder = {
                                 body: {
@@ -213,23 +242,47 @@ async function UpdateEachOne(where, data) {
 
 
 
-// async function SyncOrdersToContaAzul(header, unity) {
+async function SyncOrdersToContaAzul(header, unity) {
+    console.log("order " + unity)
+    const backDay = new Date()
+    const comebackDays = 25
+    backDay.setDate(backDay.getDate() - comebackDays)
+    const startDate = backDay.toISOString()
 
-//     const backDay = new Date()
-//     const comebackDays = 5
-//     backDay.setDate(backDay.getDate() - comebackDays)
-//     const startDate = backDay.toISOString()
+    const currentDate = new Date()
+    const endDate = currentDate.toISOString()
 
-//     const currentDate = new Date()
-//     const endDate = currentDate.toISOString()
+    const sales = await axios.get(`https://api.contaazul.com/v1/sales?emission_start=${startDate}&emission_end=${endDate}&size=1000`, { headers: header })
 
-//     const sales = await axios.get(`https://api.contaazul.com/v1/sales?emission_start=${startDate}&emission_end=${endDate}&size=1000`, { headers: header })
-
-//     let fil = sales.data.filter(res => res.notes === "")
+    let fil = sales.data.filter(res => res.notes === "" && res.payment.installments[0]?.status === "ACQUITTED")
 
 
-//     console.log(fil.map(res => res.customer.name))
-// }
+    await fil.map(async res => {
+        const { data } = await axios.get(`https://api.contaazul.com/v1/sales/${res.id}/items?Type=Product`, { headers: header })
+
+        let item = data.filter(item => {
+            if (item.itemType === "PRODUCT") return item.item
+        })
+
+
+        const bodyOrder = async () => {
+            return {
+                body: {
+                    orders: await order(res.customer.name, item.map(res => res.item), unity),
+                    unity: idList[unity]
+                }
+            }
+        }
+        item.length > 0 && await OrdersController.store(await bodyOrder())
+
+    })
+
+
+
+
+
+
+}
 
 
 
@@ -242,11 +295,13 @@ const syncContaAzul = async () => {
         const header = {
             "Authorization": `Bearer ${await getToken(realToken, 'refresh')}`
         }
-        await SyncContaAzulAndDatabase(header)
-        // await SyncOrdersToContaAzul(header, realToken)
+        await Promise.all([
+            SyncContaAzulAndDatabase(header),
+            SyncOrdersToContaAzul(header, realToken)
+
+        ])
 
     }
 }
-// syncContaAzul()
 
 export default syncContaAzul

@@ -10,28 +10,28 @@ class OrderController {
         return res.status(200).json(orders)
     }
 
-
     async store(req, res) {
         const { orders, unity } = req.body
 
         const code = await getLastMondayCode();
 
 
-        const weekOrders = await prisma.orders.findMany({
+        const response = await prisma.orders.findMany({
             where: {
                 code: code,
                 unity: unity
             }
         })
+        if (response.length > 0) {
+            for (let index = 0; index < orders.length; index++) {
+                const element = orders[index];
 
-        for (let index = 0; index < orders.length; index++) {
-            const element = orders[index];
+                if (response[0].orders.some(res => res.nome === element.nome &&
+                    res.materialDidatico === element.materialDidatico)) return
 
-
-            if (weekOrders.length > 0) {
                 await prisma.orders.update({
                     where: {
-                        id: weekOrders[0].id
+                        id: response[0].id
                     },
                     data: {
                         orders: {
@@ -47,11 +47,11 @@ class OrderController {
                     .catch((err) => {
                         return res.status(400).json({ err })
                     })
+
             }
         }
 
-
-        if (weekOrders.length === 0) {
+        if (response.length === 0) {
             await prisma.orders.create({
                 data: {
                     code,
