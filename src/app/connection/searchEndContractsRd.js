@@ -1,6 +1,6 @@
 import axios from 'axios';
 import "dotenv/config";
-import updateStageRd from './externalConnections/rdStation.js';
+import { updateStageRd } from './externalConnections/rdStation.js';
 
 const funis = {
     "Centro": "64badc42874ccc000dd4ed2e",
@@ -42,7 +42,7 @@ async function updateRdData(unity, page) {
 
                 if (newValue === monthAndYear) {
                     // console.log(data.name)
-                    updateStageRd(array[i], unity)
+                    await updateStageRd(array[i], unity)
                 }
             }
 

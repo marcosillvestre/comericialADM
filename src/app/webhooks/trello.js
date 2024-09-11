@@ -2,7 +2,7 @@ import axios from "axios";
 import "dotenv/config";
 import prisma from "../../database/database.js";
 import { Historic } from '../../database/historic/properties.js';
-import updateStageRd from "../connection/externalConnections/rdStation.js";
+import { createTasks, updateStageRd } from "../connection/externalConnections/rdStation.js";
 import { SendtoWpp } from '../connection/externalConnections/wpp.js';
 
 const historic = new Historic()
@@ -80,8 +80,8 @@ class TrelloWebhook {
                         })
 
 
-                    webhook.data.checkItem.name === "Sim" && updateStageRd(body, "win" + body.unidade)
-                    webhook.data.checkItem.name === "Não" && updateStageRd(body, "lose" + body.unidade)
+                    webhook.data.checkItem.name === "Sim" && await updateStageRd(body, "win" + body.unidade)
+                    webhook.data.checkItem.name === "Não" && await updateStageRd(body, "lose" + body.unidade)
 
 
                 }
@@ -122,10 +122,11 @@ class TrelloWebhook {
                         }
 
 
+                        await createTasks(data[0].name, data[0].aluno, data[0].classe)
+
                         const storeHistoric = async () => {
                             await historic._store("Automatização", "paStatus", "Ok", data[0].contrato)
                         }
-
 
                         Promise.all([storeHistoric(), update(),])
                     }

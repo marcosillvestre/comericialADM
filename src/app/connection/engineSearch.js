@@ -35,7 +35,7 @@ async function searchSync() {
                         comissaoValor: "Pendente",
                         diretorResponsavel: "Pendente",
                         Valor: index.amount_total ? index.amount_total : 0.0,
-                        id: 1,
+                        id: index.id,
                         situMatric: "Pendente",
                         paStatus: "Pendente",
 
@@ -287,60 +287,3 @@ async function trelloCreateCard(object) {
 }
 
 export default searchSync
-
-
-// const kk = async () => {
-
-//     let token = "6OJf8gPwzAT8T2HWAAEddPVCYFKyMrDe"
-
-//     const header = {
-//         "Authorization": `Bearer ${token}`,
-//         "Content-Type": "application/json"
-//     }
-//     let id = "8462be76-2aab-4ddc-84d7-77d696fa05a0"
-//     const response = await axios.get(`https://api.contaazul.com/v1/sales/${id}/pdf`, {
-//         headers: header
-//     })
-
-//     console.log(response)
-//     await prisma.person.findMany({
-//         where: {
-//             name: {
-//                 contains: "Ana Claudia Ferraz Franca"
-//             }
-//         }
-//     })
-//         .then(result => {
-//             const date = result[0].dataMatricula.split('/')
-//             // const datess = result[2].dataMatricula.split('/')
-
-//             console.log(
-//                 result[0].dataMatricula,
-//                 new Date(`${date[1]}-${date[0]}-${date[2]}`)
-//                 .setUTCHours(0, 0, 0, 0)
-//                 // >=
-//                 // new Date(`${datess[1]}-${datess[0]}-${datess[2]}`).setUTCHours(0, 0, 0, 0)
-//             )
-
-//         })
-// }
-// kk()
-
-// const kk = async () => {
-
-//     let token = "6OJf8gPwzAT8T2HWAAEddPVCYFKyMrDe"
-
-//     const header = {
-//         "Authorization": `Bearer ${await getToken("Centro", "_")}`,
-//         "Content-Type": "application/json"
-//     }
-//     let id = "8462be76-2aab-4ddc-84d7-77d696fa05a0"
-//     const response = await axios.get(`https://api.contaazul.com/v1/sales/${id}/pdf`, {
-//         headers: header
-//     })
-//     atob(response.data)
-
-//     // upload.fields(response.data)
-// }
-// kk()
-

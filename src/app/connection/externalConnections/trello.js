@@ -1,6 +1,6 @@
 import axios from "axios";
 import 'dotenv';
-import updateStageRd from "./rdStation.js";
+import { updateStageRd } from "./rdStation.js";
 import { SendSimpleWpp, SendtoWpp } from "./wpp.js";
 
 const list = {

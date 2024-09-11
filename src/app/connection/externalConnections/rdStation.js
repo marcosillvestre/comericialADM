@@ -17,9 +17,7 @@ const stageToBeUpdated = {
     "losePTB": "64bacb30693f48000d57686b",
 }
 
-async function updateStageRd(data, unity) {
-
-
+export async function updateStageRd(data, unity) {
     await axios.put(`https://crm.rdstation.com/api/v1/deals/${data.id}?token=${process.env.RD_TOKEN}`,
         { deal_stage_id: stageToBeUpdated[unity] })
         .then(async (res) => {
@@ -30,4 +28,56 @@ async function updateStageRd(data, unity) {
 }
 
 
-export default updateStageRd
+async function getDealId(name, aluno, classe) {
+    try {
+        const { data } = await axios.get(`https://crm.rdstation.com/api/v1/deals?token=${process.env.RD_TOKEN}&name=${name}`)
+        const { total, deals } = data
+        const result = []
+
+        for (const element of deals) {
+            let nameAluno = element.deal_custom_fields.filter(res =>
+                res.custom_field.label.includes('Nome do aluno'))
+                .map(res => res.value)[0]
+
+            let relatedClasse = element.deal_custom_fields.filter(res => res.custom_field.label.includes('Classe')).map(res => res.value)[0]
+
+            if (nameAluno.toLowerCase().includes(aluno.toLowerCase()) && relatedClasse === classe) result.push({ id: element.id, user: element.user })
+        }
+
+        return result
+
+    } catch (error) {
+        console.log(error)
+        return error
+    }
+
+}
+
+
+
+
+export async function createTasks(name, aluno, classe) {
+    const scheduledFor90Days = new Date()
+    scheduledFor90Days.setDate(scheduledFor90Days.getDate() + 90)
+
+    const deals = await getDealId(name, aluno, classe)
+
+    deals.forEach(async element => {
+
+        const { id, user } = element
+
+        const body = {
+            date: scheduledFor90Days,
+            deal_id: id,
+            notes: "Colher FeedBack com o aluno para teste de satisfação",
+            subject: "FeedBack",
+            type: "call",
+            user_ids: [user.id]
+
+        }
+        await axios.post(`https://crm.rdstation.com/api/v1/tasks?token=${process.env.RD_TOKEN}`, body)
+            .then(res => { if (res) console.log("FeedBack agendado") })
+            .catch(error => console.log(error))
+    });
+}
+
