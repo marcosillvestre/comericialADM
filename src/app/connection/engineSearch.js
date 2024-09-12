@@ -118,7 +118,7 @@ async function searchSync() {
                                     comissaoValor: "Pendente",
                                     diretorResponsavel: "Pendente",
                                     Valor: res.Valor || 0.0,
-                                    id: res.id,
+                                    id: 1,
                                     situMatric: "Pendente",
                                     paStatus: "Pendente",
 
@@ -182,9 +182,9 @@ async function searchSync() {
                                     comissaoStatus: "Pendente",
                                 }
                             })
-                                .then(() => {
+                                .then(async () => {
                                     console.log(`${res.name} foi cadastrado no sistema com sucesso`)
-                                    trelloCreateCard(res)
+                                    await trelloCreateCard(res)
                                 })
                                 .catch((err) => {
                                     if (err.meta) {
