@@ -98,6 +98,7 @@ class TrelloWebhook {
                                 {
                                     name: {
                                         contains: nameSearch,
+                                        mode: "insensitive"
                                     },
                                 },
                                 {
@@ -109,8 +110,8 @@ class TrelloWebhook {
                         }
                     })
 
-
-                    if (data) {
+                    console.log(nameSearch)
+                    if (data.length > 0) {
                         const update = async () => {
 
                             await prisma.person.update({
