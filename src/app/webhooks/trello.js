@@ -3,8 +3,8 @@ import "dotenv/config";
 import prisma from "../../database/database.js";
 import { Historic } from '../../database/historic/properties.js';
 import { createTasks, updateStageRd } from "../connection/externalConnections/rdStation.js";
-import { SendtoWpp } from '../connection/externalConnections/wpp.js';
-
+import { CreateCommentOnTrello } from '../connection/externalConnections/trello.js';
+import { SendtoWpp, StartChatbot } from '../connection/externalConnections/wpp.js';
 const historic = new Historic()
 class TrelloWebhook {
 
@@ -122,13 +122,17 @@ class TrelloWebhook {
                         }
 
 
-                        await createTasks(data[0].name, data[0].aluno, data[0].classe)
 
                         const storeHistoric = async () => {
                             await historic._store("Automatização", "paStatus", "Ok", data[0].contrato)
                         }
 
-                        Promise.all([storeHistoric(), update(),])
+                        Promise.all([
+                            storeHistoric(),
+                            update(),
+                            createTasks(data[0].name, data[0].aluno, data[0].classe),
+                            StartChatbot(data[0].name, data[0].tel, process.env.BOT_INICIO, "Início")
+                        ])
                     }
                 }
 
@@ -137,6 +141,29 @@ class TrelloWebhook {
                 console.log(error)
             }
         }
+
+        return res.status(200).send("Accepted")
+    }
+
+    async feedBack(req, res) {
+        const { nome, telefone, relato, nota } = req.body
+
+        let formatedNumber = telefone.slice(5, telefone.length)
+
+        const search = await prisma.person.findFirst({
+            where: {
+                tel: {
+                    contains: formatedNumber
+                }
+            }
+        })
+
+
+        if (!search) return res.status(400).json({ message: `${nome} não encontrado na base de dado` })
+
+        const { name, unidade, professor, aluno } = search
+        await CreateCommentOnTrello(name, unidade, `${aluno} realizou a pesquisa de satisfação da primeira aula, Professor: ${professor} , Nota: ${nota},Relato: "${relato}".`)
+
 
         return res.status(200).send("Accepted")
     }

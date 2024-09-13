@@ -25,13 +25,13 @@ const upload = multer({ storage: storage })
 routes.post('/contrato', parser, PostConttroller.sender)
 
 routes.post('/webhook-trello', TrelloWebhook.capture)
+routes.post('/feedback', TrelloWebhook.feedBack)
 
 routes.post('/login', SessionController.store)
 
 routes.post('/redefinir-senha', SessionController.forgetPassword)
 
 routes.post('/nova-senha', SessionController.redefinePassword)
-
 
 
 routes.use(auth) // autenticated routes

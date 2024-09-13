@@ -202,6 +202,3 @@ export async function SendRematriculaToTrello(data, unity) {
         })
 
 }
-
-
-
