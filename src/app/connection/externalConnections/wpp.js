@@ -31,7 +31,7 @@ export async function SendtoWpp(message, unity) {
 export async function SendSimpleWpp(name, phone, message) {
     const messageBody = {
         "toPhone": phone,
-        "fromPhone": "+5531987371953",
+        "fromPhone": process.env.FROM,
         "organizationId": process.env.UMBLER_ORG_ID,
         "message": message,
         "file": null,
@@ -44,3 +44,25 @@ export async function SendSimpleWpp(name, phone, message) {
         .catch(err => console.log(err.response.data))
 
 }
+
+
+
+export async function StartChatbot(name, phone, chatBotId, botName) {
+
+    const messageBody = {
+        "toPhone": phone,
+
+        "fromPhone": process.env.FROM,
+        "botId": chatBotId,
+        "triggerName": botName,
+        "organizationId": process.env.UMBLER_ORG_ID,
+
+        "contactName": name,
+    }
+    await axios.post("https://app-utalk.umbler.com/api/v1/chats/start-bot", messageBody, { headers })
+        .then(() => console.log(`enviado para ${name} com sucesso`))
+        .catch(err => console.log(err.response.data))
+
+}
+
+// await StartChatbot("marcos", "31 97337-5058", "ZuHsKJ5N9i3HZ8cD", "Início")

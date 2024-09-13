@@ -165,7 +165,7 @@ class TrelloWebhook {
         await CreateCommentOnTrello(name, unidade, `${aluno} realizou a pesquisa de satisfação da primeira aula, Professor: ${professor} , Nota: ${nota},Relato: "${relato}".`)
 
 
-        return res.status(200).send("Accepted")
+        return res.status(200).json({ name, unidade, professor, aluno })
     }
 
 }
