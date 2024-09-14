@@ -5,6 +5,7 @@ import { stages } from "../../utils/stage.js";
 
 import prisma from '../../database/database.js';
 import { Historic } from "../../database/historic/properties.js";
+import { getDealIdWithCPf } from '../connection/externalConnections/rdStation.js';
 import { CreateCommentOnTrello } from '../connection/externalConnections/trello.js';
 const historic = new Historic()
 const limit = 200
@@ -302,77 +303,106 @@ class PostController {
     }
 
     async sender(req, res) {
-        const str = JSON.stringify(req.body)
-        const obj = JSON.parse(str)
+        const str = req.body
 
-        const name1 = obj['partes[0][nome]']
-        const email1 = obj['partes[0][email]']
-        const signed1 = obj['partes[0][assinado][created]']?.split("+")[0]
+        const f = str[0].partes.map(res => {
+            return {
+                nome: res.nome,
+                email: res.email,
+                cpf: res.cpf,
+                celular: res.celular,
+                assinado: res.assinado.created
 
-        const name2 = obj['partes[1][nome]']
-        const email2 = obj['partes[1][email]']
-        const signed2 = obj['partes[1][assinado][created]']?.split("+")[0]
-
-
-        const body1 = {
-            name1,
-            email1,
-            signed1,
-        }
-        const body2 = {
-            name2,
-            email2,
-            signed2,
-        }
-
-        const Status = {
-            body1, body2
-        }
-        const newArr = []
-
-
-        console.log("name1" + name1)
-        await prisma.person.findMany({
-            where: {
-                acStatus: "Pendente"
             }
         })
-            .then(async res => {
-                newArr.push(Status)
-                let data = res.filter(item => item.name.toLowerCase().includes(name1.toLowerCase()))
-                if (data.length > 0) {
-                    try {
-                        const signing = async () => {
-                            await prisma.person.update({
-                                where: { contrato: data[0].contrato },
-                                data: {
-                                    "dataAC": newArr,
-                                    "acStatus": "Ok"
-                                }
-                            }).then(() => console.log(Status))
-                        }
-                        const storeHistoric = async () => {
-                            await historic._store("Automatização", "acStatus", "Ok", data[0].contrato)
-                        }
 
-                        console.log("data" + data[0].name)
+        let founded = f.find(res => res.email !== "americanwaycloud@gmail.com")
+        if (!founded) return res.status(400).json({ message: "Cliente não assinou ainda" })
 
-                        Promise.all([
-                            storeHistoric(),
-                            signing(),
-                            CreateCommentOnTrello(data[0].name, data[0].unidade, `${data[0].name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`),
-                        ])
+        const { nome, cpf } = founded
+        const namesForSearch = await getDealIdWithCPf(nome, cpf)
 
 
-                    } catch (error) {
-                        if (error) {
-                            console.log("Contrato não encontrado")
-                        }
-                    }
-                }
+        const contracts = await Promise.all(namesForSearch.map(async element => {
+            const search = await prisma.person.findFirst({
+                where: {
+                    AND: [
+                        {
+                            name: {
+                                contains: element,
+                                mode: "insensitive"
+                            },
+                        },
+                        {
+                            acStatus: "Pendente",
+                        },
+                    ],
+                },
             })
 
-        return res.status(200).json({ message: "worked" })
+            if (!search) return
+            const { contrato, name, unidade } = search
+
+            return { contrato, name, unidade }
+
+        }));
+
+
+
+        let counter = 0
+        const SendAllPromises = async (page) => {
+
+            try {
+                const { contrato, name, unidade } = contracts[page]
+
+
+                await prisma.person.update({
+                    where: { contrato: contrato },
+                    data: {
+                        dataAC: [{
+                            body1: {
+                                name1: f[0].nome,
+                                email1: f[0].email,
+                                signed1: f[0].assinado,
+                            },
+                            body2: {
+                                name2: f[1].nome,
+                                email2: f[1].email,
+                                signed2: f[1].assinado,
+                            }
+                        }],
+                        acStatus: "Ok"
+                    }
+                })
+                    .then(async () => {
+
+                        const storeHistoric = async () => {
+                            await historic._store("Automatização", "acStatus", "Ok", contrato)
+                        }
+                        await Promise.all([
+                            storeHistoric(),
+                            CreateCommentOnTrello(name, unidade, `${name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`),
+                        ])
+                    })
+                    .catch(() => {
+                        counter = + 1
+                        SendAllPromises(counter)
+                    })
+
+
+            } catch (error) {
+                console.log(error)
+                console.log("Contrato não encontrado")
+            }
+        }
+
+        if (contracts.every(res => res === undefined)) {
+            console.log("Não encontrado no sistema")
+            return res.status(400).json({ message: "Não encontrado no sistema" })
+        }
+
+        await SendAllPromises(counter)
+        return res.status(200).json({ message: "deu certo" })
     }
 
     async update(req, res) {

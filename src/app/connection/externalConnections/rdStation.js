@@ -81,3 +81,27 @@ export async function createTasks(name, aluno, classe) {
     });
 }
 
+
+
+
+export async function getDealIdWithCPf(name, cpf) {
+    try {
+        const { data } = await axios.get(`https://crm.rdstation.com/api/v1/deals?token=${process.env.RD_TOKEN}&name=${name}`)
+        const { total, deals } = data
+        const result = []
+
+        for (const element of deals) {
+            let realatedCPF = element.deal_custom_fields.filter(res =>
+                res.custom_field.label.includes('CPF'))
+                .map(res => res.value)[0]
+
+            if (realatedCPF === cpf) result.push(element.name)
+        }
+        return result
+
+    } catch (error) {
+        console.log(error)
+        return error
+    }
+
+}
