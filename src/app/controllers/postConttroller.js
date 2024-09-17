@@ -3,6 +3,7 @@ import "dotenv/config";
 import { funis } from "../../utils/funnels.js";
 import { stages } from "../../utils/stage.js";
 
+import { DateTransformer } from '../../config/DateTransformer.js';
 import prisma from '../../database/database.js';
 import { Historic } from "../../database/historic/properties.js";
 import { getDealIdWithCPf } from '../connection/externalConnections/rdStation.js';
@@ -382,6 +383,7 @@ class PostController {
                         await Promise.all([
                             storeHistoric(),
                             CreateCommentOnTrello(name, unidade, `${name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`),
+
                         ])
                     })
                     .catch(() => {
@@ -551,140 +553,42 @@ class PostController {
     }
 
     async indexPeriod(req, res) {
-        const { range, role, name, unity, dates, types, skip, take } = req.query
+        const { range, role, name, unity, dates, skip, take } = req.query
 
         const skipParsed = parseInt(skip)
-        const dbData = await prisma.person.findMany()
 
+        const [initial, final] = dates.split("~")
 
         try {
+            const dbData = await prisma.person.findMany()
             const endData = take !== 'all' ? parseInt(take) : dbData.length
 
-            const settledPeriod = {
-                "Mês passado": 1, //
-                "Mês retrasado": 2, //
-                "Este mês": 3,
-                "Personalizado": 0,//
-            }
-            const rangePeriod = {
-                "Últimos 7 dias": 7,
-                "Todo período": dbData.length,
-            }
 
-            const currentDay = new Date()
+            const filtered = role === 'comercial' ?
+                dbData.filter(res => res.owner.toLowerCase().includes(name.toLowerCase())) :
+                dbData
 
-            if (settledPeriod[range] === 3) {
-                const dbData = await prisma.person.findMany()
-                const filtered = role === 'comercial' ? dbData.filter(res => res.owner.toLowerCase().includes(name.toLowerCase())) : dbData
-                const firstDayThisMonth = new Date(currentDay.getFullYear(), currentDay.getMonth(), 1);
-                firstDayThisMonth.setUTCHours(0, 0, 0, 0);
-
-                const generalMonthsBefore = filtered?.filter(res => {
-                    const date = res[types].split("/")
-                    return new Date(`${date[1]}-${date[0]}-${date[2]}`).setUTCHours(0, 0, 0, 0) >= firstDayThisMonth
-                })
+            const initialDate = new Date(initial).setUTCHours(0, 0, 0, 0)
+            const finalDate = new Date(final).setUTCHours(0, 0, 0, 0)
 
 
-                const slicedData = generalMonthsBefore.slice(skipParsed, endData + skipParsed)
+            const DateFilter = await Promise.all(filtered.map(async r => {
+                let date = await DateTransformer(r.dataMatricula)
 
-                return res.status(200).json({
-                    period: range,
-                    total: generalMonthsBefore.length,
-                    deals: slicedData
-                })
+                return (date >= initialDate && date <= finalDate) ? r : null;
 
+            }))
 
-            }
-
-            if (settledPeriod[range] === 1 || settledPeriod[range] === 2) {
-                const dbData = await prisma.person.findMany()
-
-                const firstDayLastMonth = new Date(currentDay.getFullYear(), currentDay.getMonth(), 1);
-
-                firstDayLastMonth.setMonth(firstDayLastMonth.getMonth() - settledPeriod[range]);
-
-                const diaDeHoje = new Date();
-                const diaPrimeiroDesseMes = new Date(diaDeHoje.getFullYear(), diaDeHoje.getMonth(), 1);
-
-                const primeiroDiaDoMesPassado = new Date(diaPrimeiroDesseMes);
+            let generalMonthsBefore = DateFilter.filter(res => res !== null)
 
 
-                primeiroDiaDoMesPassado.setMonth(primeiroDiaDoMesPassado.getMonth() - settledPeriod[range]);
-                const lastDayLastMonth = new Date(primeiroDiaDoMesPassado);
-                lastDayLastMonth.setMonth(lastDayLastMonth.getMonth() + 1);
-                lastDayLastMonth.setDate(0);
+            const slicedData = generalMonthsBefore.slice(skipParsed, endData + skipParsed)
 
-                lastDayLastMonth.setUTCHours(0, 0, 0, 0);
-                firstDayLastMonth.setUTCHours(0, 0, 0, 0);
-
-                const filtered = role === 'comercial' ? dbData.filter(res => res.owner.toLowerCase().includes(name.toLowerCase())) : dbData
-
-
-                const generalMonthsBefore = filtered?.filter(res => {
-                    const date = res[types].split("/")
-                    return new Date(`${date[1]}-${date[0]}-${date[2]}`).setUTCHours(0, 0, 0, 0) >=
-                        firstDayLastMonth &&
-                        new Date(`${date[1]}-${date[0]}-${date[2]}`).setUTCHours(0, 0, 0, 0) <=
-                        lastDayLastMonth
-                })
-
-                const slicedData = generalMonthsBefore.slice(skipParsed, endData + skipParsed)
-
-                return res.status(200).json({
-                    period: range,
-                    total: generalMonthsBefore.length,
-                    deals: slicedData
-                })
-            }
-
-            if (settledPeriod[range] === 0) {
-                const dbData = await prisma.person.findMany()
-                const mixedDates = dates.split("~")
-
-                if (!(mixedDates.some(res => res === 'undefined'))) {
-
-                    const filtered = role === 'comercial' ? dbData.filter(res => res.owner.toLowerCase().includes(name.toLowerCase())) : dbData
-
-                    const generalRangeDates = filtered?.filter(res => {
-                        const date = res[types].split("/")
-
-
-                        return new Date(`${date[1]}-${date[0]}-${date[2]}`) >= new Date(mixedDates[0]) &&
-                            new Date(`${date[1]}-${date[0]}-${date[2]}`) <= new Date(mixedDates[1])
-                    })
-
-                    const slicedData = generalRangeDates.slice(skipParsed, endData + skipParsed)
-
-                    return res.status(200).json({
-                        period: range,
-                        total: generalRangeDates.length,
-                        deals: slicedData
-                    })
-                }
-            }
-
-            if (rangePeriod[range] !== undefined) {
-                const dbData = await prisma.person.findMany()
-
-                const periodDate = new Date(currentDay.setDate(currentDay.getDate() - rangePeriod[range]))
-                const filtered = role === 'comercial' ? dbData.filter(res => res.owner.toLowerCase().includes(name.toLowerCase())) : dbData
-
-                const generalRangePeriod = filtered?.filter(res => {
-                    const date = res[types].split("/")
-                    return new Date(`${date[1]}-${date[0]}-${date[2]}`).setUTCHours(0, 0, 0, 0) >= periodDate
-                })
-
-
-                const slicedData = generalRangePeriod.slice(skipParsed, endData + skipParsed)
-
-
-                return res.status(200).json({
-                    period: range,
-                    total: generalRangePeriod.length,
-                    deals: slicedData
-                })
-
-            }
+            return res.status(200).json({
+                period: range,
+                total: generalMonthsBefore.length,
+                deals: slicedData
+            })
 
 
 
@@ -695,28 +599,64 @@ class PostController {
         }
 
     }
+
     async query(req, res) {
-        const { param, value } = req.query
-        try {
+        const { param, value, range, name, role } = req.query
 
-
+        if (range) {
+            const [initial, final] = range.split("~")
             const dbData = await prisma.person.findMany({
                 where: {
                     [param]: {
-                        contains: value
+                        contains: value,
+                        mode: "insensitive"
                     }
                 }
             })
+            const filtered = role === 'comercial' ?
+                dbData.filter(res => res.owner.toLowerCase().includes(name.toLowerCase())) :
+                dbData
 
+            const initialDate = new Date(initial)
+            const finalDate = new Date(final)
 
-            if (dbData) return res.status(200).json({
-                period: dbData[0].name,
-                total: dbData.length,
-                deals: dbData
+            const DateFilter = await Promise.all(filtered.map(async r => {
+                let date = await DateTransformer(r.dataMatricula)
+
+                return (date >= initialDate && date <= finalDate) ? r : null;
+
+            }))
+
+            let generalMonthsBefore = DateFilter.filter(res => res !== null)
+
+            return res.status(200).json({
+                period: range,
+                total: generalMonthsBefore.length,
+                deals: generalMonthsBefore
             })
-        } catch (error) {
-            console.log(error)
-            return res.status(400).json({ message: "Erro" })
+
+        } else {
+
+            try {
+                const dbData = await prisma.person.findMany({
+                    where: {
+                        [param]: {
+                            contains: value,
+                            mode: "insensitive"
+                        }
+                    }
+                })
+
+
+                if (dbData) return res.status(200).json({
+                    period: dbData[0]?.name,
+                    total: dbData.length,
+                    deals: dbData
+                })
+            } catch (error) {
+                console.log(error)
+                return res.status(400).json({ message: "Não encontrado" })
+            }
         }
     }
 
