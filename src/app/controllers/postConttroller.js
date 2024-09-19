@@ -8,7 +8,7 @@ import prisma from '../../database/database.js';
 import { Historic } from "../../database/historic/properties.js";
 import { getDealIdWithCPf } from '../connection/externalConnections/rdStation.js';
 import { CreateCommentOnTrello } from '../connection/externalConnections/trello.js';
-import { ScheduleBotMessages, SendSimpleWpp } from '../connection/externalConnections/wpp.js';
+import { ScheduleBotMessages } from '../connection/externalConnections/wpp.js';
 const historic = new Historic()
 const limit = 200
 const comebackDays = 3
@@ -314,7 +314,7 @@ class PostController {
 
         const f = partes.map(async res => {
 
-            // if (res.nome) await historic._store(res.nome, "Contrato", "Assinado", contract)
+            if (res.nome) await historic._store(res.nome, "Contrato", "Assinado", contract)
 
             return {
                 nome: res.nome,
@@ -385,7 +385,7 @@ Te esperamos na aula 👩‍💻`,
 
         if (!contracts) {
             console.log("Não encontrado no sistema")
-            return res.status(400).json({ message: "Não encontrado no sistema" })
+            return res.status(400).json({ message: "Não encontrado no sistema ou já assinado" })
         }
 
         const SendAllPromises = async () => {
