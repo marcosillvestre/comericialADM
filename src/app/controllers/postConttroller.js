@@ -309,7 +309,7 @@ class PostController {
 
         const { partes, documento } = str
 
-        const [_, contract] = documento.nome.split("_")
+        const [_, contract] = documento.nome.split("+")
 
 
         const f = partes.map(async res => {
