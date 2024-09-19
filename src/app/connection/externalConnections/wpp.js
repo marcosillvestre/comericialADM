@@ -1,6 +1,6 @@
 import axios from 'axios'
 import 'dotenv/config'
-
+import { DateTransformer } from '../../../config/DateTransformer.js'
 const headers = {
     accept: 'application/json',
     Authorization: `Bearer ${process.env.UMBLER_TOKEN}`,
@@ -46,6 +46,37 @@ export async function SendSimpleWpp(name, phone, message) {
 }
 
 
+export async function ScheduleBotMessages(name, phone, message, date, botName) {
+
+    const isoDate = await DateTransformer(date)
+    const schedule = new Date(isoDate)
+    schedule.setDate(schedule.getDate() - 1)
+
+    schedule.setUTCHours(17, 25, 0, 0)
+
+    const messageBody = {
+        "toPhone": phone,
+        "fromPhone": process.env.FROM,
+        "organizationId": process.env.UMBLER_ORG_ID,
+        "message": message,
+        "file": null,
+        "contactName": name,
+
+        "dateSendAtUTC": schedule,
+
+        "botId": process.env.BOT_LEMBRETE,
+        "botTriggerName": botName,
+        "botName": botName
+    }
+
+
+    await axios.post("https://app-utalk.umbler.com/api/v1/scheduled-messages", messageBody, { headers })
+        .then(() => console.log(`enviado para ${name} com sucesso`))
+        .catch(err => console.log(err.response.data))
+
+}
+
+
 
 export async function StartChatbot(name, phone, chatBotId, botName) {
 
@@ -64,5 +95,3 @@ export async function StartChatbot(name, phone, chatBotId, botName) {
         .catch(err => console.log(err.response.data))
 
 }
-
-// await StartChatbot("marcos", "31 97337-5058", "ZuHsKJ5N9i3HZ8cD", "Início")

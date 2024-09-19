@@ -3,6 +3,7 @@ import { CronJob } from "cron";
 
 import syncContaAzul from "../connection/contaAzulSyncDatabase.js";
 import searchSync from '../connection/engineSearch.js';
+import firstClassSearch from "../connection/FirstClassSearch.js";
 import orderBooks from "../connection/orderingBooks.js";
 import renewContracts from '../connection/searchEndContractsRd.js';
 
@@ -18,6 +19,10 @@ const functionsArray = [
     {
         time: "0 0 8 * * mon",
         fn: orderBooks
+    },
+    {
+        time: "0 0 9 * * mon",
+        fn: firstClassSearch
     },
     {
         time: "0 */2 * * *",

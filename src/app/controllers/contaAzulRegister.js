@@ -1,6 +1,7 @@
 import axios from 'axios';
 import 'dotenv/config';
 import moment from 'moment';
+import { DateTransformer } from '../../config/DateTransformer.js';
 import { getToken } from '../core/getToken.js';
 
 
@@ -145,7 +146,7 @@ class RegisterContaAzulController {
 
                             let value = parseFloat(valorCurso) / parseInt(numeroParcelas)
 
-                            let venc = new Date(`${ppVencimento.split("/")[1]}/${ppVencimento.split("/")[0]}/${ppVencimento.split("/")[2]}`)
+                            let venc = await DateTransformer(ppVencimento)
                             venc.setDate(venc.getDate() - 20)
 
                             let less20Days = venc.toISOString()

@@ -31,7 +31,7 @@ async function SyncContaAzulAndDatabase(header) {
     console.log("db")
 
     const backDay = new Date()
-    const comebackDays = 25
+    const comebackDays = 90
     backDay.setDate(backDay.getDate() - comebackDays)
     const startDate = backDay.toISOString()
 
@@ -42,12 +42,25 @@ async function SyncContaAzulAndDatabase(header) {
         const sales = await axios.get(`https://api.contaazul.com/v1/sales?emission_start=${startDate}&emission_end=${endDate}&size=1000`, { headers: header })
 
 
-        const filtered = sales.data.filter(res => {
+
+        const filtered = sales.data.filter(async res => {
             const status = res.payment.installments[0]?.status
             let notes = res.notes
             let cleanData = notes.replace(/\\n/g, "")
-            return status === "ACQUITTED" && notes !== '' && JSON.parse(!(cleanData.includes("(")))
+
+            let parsed = () => {
+                try {
+                    return JSON.parse(cleanData)
+                } catch (error) {
+                    console.log(res.customer.name)
+                    return false
+                }
+            }
+
+            return status === "ACQUITTED" && notes !== '' && await parsed()
         })
+
+        console.log(filtered.length)
 
         let notes = filtered.map(res => {
             try {
@@ -68,7 +81,7 @@ async function SyncContaAzulAndDatabase(header) {
                 }
             } catch (error) {
                 // console.log(res)
-                // console.log(`${res.customer.name} => error`)
+                console.log(`${res.customer.name} => error`)
             }
 
         })
@@ -76,7 +89,7 @@ async function SyncContaAzulAndDatabase(header) {
 
         await SearchEachSync(notes.filter(response => response !== undefined))
     } catch (error) {
-        console.log(error.response.data)
+        console.log("error")
     }
 }
 
@@ -204,14 +217,13 @@ async function UpdateEachOne(where, data) {
                         let message = `${response.name}` + "-- realizou o pagamento do material didático ||" + " `" + `${response.materialDidatico}` + "`"
                         await SendtoWpp(message, response.unidade)
 
-                        let filtered = response.materialDidatico.filter(res => res.includes("BK"))
 
-                        if (filtered.length > 0) {
 
+                        if (response.materialDidatico.length > 0) {
 
                             let bodyOrder = {
                                 body: {
-                                    orders: await order(response.name, filtered, response.unidade),
+                                    orders: await order(response.name, response.materialDidatico, response.unidade),
                                     unity: idList[response.unidade]
                                 }
                             }
@@ -285,9 +297,6 @@ async function SyncOrdersToContaAzul(header, unity) {
 }
 
 
-
-
-
 const syncContaAzul = async () => {
     console.log("Payments ca updates")
 
@@ -295,6 +304,8 @@ const syncContaAzul = async () => {
         const header = {
             "Authorization": `Bearer ${await getToken(realToken, 'refresh')}`
         }
+
+
         await Promise.all([
             SyncContaAzulAndDatabase(header),
             SyncOrdersToContaAzul(header, realToken)
@@ -303,5 +314,9 @@ const syncContaAzul = async () => {
 
     }
 }
+
+// syncContaAzul()
+
+
 
 export default syncContaAzul

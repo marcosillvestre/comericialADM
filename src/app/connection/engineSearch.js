@@ -106,6 +106,29 @@ async function searchSync() {
                 }
                 if (array) {
                     array.map(async res => {
+
+
+                        const searchHistoric = await prisma.historic.findMany({
+                            where: {
+                                information: {
+                                    equals: {
+                                        field: "Contrato",
+                                        to: "Assinado",
+                                        from: res.contrato
+                                    }
+                                }
+                            }
+                        })
+
+                        const signed = () => {
+                            if (searchHistoric) {
+                                const isThere = searchHistoric.find(sign => sign.responsible !== "American Way")
+                                return isThere ? "Pendente" : "Ok"
+                            }
+                            return "Pendente"
+                        }
+
+
                         if (!(res.contrato.includes("/"))) {
                             await prisma.person.create({
                                 data: {
@@ -129,7 +152,7 @@ async function searchSync() {
                                     inicioContrato: res.inicioContrato,
                                     fimContrato: res.fimContrato,
                                     acFormato: res.acFormato,
-                                    acStatus: "Pendente",
+                                    acStatus: await signed(),
                                     tmValor: res.tmValor,
                                     tmVencimento: res.tmVencimento,
                                     tmStatus: "Pendente",
@@ -285,5 +308,6 @@ async function trelloCreateCard(object) {
 
         })
 }
+
 
 export default searchSync

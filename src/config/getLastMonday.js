@@ -8,7 +8,7 @@ export function getLastMondayCode(date = new Date) {
 }
 
 
-export function getLastWeekMondayCode(date = new Date) {
+export function getLastWeekMondayCode() {
     let code = getLastMondayCode();
 
     code.split();

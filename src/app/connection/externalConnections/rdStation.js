@@ -84,18 +84,47 @@ export async function createTasks(name, aluno, classe) {
 
 
 
-export async function getDealIdWithCPf(name, cpf) {
+export async function getDealIdWithCPf(name, cpf, contract) {
+
+    // console.log(name, cpf, contract)
+
+
     try {
         const { data } = await axios.get(`https://crm.rdstation.com/api/v1/deals?token=${process.env.RD_TOKEN}&name=${name}`)
         const { total, deals } = data
-        const result = []
+        let result;
 
         for (const element of deals) {
-            let realatedCPF = element.deal_custom_fields.filter(res =>
+
+            const cField = element.deal_custom_fields
+
+            let realatedCPF = cField.filter(res =>
                 res.custom_field.label.includes('CPF'))
                 .map(res => res.value)[0]
 
-            if (realatedCPF === cpf) result.push(element.name)
+            let contrato = cField.filter(res =>
+                res.custom_field.label.includes('Nº do contrato'))
+                .map(res => res.value)[0]
+
+            let pAula = cField.filter(res =>
+                res.custom_field.label.includes('Data da primeira aula'))
+                .map(res => res.value)[0]
+
+            let unidade = cField.filter(res =>
+                res.custom_field.label.includes('Unidade'))
+                .map(res => res.value)[0]
+
+            let tel = element.contacts.map(res => res.phones).map(res => res[0]?.phone)[0]
+
+            let curso = cField.filter(res =>
+                res.custom_field.label.includes('Curso'))
+                .map(res => res.value)[0]
+
+            if (contract) {
+                if (realatedCPF === cpf && contrato === contract) return result = { key: "contrato", value: contrato, tel, pAula, unidade, curso }
+            }
+
+            if (realatedCPF === cpf) return result = { key: "name", value: element.name, tel, pAula, unidade, curso }
         }
         return result
 
@@ -105,3 +134,5 @@ export async function getDealIdWithCPf(name, cpf) {
     }
 
 }
+
+

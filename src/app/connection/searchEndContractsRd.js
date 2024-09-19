@@ -47,7 +47,7 @@ async function updateRdData(unity, page) {
             }
 
             if (deals.length === 200) {
-                page = page + 1
+                page += 1
                 updateRdData(unity, page)
             }
         })
@@ -63,6 +63,5 @@ const renewContracts = async () => {
         await updateRdData(unity, page)
     }
 }
-
 
 export default renewContracts

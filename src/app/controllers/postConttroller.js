@@ -8,6 +8,7 @@ import prisma from '../../database/database.js';
 import { Historic } from "../../database/historic/properties.js";
 import { getDealIdWithCPf } from '../connection/externalConnections/rdStation.js';
 import { CreateCommentOnTrello } from '../connection/externalConnections/trello.js';
+import { ScheduleBotMessages, SendSimpleWpp } from '../connection/externalConnections/wpp.js';
 const historic = new Historic()
 const limit = 200
 const comebackDays = 3
@@ -63,7 +64,7 @@ class PostController {
                             aluno: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome do aluno')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome do aluno')).map(res => res.value)[0] : "Sem este dado no rd",
                             tel: index.contacts.map(res => res.phones).map(res => res[0]?.phone)[0] ? index.contacts.map(res => res.phones).map(res => res[0]?.phone)[0] : "Sem este dado no rd",
                             email: index.contacts.map(res => res.emails).map(res => res[0]?.email)[0] ? index.contacts.map(res => res.emails).map(res => res[0]?.email)[0] : "Sem este dado no rd",
-                            paDATA: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data da primeira aula')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data da primeira aula')).map(res => res.value)[0] : "Sem este dado no rd",
+                            pAula: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data da primeira aula')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data da primeira aula')).map(res => res.value)[0] : "Sem este dado no rd",
                             classe: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Classe')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Classe')).map(res => res.value)[0] : "Sem este dado no rd",
                             subclasse: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Subclasse')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Subclasse')).map(res => res.value)[0] : "Sem este dado no rd",
                             ppStatus: "Pendente",
@@ -306,7 +307,15 @@ class PostController {
     async sender(req, res) {
         const str = req.body
 
-        const f = str[0].partes.map(res => {
+        const { partes, documento } = str
+
+        const [_, contract] = documento.nome.split("_")
+
+
+        const f = partes.map(async res => {
+
+            // if (res.nome) await historic._store(res.nome, "Contrato", "Assinado", contract)
+
             return {
                 nome: res.nome,
                 email: res.email,
@@ -317,79 +326,98 @@ class PostController {
             }
         })
 
-        let founded = f.find(res => res.email !== "americanwaycloud@gmail.com")
+
+        let founded = await f.find(res => res.nome !== "American Way")
+
         if (!founded) return res.status(400).json({ message: "Cliente não assinou ainda" })
 
         const { nome, cpf } = founded
-        const namesForSearch = await getDealIdWithCPf(nome, cpf)
+
+        const { key, value, tel, pAula, unidade, curso } = await getDealIdWithCPf(nome, cpf, contract)
+
+        const unityNumber = {
+            "Golfinho Azul": "31 8713-7018",
+            'PTB': "31 8713-7018",
+            'Centro': "31 8284-0590"
+        }
+
+        const curseMessages = {
+            "Inglês": `Hello, ${nome}. Tudo bem com você? 😊
+Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar 
+boas-vindas ao nosso curso de Inglês. 
+Está pronto para deixar o verbo to be para trás? 🏃💨
+
+Sua jornada rumo à fluência está prestes a começar, 
+e eu vou estar aqui para te ajudar em cada passo do caminho.
+Se tiver alguma dúvida ou precisar de qualquer coisa,
+envie uma mensagem para o número pedagógico ${unityNumber[unidade]} . 
+I’ll see you in class`,
+            "Espanhol": `Hola, ${nome}. Tudo bem com você? 😊
+Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar boas-vindas ao nosso curso de Espanhol. Está pronto para deixar o portunhol para trás? 🏃💨
+Sua jornada rumo à fluência está prestes a começar, e eu vou estar aqui para te ajudar em cada passo do caminho. Se tiver alguma dúvida ou precisar de qualquer coisa, 
+envie uma mensagem para o número pedagógico ${unityNumber[unidade]}.
+Te veo en la clase 🇪🇸`,
+            "Tecnologia": `Hello, ${nome}. Tudo bem com você? 😊
+Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar boas-vindas ao nosso curso de informática. Está pronto para aprender a montar documentos e planilhas completas? 😎
+Em poucos meses você vai estar dominando o Pacote Office, e eu vou estar aqui para te ajudar em cada passo do caminho. Se tiver alguma dúvida ou precisar de qualquer coisa,
+envie uma mensagem para o número pedagógico ${unityNumber[unidade]}.
+Te esperamos na aula 👩‍💻`,
+        }
+
+        await Promise.all([
+            SendSimpleWpp(nome, tel, curseMessages[curso]),
+            ScheduleBotMessages(nome, tel, "Olá", pAula, "Lembrete da primeira aula")
+
+        ])
 
 
-        const contracts = await Promise.all(namesForSearch.map(async element => {
-            const search = await prisma.person.findFirst({
-                where: {
-                    AND: [
-                        {
-                            name: {
-                                contains: element,
-                                mode: "insensitive"
-                            },
-                        },
-                        {
-                            acStatus: "Pendente",
-                        },
-                    ],
+
+        const contracts = await prisma.person.findFirst({
+            where: {
+                [key]: {
+                    contains: value,
+                    mode: "insensitive"
                 },
-            })
-
-            if (!search) return
-            const { contrato, name, unidade } = search
-
-            return { contrato, name, unidade }
-
-        }));
+                acStatus: "Pendente",
+            },
+        })
 
 
+        if (!contracts) {
+            console.log("Não encontrado no sistema")
+            return res.status(400).json({ message: "Não encontrado no sistema" })
+        }
 
-        let counter = 0
-        const SendAllPromises = async (page) => {
+        const SendAllPromises = async () => {
 
             try {
-                const { contrato, name, unidade } = contracts[page]
+                const { contrato, name, unidade } = contracts
 
-
-                await prisma.person.update({
-                    where: { contrato: contrato },
-                    data: {
-                        dataAC: [{
-                            body1: {
-                                name1: f[0].nome,
-                                email1: f[0].email,
-                                signed1: f[0].assinado,
-                            },
-                            body2: {
-                                name2: f[1].nome,
-                                email2: f[1].email,
-                                signed2: f[1].assinado,
-                            }
-                        }],
-                        acStatus: "Ok"
-                    }
-                })
-                    .then(async () => {
-
-                        const storeHistoric = async () => {
-                            await historic._store("Automatização", "acStatus", "Ok", contrato)
+                const update = async () => {
+                    await prisma.person.update({
+                        where: { contrato: contrato },
+                        data: {
+                            dataAC: [{
+                                body1: {
+                                    name1: f[0].nome,
+                                    email1: f[0].email,
+                                    signed1: f[0].assinado,
+                                },
+                                body2: {
+                                    name2: f[1].nome,
+                                    email2: f[1].email,
+                                    signed2: f[1].assinado,
+                                }
+                            }],
+                            acStatus: "Ok"
                         }
-                        await Promise.all([
-                            storeHistoric(),
-                            CreateCommentOnTrello(name, unidade, `${name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`),
+                    })
+                }
 
-                        ])
-                    })
-                    .catch(() => {
-                        counter = + 1
-                        SendAllPromises(counter)
-                    })
+                await Promise.all([
+                    update(),
+                    CreateCommentOnTrello(name, unidade, `${name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`),
+                ])
 
 
             } catch (error) {
@@ -398,12 +426,7 @@ class PostController {
             }
         }
 
-        if (contracts.every(res => res === undefined)) {
-            console.log("Não encontrado no sistema")
-            return res.status(400).json({ message: "Não encontrado no sistema" })
-        }
-
-        await SendAllPromises(counter)
+        await SendAllPromises()
         return res.status(200).json({ message: "deu certo" })
     }
 
