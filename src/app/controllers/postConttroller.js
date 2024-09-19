@@ -8,7 +8,7 @@ import prisma from '../../database/database.js';
 import { Historic } from "../../database/historic/properties.js";
 import { getDealIdWithCPf } from '../connection/externalConnections/rdStation.js';
 import { CreateCommentOnTrello } from '../connection/externalConnections/trello.js';
-import { ScheduleBotMessages } from '../connection/externalConnections/wpp.js';
+import { ScheduleBotMessages, SendSimpleWpp } from '../connection/externalConnections/wpp.js';
 const historic = new Historic()
 const limit = 200
 const comebackDays = 3
