@@ -309,40 +309,43 @@ class PostController {
 
         const { partes, documento } = str
 
-        const [_, contract] = documento.nome.split("+")
+        if (documento.nome.contains("adesao")) {
 
 
-        const f = partes.map(async res => {
+            const [_, contract] = documento.nome.split("+")
 
-            if (res.nome) await historic._store(res.nome, "Contrato", "Assinado", contract)
 
-            return {
-                nome: res.nome,
-                email: res.email,
-                cpf: res.cpf,
-                celular: res.celular,
-                assinado: res.assinado.created
+            const f = partes.map(async res => {
 
+                if (res.nome && contract) await historic._store(res.nome, "Contrato", "Assinado", contract)
+
+                return {
+                    nome: res.nome,
+                    email: res.email,
+                    cpf: res.cpf,
+                    celular: res.celular,
+                    assinado: res.assinado.created
+
+                }
+            })
+
+
+            let founded = await f.find(res => res.nome !== "American Way")
+
+            if (!founded) return res.status(400).json({ message: "Cliente não assinou ainda" })
+
+            const { nome, cpf } = founded
+
+            const { key, value, tel, pAula, unidade, curso } = await getDealIdWithCPf(nome, cpf, contract)
+
+            const unityNumber = {
+                "Golfinho Azul": "31 8713-7018",
+                'PTB': "31 8713-7018",
+                'Centro': "31 8284-0590"
             }
-        })
 
-
-        let founded = await f.find(res => res.nome !== "American Way")
-
-        if (!founded) return res.status(400).json({ message: "Cliente não assinou ainda" })
-
-        const { nome, cpf } = founded
-
-        const { key, value, tel, pAula, unidade, curso } = await getDealIdWithCPf(nome, cpf, contract)
-
-        const unityNumber = {
-            "Golfinho Azul": "31 8713-7018",
-            'PTB': "31 8713-7018",
-            'Centro': "31 8284-0590"
-        }
-
-        const curseMessages = {
-            "Inglês": `Hello, ${nome}. Tudo bem com você? 😊
+            const curseMessages = {
+                "Inglês": `Hello, ${nome}. Tudo bem com você? 😊
 Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar 
 boas-vindas ao nosso curso de Inglês. 
 Está pronto para deixar o verbo to be para trás? 🏃💨
@@ -352,82 +355,87 @@ e eu vou estar aqui para te ajudar em cada passo do caminho.
 Se tiver alguma dúvida ou precisar de qualquer coisa,
 envie uma mensagem para o número pedagógico ${unityNumber[unidade]} . 
 I’ll see you in class`,
-            "Espanhol": `Hola, ${nome}. Tudo bem com você? 😊
+                "Espanhol": `Hola, ${nome}. Tudo bem com você? 😊
 Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar boas-vindas ao nosso curso de Espanhol. Está pronto para deixar o portunhol para trás? 🏃💨
 Sua jornada rumo à fluência está prestes a começar, e eu vou estar aqui para te ajudar em cada passo do caminho. Se tiver alguma dúvida ou precisar de qualquer coisa, 
 envie uma mensagem para o número pedagógico ${unityNumber[unidade]}.
 Te veo en la clase 🇪🇸`,
-            "Tecnologia": `Hello, ${nome}. Tudo bem com você? 😊
+                "Tecnologia": `Hello, ${nome}. Tudo bem com você? 😊
 Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar boas-vindas ao nosso curso de informática. Está pronto para aprender a montar documentos e planilhas completas? 😎
 Em poucos meses você vai estar dominando o Pacote Office, e eu vou estar aqui para te ajudar em cada passo do caminho. Se tiver alguma dúvida ou precisar de qualquer coisa,
 envie uma mensagem para o número pedagógico ${unityNumber[unidade]}.
 Te esperamos na aula 👩‍💻`,
-        }
-
-        await Promise.all([
-            SendSimpleWpp(nome, tel, curseMessages[curso]),
-            ScheduleBotMessages(nome, tel, "Olá", pAula, "Lembrete da primeira aula")
-
-        ])
-
-
-
-        const contracts = await prisma.person.findFirst({
-            where: {
-                [key]: {
-                    contains: value,
-                    mode: "insensitive"
-                },
-                acStatus: "Pendente",
-            },
-        })
-
-
-        if (!contracts) {
-            console.log("Não encontrado no sistema")
-            return res.status(400).json({ message: "Não encontrado no sistema ou já assinado" })
-        }
-
-        const SendAllPromises = async () => {
-
-            try {
-                const { contrato, name, unidade } = contracts
-
-                const update = async () => {
-                    await prisma.person.update({
-                        where: { contrato: contrato },
-                        data: {
-                            dataAC: [{
-                                body1: {
-                                    name1: f[0].nome,
-                                    email1: f[0].email,
-                                    signed1: f[0].assinado,
-                                },
-                                body2: {
-                                    name2: f[1].nome,
-                                    email2: f[1].email,
-                                    signed2: f[1].assinado,
-                                }
-                            }],
-                            acStatus: "Ok"
-                        }
-                    })
-                }
-
-                await Promise.all([
-                    update(),
-                    CreateCommentOnTrello(name, unidade, `${name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`),
-                ])
-
-
-            } catch (error) {
-                console.log(error)
-                console.log("Contrato não encontrado")
             }
+
+            await Promise.all([
+                SendSimpleWpp(nome, tel, curseMessages[curso]),
+                ScheduleBotMessages(nome, tel, "Olá", pAula, "Lembrete da primeira aula")
+
+            ])
+
+
+
+            const contracts = await prisma.person.findFirst({
+                where: {
+                    [key]: {
+                        contains: value,
+                        mode: "insensitive"
+                    },
+                    acStatus: "Pendente",
+                },
+            })
+
+
+            if (!contracts) {
+                console.log("Não encontrado no sistema")
+                return res.status(400).json({ message: "Não encontrado no sistema ou já assinado" })
+            }
+
+            const SendAllPromises = async () => {
+
+                try {
+                    const { contrato, name, unidade } = contracts
+
+                    const update = async () => {
+                        await prisma.person.update({
+                            where: { contrato: contrato },
+                            data: {
+                                dataAC: [{
+                                    body1: {
+                                        name1: f[0].nome,
+                                        email1: f[0].email,
+                                        signed1: f[0].assinado,
+                                    },
+                                    body2: {
+                                        name2: f[1].nome,
+                                        email2: f[1].email,
+                                        signed2: f[1].assinado,
+                                    }
+                                }],
+                                acStatus: "Ok"
+                            }
+                        })
+                    }
+
+                    await Promise.all([
+                        update(),
+                        CreateCommentOnTrello(name, unidade, `${name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`),
+                    ])
+
+
+                } catch (error) {
+                    console.log(error)
+                    console.log("Contrato não encontrado")
+                }
+            }
+
+            await SendAllPromises()
+            return res.status(200).json({ message: "deu certo" })
         }
 
-        await SendAllPromises()
-        return res.status(200).json({ message: "deu certo" })
+        if (documento.nome.contains("reciboMd")) {
+
+        }
     }
 
     async update(req, res) {
