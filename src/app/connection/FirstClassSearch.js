@@ -21,7 +21,8 @@ const filter4Week = (array) => {
 
 const databaseSearch = async (unity) => {
     const date = new Date()
-    const period = "/0" + date.getMonth() + "/" + date.getFullYear()
+    const month = date.getMonth() + 1
+    const period = "/0" + month + "/" + date.getFullYear()
 
     const search = await prisma.person.findMany({
         where: {
@@ -76,6 +77,7 @@ const firstClassSearch = async () => {
             await SendtoWpp(`Não há aulas programadas para esta semana na unidade do ${unity}`, unity)
     }
 }
+
 
 
 export default firstClassSearch
