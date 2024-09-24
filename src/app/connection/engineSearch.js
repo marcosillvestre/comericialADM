@@ -109,19 +109,32 @@ async function searchSync() {
 
                         const searchHistoric = await prisma.historic.findMany({
                             where: {
-                                information: {
-                                    equals: {
-                                        field: "Contrato",
-                                        to: "Assinado",
-                                        from: res.contrato
+                                OR: [
+
+                                    {
+                                        information: {
+                                            equals: {
+                                                field: "Contrato",
+                                                to: "Assinado",
+                                                from: res.contrato
+                                            }
+                                        }
+                                    },
+                                    {
+                                        responsible: {
+                                            contains: res.name,
+                                            mode: "insensitive"
+                                        }
                                     }
-                                }
+                                ]
                             }
                         })
 
                         const signed = () => {
                             if (searchHistoric) {
-                                const isThere = searchHistoric.find(sign => sign.responsible !== "American Way")
+                                const isThere = searchHistoric
+                                    .find(sign => sign.responsible !== "American Way")
+
                                 return isThere ? "Pendente" : "Ok"
                             }
                             return "Pendente"
