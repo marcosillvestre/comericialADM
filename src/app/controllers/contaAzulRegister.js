@@ -26,7 +26,6 @@ class RegisterContaAzulController {
         }
 
 
-
         try {
             const customerBody = {
                 "name": nameResponsible || name,
@@ -154,7 +153,7 @@ class RegisterContaAzulController {
 
                             const body = {
                                 "emission": less20Days,
-                                "status": "PENDING",
+                                "status": "COMMITTED",
                                 "customer_id": data.data[0]?.id,
                                 "services": [
                                     {
