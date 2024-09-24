@@ -45,7 +45,8 @@ class OrderController {
                         return
                     })
                     .catch((err) => {
-                        return res.status(400).json({ err })
+                        console.log(err)
+                        if (res) return res.status(400).json({ err })
                     })
 
             }
@@ -65,7 +66,8 @@ class OrderController {
                     console.log("Pedido criado com sucesso")
                 })
                 .catch((err) => {
-                    return res.status(400).json({ err })
+                    console.log(err)
+                    if (res) return res.status(400).json({ err })
                 })
         }
 
@@ -76,45 +78,6 @@ class OrderController {
         const { id, where, value, responsible } = req.body
 
         const historic = new Historic()
-
-        let code;
-
-        if (where === "arrived") {
-            try {
-                await prisma.orders.update({
-                    where: {
-                        id: id
-                    },
-                    data: {
-                        arrived: value
-                    }
-
-                })
-                    .then(async res => {
-                        code = res.code
-                        Promise.all([
-                            CompleteCheckPointOnTrello(res.orders, res.unity, "Material Didático/Confirmação de disponibilidade para retirada do material na escola"),
-                            historic._store(responsible, where, value, code)
-                        ])
-
-
-                    })
-
-
-
-
-                if (res) return res.status(201).json({ message: "Pedido editado com sucesso" })
-                console.log("Pedido editado")
-
-            } catch (error) {
-                console.log(error)
-
-                return res.status(400).json({ error })
-            }
-        }
-
-
-
 
         try {
             const filter = await prisma.orders.findUnique({
@@ -150,8 +113,6 @@ class OrderController {
             return res.status(400).json({ message: error })
 
         }
-
-
 
     }
 
@@ -197,6 +158,7 @@ class OrderController {
             })
                 .then(async res => {
                     if (where === "dataRetirada") await CompleteCheckPointOnTrello(res.orders, res.unity, "Material Didático/Confirmação de retirada pelo aluno ou responsável")
+                    if (where === "chegada") await CompleteCheckPointOnTrello(res.orders, res.unity, "Material Didático/Confirmação de disponibilidade para retirada do material na escola")
 
                 })
 
