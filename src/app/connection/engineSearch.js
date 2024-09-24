@@ -56,7 +56,6 @@ async function searchSync() {
                         ppVencimento: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Data de vencimento da primeira parcela')).map(res => res.value)[0] : "Sem este dado no rd",
 
                         mdValor: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor do material didático')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Valor do material didático')).map(res => res.value)[0] : "Sem este dado no rd",
-                        mdStatus: "Pendente",
                         aluno: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome do aluno')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome do aluno')).map(res => res.value)[0] : "Sem este dado no rd",
                         tel: index.contacts.map(res => res.phones).map(res => res[0]?.phone)[0] ? index.contacts.map(res => res.phones).map(res => res[0]?.phone)[0] : "Sem este dado no rd",
                         email: index.contacts.map(res => res.emails).map(res => res[0]?.email)[0] ? index.contacts.map(res => res.emails).map(res => res[0]?.email)[0] : "Sem este dado no rd",
@@ -158,7 +157,7 @@ async function searchSync() {
                                     tmStatus: "Pendente",
                                     ppVencimento: res.ppVencimento,
                                     mdValor: res.mdValor,
-                                    mdStatus: "Pendente",
+                                    mdStatus: res.curso === "Tecnologia" ? "Não" : "Pendente",
                                     aluno: res.aluno,
                                     tel: res.tel,
                                     email: res.email,
@@ -192,7 +191,7 @@ async function searchSync() {
                                     tmParcelas: "",
                                     tmData: "",
                                     ppDesconto: res.ppDesconto,
-                                    ppFormaPg: "",
+                                    ppFormaPg: res.ppFormaPg,
                                     ppParcelas: res.ppParcelas,
                                     ppData: "",
                                     ppValor: res.ppValor,
@@ -311,3 +310,12 @@ async function trelloCreateCard(object) {
 
 
 export default searchSync
+
+// const personalHistoric = await prisma.historic.deleteMany({
+//     where: {
+//         responsible: "Marcos"
+//     }
+// }
+// )
+
+// console.log(personalHistoric)
