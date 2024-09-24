@@ -41,14 +41,31 @@ class Historic {
     async indexPersonalHistoric(req, res) {
         const { contract } = req.query
 
+        const { name } = await prisma.person.findUnique({
+            where: {
+                contrato: contract
+            }
+        })
+
 
         try {
             const personalHistoric = await prisma.historic.findMany({
                 where: {
-                    information: {
-                        path: ["from"],
-                        string_contains: contract
-                    }
+
+                    OR: [
+                        {
+                            information: {
+                                path: ["from"],
+                                string_contains: contract
+                            }
+                        },
+                        {
+                            responsible: {
+                                contains: name,
+                                mode: "insensitive"
+                            }
+                        }
+                    ]
                 }
             })
 
