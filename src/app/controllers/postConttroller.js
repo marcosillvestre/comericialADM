@@ -435,6 +435,49 @@ Te esperamos na aula 👩‍💻`,
         }
 
         if (documento.nome.contains("reciboMd")) {
+            const [nameTruncked, code] = documento.nome.split("+")
+
+            const [_, name] = nameTruncked.split("-")
+
+            let possibilities = await prisma.orders.findFirst({
+                where: {
+                    code
+                },
+            })
+
+            const founded = possibilities.find(res => res.orders.find(r => r.nome === name))
+            if (!founded) {
+                console.log("Contrato de recibo não encontrado")
+                return res.status(400).json({ message: "not found" })
+            }
+
+            const { orders, id } = founded
+
+            let forBeSetted = []
+
+            for (let index = 0; index < orders.length; index++) {
+                const element = orders[index];
+                if (element.nome === name) {
+                    element["assinado"] = true
+                }
+
+                forBeSetted.push(element)
+
+            }
+
+
+            await prisma.orders.update({
+                where: {
+                    id: id
+                },
+                data: {
+                    orders: {
+                        set: forBeSetted
+                    }
+                }
+            })
+
+            return res.status(201).json({ message: "link atribuido com sucesso" })
 
         }
     }
