@@ -314,7 +314,8 @@ async function trelloCreateCard(object) {
 
     await CardCreationOnTrello(body)
         .then(async url => {
-            let message = `${body.name} -- foi cadastrado no sistema de comissão, voce pode encontra-lo também no trello por esse link: ${url}`
+            let message = `> ${body.name}
+foi cadastrado no sistema de comissão, voce pode encontra-lo também no trello por esse link: ${url}`
 
             await SendtoWpp(message, data.unidade)
 

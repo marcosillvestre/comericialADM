@@ -1,16 +1,18 @@
-
 import axios from "axios"
-import { getToken } from "../core/getToken.js"
-
-import { v4 } from 'uuid'
+import { v4 } from "uuid"
+import { StringsMethods } from "../../config/serializerStrings.js"
 import prisma from "../../database/database.js"
 import { Historic } from "../../database/historic/properties.js"
+import ordersController from "../controllers/ordersController.js"
+import { getToken } from "../core/getToken.js"
+import { getAllSales } from "./externalConnections/contaAzulStrategy.js"
 import { CompleteCheckPointOnTrello, CreateCommentOnTrello } from "./externalConnections/trello.js"
 import { SendtoWpp } from "./externalConnections/wpp.js"
 
-import OrdersController from "../controllers/ordersController.js"
-
 const historic = new Historic()
+const { spacesAndLowerCase } = new StringsMethods()
+
+
 
 const routes = {
     "parcela": "ppStatus",
@@ -21,113 +23,17 @@ const routes = {
     "tmStatus": "taxa de matricula",
     "mdStatus": "material didatico"
 }
-
 const idList = {
     "Golfinho Azul": "PTB",
     'PTB': "PTB",
     'Centro': "Centro"
 }
-async function SyncContaAzulAndDatabase(header) {
-    console.log("db")
 
-    const backDay = new Date()
-    const comebackDays = 90
-    backDay.setDate(backDay.getDate() - comebackDays)
-    const startDate = backDay.toISOString()
-
-    const currentDate = new Date()
-    const endDate = currentDate.toISOString()
-
-    try {
-        const sales = await axios.get(`https://api.contaazul.com/v1/sales?emission_start=${startDate}&emission_end=${endDate}&size=1000`, { headers: header })
-
-
-
-        const filtered = sales.data.filter(async res => {
-            const status = res.payment.installments[0]?.status
-            let notes = res.notes
-            let cleanData = notes.replace(/\\n/g, "")
-
-            let parsed = () => {
-                try {
-                    return JSON.parse(cleanData)
-                } catch (error) {
-                    console.log(res.customer.name)
-                    return false
-                }
-            }
-
-            return status === "ACQUITTED" && notes !== '' && await parsed()
-        })
-
-        console.log(filtered.length)
-
-        let notes = filtered.map(res => {
-            try {
-                let note = JSON.parse(res.notes)
-
-                return {
-                    aluno: note["Aluno"],
-                    responsavel: note["Responsável"],
-                    contract: note["contrato"],
-                    service: note["serviço"],
-                    tm: note['TM Valor'],
-                    value: res.total,
-                    unidade: note["Unidade"],
-                    ppFPG: note["PP Forma PG"],
-                    mdFPG: note["MD forma pg"],
-                    tmFPG: note["TM forma de pg"],
-                    dueDate: res.payment.installments[0].due_date
-                }
-            } catch (error) {
-                // console.log(res)
-                console.log(`${res.customer.name} => error`)
-            }
-
-        })
-
-
-        await SearchEachSync(notes.filter(response => response !== undefined))
-    } catch (error) {
-        console.log("error")
-    }
-}
-
-
-async function SearchEachSync(notes) {
-    for (const response of notes) {
-        let where = response.service !== undefined ? routes[response.service] : null
-
-        if (where) {
-            await prisma.person.findFirst({
-                where: {
-                    AND: [
-                        {
-                            contrato: {
-                                contains: response.contract,
-                            },
-                        },
-                        {
-                            [where]: {
-                                contains: "Pendente",
-                            },
-                        },
-                    ],
-                },
-            })
-                .then(async data => data && await UpdateEachOne(where, data))
-            // .then(data => data && console.log(where, data))
-
-        }
-    }
-}
-
-const order = async (name, material, unity) => {
+const order = async (name, material, unity, tel, aluno) => {
 
     const header = {
         "Authorization": `Bearer ${await getToken(unity)}`
     }
-
 
 
     if (material[0].id === undefined) {
@@ -143,8 +49,12 @@ const order = async (name, material, unity) => {
                 materialDidatico: splited[0],
                 valor: pdFiltered[0].value,
                 data: new Date().toLocaleDateString("pt-BR"),
+                assinado: false,
                 dataRetirada: "",
-                link: ""
+                link: "",
+                retiradoPor: "",
+                aluno,
+                tel
             }
 
         })
@@ -164,9 +74,13 @@ const order = async (name, material, unity) => {
                 materialDidatico: data.name,
                 valor: data.value,
                 data: new Date().toLocaleDateString("pt-BR"),
+                type: "manual",
+                assinado: false,
+                retiradoPor: "",
                 dataRetirada: "",
                 link: "",
-                type: "manual"
+                aluno,
+                tel
             }
         } catch (error) {
             return error.response.data
@@ -177,125 +91,268 @@ const order = async (name, material, unity) => {
 }
 
 
-
-async function UpdateEachOne(where, data) {
-    try {
-        const update = async () => {
-            await prisma.person.update({
-                where: { contrato: data.contrato },
-                data: {
-                    [where]: "Ok"
-                }
-            })
-                .then(async (response) => {
-                    console.log(`${response.name} success updated / ${where} / ${response.unidade}`)
-
-
-                    let checkup = {
-                        "ppStatus": "AUTOMÁTICO - Confirmação automática de pagamento da primeira mensalidade",
-                        "tmStatus": "AUTOMÁTICO - Confirmação pagamento da taxa de matrícula (se houver)",
-                        "mdStatus": "AUTOMÁTICO - Confirmar pagamento do material didático"
-                    }
-
-
-                    await CompleteCheckPointOnTrello([{ nome: response.name }], response.unidade, `ADM - Checkup inicial/${checkup[where]}`)
-
-
-                    let type = {
-                        "ppStatus": data.ppFPG,
-                        "tmStatus": data.tmFPG,
-                        "mdStatus": data.mdFPG
-                    }
-
-                    let trelloMessage = `${response.name} -- realizou o pagamento da(o) ${routes[where]} via ${type[where]} no valor de ${data.value} no dia ${new Date().toLocaleDateString('pt-BR')}`
-
-
-                    await CreateCommentOnTrello(response.name, response.unidade, trelloMessage)
-
-
-                    if (where === "mdStatus") {
-                        let message = `${response.name}` + "-- realizou o pagamento do material didático ||" + " `" + `${response.materialDidatico}` + "`"
-                        await SendtoWpp(message, response.unidade)
-
-
-
-                        if (response.materialDidatico.length > 0) {
-
-                            let bodyOrder = {
-                                body: {
-                                    orders: await order(response.name, response.materialDidatico, response.unidade),
-                                    unity: idList[response.unidade]
-                                }
-                            }
-
-                            await OrdersController.store(bodyOrder)
-                        }
-                    }
-                })
-
-                .catch(e => console.log(e))
-        }
-
-        const storeHistoric = async () => {
-            await historic._store("Automatização", where, "Ok", data.contrato)
-        }
-
-
-        Promise.all([
-            storeHistoric(),
-            update()
-        ]
-        )
-
-    } catch (error) {
-        console.log(error)
-    }
-}
-
-
-
-async function SyncOrdersToContaAzul(header, unity) {
+async function SyncOrdersToContaAzul(sale, headers, unity) {
     console.log("order " + unity)
-    const backDay = new Date()
-    const comebackDays = 25
-    backDay.setDate(backDay.getDate() - comebackDays)
-    const startDate = backDay.toISOString()
 
-    const currentDate = new Date()
-    const endDate = currentDate.toISOString()
+    const { id, customer, payment } = sale
 
-    const sales = await axios.get(`https://api.contaazul.com/v1/sales?emission_start=${startDate}&emission_end=${endDate}&size=1000`, { headers: header })
+    if (payment.installments[0]?.status === "ACQUITTED") {
 
-    let fil = sales.data.filter(res => res.notes === "" && res.payment.installments[0]?.status === "ACQUITTED")
+        const { data } = await axios.get(
+            `https://api.contaazul.com/v1/sales/${id}/items?Type=Product`,
+            { headers: headers })
 
-
-    await fil.map(async res => {
-        const { data } = await axios.get(`https://api.contaazul.com/v1/sales/${res.id}/items?Type=Product`, { headers: header })
-
-        let item = data.filter(item => {
-            if (item.itemType === "PRODUCT") return item.item
+        let item = data.map(item => {
+            return item.itemType === "PRODUCT" ? item.item : null
         })
 
 
-        const bodyOrder = async () => {
-            return {
-                body: {
-                    orders: await order(res.customer.name, item.map(res => res.item), unity),
-                    unity: idList[unity]
+        const find = await prisma.person.findFirst({
+            where: {
+                name: {
+                    contains: customer.name,
+                    mode: "insensitive"
                 }
             }
+        })
+        if (find) {
+            var { tel, aluno } = find
         }
-        item.length > 0 && await OrdersController.store(await bodyOrder())
 
-    })
+        const bodyOrder = {
+            body: {
+                orders: await order(
+                    customer.name,
+                    item.filter(res => res.item !== null),
+                    unity,
+                    aluno || "",
+                    tel || ""
+                ),
+                unity: idList[unity]
+            }
+        }
+
+        item.length > 0 && await ordersController.store(bodyOrder)
+
+    }
+
+}
 
 
+
+const getSalesByCustomerId = async (list, headers, unity) => {
+
+    const allSales = await getAllSales(headers)
+
+    if (!allSales) return "Erro na busca"
+
+
+    const data = Promise.all(
+        list.map(async (element, index) => {
+            const sale = allSales.
+                find(allSales =>
+                    spacesAndLowerCase(allSales.customer.name) === spacesAndLowerCase(element.name))
+
+            if (!sale) {
+                // console.log("[NOT FOUND] " + element.name + index)
+                return
+            }
+
+            const { notes, payment, customer, id } = sale
+
+            if (notes === "") {
+                await SyncOrdersToContaAzul(sale, headers, unity)
+                // console.log(customer.name)
+                return
+            }
+            console.log("[FOUNDED] " + customer.name + index)
+
+            let parsed = () => {
+                let cleanData = notes.replace(/\\n/g, "")
+                const service = JSON.parse(cleanData)["serviço"]
+                return service
+            }
+
+            let service = await parsed()
+
+            return {
+                id,
+                name: customer.name,
+                pendentes: element.pendents,
+                service,
+                contrato: element.contrato,
+                payment: payment.installments[0],
+            }
+
+
+
+        }))
+
+
+    return data
+
+}
+
+
+async function Echo(response, where) {
+    await historic._store("Automatização", where, "Ok", response.contrato)
+
+    if (where === "mdStatus") {
+
+        let message = `>${response.name}
+realizou o pagamento do material didático
+>${response.materialDidatico}`
+
+        await SendtoWpp(message, response.unidade)
+
+
+        if (!(response.materialDidatico.find(r => r === "Outros" || r === "Office"))) {
+
+            let bodyOrder = {
+                body: {
+                    orders: await order(
+                        response.name,
+                        response.materialDidatico,
+                        response.unidade,
+                        response.tel,
+                        response.aluno
+                    ),
+                    unity: idList[response.unidade]
+                }
+            }
+
+            await ordersController.store(bodyOrder)
+
+        }
+    }
+
+    let checkup = {
+        "ppStatus": "AUTOMÁTICO - Confirmação de pagamento da primeira mensalidade.",
+        "tmStatus": "AUTOMÁTICO - Confirmação pagamento da taxa de matrícula (se haver)",
+        "mdStatus": "AUTOMÁTICO - Confirmação de pagamento do material didático."
+    }
+
+
+    let type = {
+        "ppStatus": response.ppFormaPg,
+        "tmStatus": response.tmFormaPg,
+        "mdStatus": response.mdFormaPg
+    }
+
+    let trelloMessage = `${response.name} -- realizou o pagamento da(o) ${routes[where]} via ${type[where]} no dia ${new Date().toLocaleDateString('pt-BR')}`
+
+    Promise.all([
+        CompleteCheckPointOnTrello([{ nome: response.name }], response.unidade, `ADM - Checkup inicial/${checkup[where]}`),
+        CreateCommentOnTrello(response.name, response.unidade, trelloMessage)
+    ])
 
 
 
 
 }
 
+async function updateOnDatabase(contrato, whereIs) {
+
+    const date = new Date().toISOString()
+    const registerDates = {
+        "ppStatus": "ppData",
+        "tmStatus": "tmData",
+        "mdStatus": "mdData"
+    }
+
+    const where = routes[whereIs]
+
+    const response = await prisma.person.update({
+        where: {
+            contrato: contrato
+        },
+        data: {
+            [where]: "Ok",
+            [registerDates[where]]: date,
+        }
+    }).then(async (response) => {
+        console.log(`${response.name} success updated / ${where} / ${response.unidade}`)
+
+        await Echo(response, where)
+    })
+
+    return response ? "Done" : "Error"
+}
+
+async function SearchPendents(unity, headers) {
+
+    await prisma.person.findMany({
+        where: {
+            unidade: unity,
+            OR: [
+                {
+                    mdStatus: {
+                        equals: 'Pendente',
+                    },
+                },
+                {
+                    ppStatus: {
+                        equals: 'Pendente',
+                    }
+                },
+                {
+                    tmStatus: {
+                        equals: 'Pendente',
+                    }
+                },
+
+            ],
+        },
+        select: {
+            name: true,
+            dataMatricula: true,
+            mdStatus: true,
+            ppStatus: true,
+            tmStatus: true,
+            unidade: true,
+            contrato: true,
+            curso: true
+        }
+    })
+        .then(async r => {
+            console.log(r.length + " [PENDINGS]")
+
+
+            const mapped = Promise.all(r.map(async (item) => {
+                const pendentes = Object.keys(item)
+                    .filter(key => item[key] === 'Pendente');
+
+                return {
+                    name: item.name,
+                    pendents: pendentes,
+                    contrato: item.contrato
+                }
+            }))
+
+            const map = await mapped
+            const forUpdateDb = await getSalesByCustomerId(map, headers, unity)
+
+            let paid = forUpdateDb.filter(res => res !== undefined)
+
+
+            console.log(paid.length + " [PAIDS]")
+
+            for (let index = 0; index < paid.length; index++) {
+                const element = paid[index];
+                const { service, pendentes, payment, name } = element
+
+                if (pendentes.find(pend => pend === routes[service])) {
+                    await updateOnDatabase(
+                        element.contrato,
+                        service
+                    )
+                }
+
+            }
+
+        })
+
+}
 
 const syncContaAzul = async () => {
     console.log("Payments ca updates")
@@ -307,16 +364,12 @@ const syncContaAzul = async () => {
 
 
         await Promise.all([
-            SyncContaAzulAndDatabase(header),
-            SyncOrdersToContaAzul(header, realToken)
+            SearchPendents(realToken, header),
 
         ])
 
     }
 }
-
-// syncContaAzul()
-
 
 
 export default syncContaAzul

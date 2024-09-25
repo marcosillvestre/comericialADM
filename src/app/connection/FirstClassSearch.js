@@ -1,14 +1,15 @@
-import { getLastMondayCode } from "../../config/getLastMonday.js";
+import { PastCodes } from "../../config/getLastMonday.js";
 import prisma from "../../database/database.js";
 import { SendtoWpp } from "./externalConnections/wpp.js";
 
 
+const { getLastMondayCode } = new PastCodes()
 
 const filter4Week = (array) => {
     let filtered = Promise.resolve(array.filter(res => {
         let initial = parseInt(res["Data da aula"].slice(0, 2))
-
-        let startDate = parseInt(getLastMondayCode().slice(0, 2))
+        const date = new Date()
+        let startDate = parseInt(getLastMondayCode(date).slice(0, 2))
         let endDate = startDate + 6
 
         return initial >= startDate && initial <= endDate && res

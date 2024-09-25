@@ -1,7 +1,10 @@
 import axios from "axios";
 import 'dotenv';
+import { StringsMethods } from "../../../config/serializerStrings.js";
 import { updateStageRd } from "./rdStation.js";
 import { SendSimpleWpp, SendtoWpp } from "./wpp.js";
+
+const { spacesAndLowerCase } = new StringsMethods()
 
 const list = {
     "Golfinho Azul": process.env.PTB_LIST,
@@ -50,14 +53,18 @@ async function getData(listId) {
 //filter
 async function filteredData(name, array) {
 
-    const filtered = array.filter(res => res.name.toLowerCase().includes(name.toLowerCase()))
+
+    const filtered = array.filter(res =>
+        spacesAndLowerCase(res.name)
+            .includes(spacesAndLowerCase(name)))
 
     if (filtered.length > 0) {
         filtered.map(res => {
             const md = res.desc.replace(/^\s*-\s*\*\*.*(\n|\r\n|\r)?/gm, '');
             const material = JSON.parse("{" + md + "}")
 
-            if (!material.Material.every(res => res === "Outros" || res === "Office")) return res
+            if (!material.Material
+                .every(res => res === "Outros" || res === "Office")) return res
 
         })
 
@@ -95,9 +102,9 @@ async function GetIdCheckListCard(name, unity, what) {
 
     const splited = what.split("/")
 
-
     try {
-        let { data } = await axios.get(`https://api.trello.com/1/cards/${id}/checklists?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`)
+        let { data } = await axios
+            .get(`https://api.trello.com/1/cards/${id}/checklists?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`)
 
         const filtered = data.find(res => res.name === splited[0])
         return filtered.checkItems.find(res => res.name === splited[1])
@@ -120,7 +127,9 @@ export async function CompleteCheckPointOnTrello(array, unity, where) {
 
         const newState = state === "incomplete" ? "complete" : "incomplete"
         try {
-            let { data } = await axios.put(`https://api.trello.com/1/cards/${id}/checkItem/${checkItem}?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`, { state: newState })
+            let { data } = await axios
+                .put(`https://api.trello.com/1/cards/${id}/checkItem/${checkItem}?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`,
+                    { state: newState })
             return data.state
         } catch (error) {
             return error.response.data

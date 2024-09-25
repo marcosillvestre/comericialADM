@@ -1,12 +1,14 @@
 import nodemailer from 'nodemailer';
 import hbs from 'nodemailer-express-handlebars';
 import path from "path";
-import { getLastWeekMondayCode } from '../../config/getLastMonday.js';
+import { PastCodes } from '../../config/getLastMonday.js';
 import prisma from "../../database/database.js";
 
 import 'dotenv';
 import { CompleteCheckPointOnTrello } from './externalConnections/trello.js';
 
+
+const { getLastWeekMondayCode } = new PastCodes()
 
 async function SearchOrders(unity) {
     let code = await getLastWeekMondayCode()
