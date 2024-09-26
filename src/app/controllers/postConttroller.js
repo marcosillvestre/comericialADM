@@ -441,13 +441,14 @@ Te esperamos na aula 👩‍💻`,
 
             const [_, name] = nameTruncked.split("-")
 
-            let possibilities = await prisma.orders.findFirst({
+            let possibilities = await prisma.orders.findMany({
                 where: {
                     code
                 },
             })
 
             const founded = possibilities.find(res => res.orders.find(r => r.nome === name))
+
             if (!founded) {
                 console.log("Contrato de recibo não encontrado")
                 return res.status(400).json({ message: "not found" })
