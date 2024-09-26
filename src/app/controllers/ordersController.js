@@ -227,14 +227,16 @@ class OrderController {
                             if (rightOrder.tel) await SendSimpleWpp(rightOrder.nome, rightOrder.tel,
                                 `Olá *${rightOrder.nome}*, 
 Temos uma ótima notícia, o seu material didático: 
-> ${rightOrder.materialDidatico},
+
+> ${rightOrder.materialDidatico}
+
 já está disponível para retirada em nossa unidade. 
 
-Qualquer dúvida, entre em contato com o nosso whatsapp pedagógico através do número pedagógico da unidade 
+Qualquer dúvida, entre em contato com o nosso whatsapp pedagógico através do número da unidade 
 > ${res.unity} : ${unityNumber[res.unity]}.
                                 
 Atenciosamente, equipe American Way.
-FAVOR NÃO RESPONDER ESTA MENSAGEM .`)
+FAVOR NÃO RESPONDER ESTA MENSAGEM 🗽.`)
                         }
                     }
                 })

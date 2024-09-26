@@ -310,7 +310,10 @@ class PostController {
 
         const { partes, documento } = str
 
-        if (documento.nome.contains("adesao")) {
+        console.log(str)
+
+
+        if (documento.nome.includes("adesao")) {
 
 
             const [_, contract] = documento.nome.split("+")
@@ -379,7 +382,7 @@ Te esperamos na aula 👩‍💻`,
             const contracts = await prisma.person.findFirst({
                 where: {
                     [key]: {
-                        contains: value,
+                        includes: value,
                         mode: "insensitive"
                     },
                     acStatus: "Pendente",
@@ -434,7 +437,7 @@ Te esperamos na aula 👩‍💻`,
             return res.status(200).json({ message: "deu certo" })
         }
 
-        if (documento.nome.contains("reciboMd")) {
+        if (documento.nome.includes("reciboMd")) {
             const [nameTruncked, code] = documento.nome.split("+")
 
             const [_, name] = nameTruncked.split("-")
@@ -478,8 +481,8 @@ Te esperamos na aula 👩‍💻`,
             })
 
             return res.status(201).json({ message: "link atribuido com sucesso" })
-
         }
+
     }
 
     async update(req, res) {
