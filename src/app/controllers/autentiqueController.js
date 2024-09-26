@@ -40,7 +40,7 @@ class AutentiqueController {
         }
             `,
                 variables: {
-                    "document": { "name": `adesao_${name}` },
+                    "document": { "name": `${req.file.originalname}` },
                     "signers": [{ "name": `${name}`, 'action': "SIGN" },
                     { "name": "Victor", 'action': "SIGN" },
                     ],
