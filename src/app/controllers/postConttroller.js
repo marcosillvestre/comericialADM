@@ -310,7 +310,6 @@ class PostController {
 
         const { partes, documento } = str
 
-        console.log(str)
 
 
         if (documento.nome.includes("adesao")) {
@@ -382,7 +381,7 @@ Te esperamos na aula 👩‍💻`,
             const contracts = await prisma.person.findFirst({
                 where: {
                     [key]: {
-                        includes: value,
+                        contains: value,
                         mode: "insensitive"
                     },
                     acStatus: "Pendente",
