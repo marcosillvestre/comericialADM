@@ -310,7 +310,7 @@ class PostController {
 
         const { partes, documento } = str
 
-
+        console.log(documento.nome)
 
         if (documento.nome.includes("adesao")) {
 
