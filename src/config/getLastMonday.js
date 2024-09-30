@@ -2,6 +2,11 @@
 
 export class PastCodes {
 
+    constructor() {
+        this.getLastMondayCode = this.getLastMondayCode.bind(this)
+        this.getLastWeekMondayCode = this.getLastWeekMondayCode.bind(this)
+    }
+
     getLastMondayCode(date) {
         const dayOfWeek = date.getDay();
         const daysSinceMonday = (dayOfWeek + 6) % 7;
@@ -9,18 +14,23 @@ export class PastCodes {
 
         const lastMonday = new Date(date);
         lastMonday.setDate(date.getDate() - daysSinceMonday);
-        return lastMonday.toLocaleDateString("pt-BR").replace("/", "").replace("/", "");
+        return lastMonday.toLocaleDateString("pt-BR").replace(/\//g, "");
     }
 
 
     getLastWeekMondayCode() {
-        let code = getLastMondayCode();
+        let code = this.getLastMondayCode(new Date());
 
-        code.split();
+        let day = parseInt(code.slice(0, 2));
+        let month = parseInt(code.slice(2, 4));
+        let year = parseInt(code.slice(4, 8));
 
-        let splited = code.replace(code[1], code[1] - 7);
+        let lastMondayDate = new Date(year, month - 1, day);
+        lastMondayDate.setDate(lastMondayDate.getDate() - 7);
 
-        return splited;
+        return lastMondayDate.toLocaleDateString("pt-BR").replace(/\//g, "");
 
     }
-}   
+}
+
+
