@@ -28,6 +28,8 @@ export async function SendtoWpp(message, unity) {
 }
 
 
+let resend = ""
+
 export async function SendSimpleWpp(name, phone, message) {
     const messageBody = {
         "toPhone": phone,
@@ -39,9 +41,14 @@ export async function SendSimpleWpp(name, phone, message) {
         "contactName": name
     }
 
-    await axios.post("https://app-utalk.umbler.com/api/v1/messages/simplified", messageBody, { headers })
-        .then(() => console.log(`enviado para ${name} com sucesso`))
-        .catch(err => console.log(err.response.data))
+    if (name + message !== resend) {
+        await axios.post("https://app-utalk.umbler.com/api/v1/messages/simplified", messageBody, { headers })
+            .then(() => {
+                console.log(`enviado para ${name} com sucesso`)
+                resend = `${name}+${message}`
+            })
+            .catch(err => console.log(err.response.data))
+    }
 
 }
 
