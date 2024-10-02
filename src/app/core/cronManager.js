@@ -17,11 +17,11 @@ const functionsArray = [
         fn: renewContracts
     },
     {
-        time: "0 0 8 * * mon",
+        time: "0 0 4 * * mon",
         fn: orderBooks
     },
     {
-        time: "0 0 9 * * mon",
+        time: "0 0 5 * * mon",
         fn: firstClassSearch
     },
     {
@@ -30,7 +30,6 @@ const functionsArray = [
     },
 
 ]
-
 
 
 functionsArray.forEach(res => {

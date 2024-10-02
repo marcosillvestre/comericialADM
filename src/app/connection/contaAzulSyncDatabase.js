@@ -284,6 +284,11 @@ async function SearchPendents(unity, headers) {
     await prisma.person.findMany({
         where: {
             unidade: unity,
+            NOT: [
+                {
+                    background: "Rematrícula"
+                }
+            ],
             OR: [
                 {
                     mdStatus: {
@@ -300,7 +305,6 @@ async function SearchPendents(unity, headers) {
                         equals: 'Pendente',
                     }
                 },
-
             ],
         },
         select: {
@@ -373,3 +377,7 @@ const syncContaAzul = async () => {
 
 
 export default syncContaAzul
+
+
+
+// syncContaAzul()
