@@ -310,8 +310,6 @@ class PostController {
 
         const { partes, documento } = str
 
-        console.log(documento.nome)
-
         if (documento.nome.includes("adesao")) {
 
 
@@ -339,7 +337,7 @@ class PostController {
 
             const { nome, cpf } = founded
 
-            const { key, value, tel, pAula, unidade, curso } = await getDealIdWithCPf(nome, cpf, contract)
+            const { key, value, tel, pAula, unidade, curso, background } = await getDealIdWithCPf(nome, cpf, contract)
 
             const unityNumber = {
                 "Golfinho Azul": "31 8713-7018",
@@ -370,11 +368,12 @@ envie uma mensagem para o número pedagógico ${unityNumber[unidade]}.
 Te esperamos na aula 👩‍💻`,
             }
 
-            await Promise.all([
-                SendSimpleWpp(nome, tel, curseMessages[curso]),
-                ScheduleBotMessages(nome, tel, "Olá", pAula, "Lembrete da primeira aula")
+            if (background !== "Rematrícula") {
 
-            ])
+                await ScheduleBotMessages(nome, tel, "Olá", pAula, "Lembrete da primeira aula")
+                await SendSimpleWpp(nome, tel, curseMessages[curso])
+
+            }
 
 
 
@@ -394,45 +393,42 @@ Te esperamos na aula 👩‍💻`,
                 return res.status(400).json({ message: "Não encontrado no sistema ou já assinado" })
             }
 
-            const SendAllPromises = async () => {
 
-                try {
-                    const { contrato, name, unidade } = contracts
+            try {
+                const { contrato, name, unidade } = contracts
 
-                    const update = async () => {
-                        await prisma.person.update({
-                            where: { contrato: contrato },
-                            data: {
-                                dataAC: [{
-                                    body1: {
-                                        name1: f[0].nome,
-                                        email1: f[0].email,
-                                        signed1: f[0].assinado,
-                                    },
-                                    body2: {
-                                        name2: f[1].nome,
-                                        email2: f[1].email,
-                                        signed2: f[1].assinado,
-                                    }
-                                }],
-                                acStatus: "Ok"
-                            }
-                        })
-                    }
-
-                    await Promise.all([
-                        update(),
-                        CreateCommentOnTrello(name, unidade, `${name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`),
-                    ])
-
-
-                } catch (error) {
-                    console.log(error)
-                    console.log("Contrato não encontrado")
+                const update = async () => {
+                    await prisma.person.update({
+                        where: { contrato: contrato },
+                        data: {
+                            dataAC: [{
+                                body1: {
+                                    name1: f[0].nome,
+                                    email1: f[0].email,
+                                    signed1: f[0].assinado,
+                                },
+                                body2: {
+                                    name2: f[1].nome,
+                                    email2: f[1].email,
+                                    signed2: f[1].assinado,
+                                }
+                            }],
+                            acStatus: "Ok"
+                        }
+                    })
                 }
+
+                await Promise.all([
+                    update(),
+                    CreateCommentOnTrello(name, unidade, `${name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`),
+                ])
+
+
+            } catch (error) {
+                console.log(error)
+                console.log("Contrato não encontrado")
             }
 
-            await SendAllPromises()
             return res.status(200).json({ message: "deu certo" })
         }
 
