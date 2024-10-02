@@ -390,7 +390,7 @@ Te esperamos na aula 👩‍💻`,
 
             if (!contracts) {
                 console.log("Não encontrado no sistema")
-                return res.status(400).json({ message: "Não encontrado no sistema ou já assinado" })
+                return res.status(200).json({ message: "Não encontrado no sistema ou já assinado" })
             }
 
 
