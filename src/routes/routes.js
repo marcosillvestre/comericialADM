@@ -16,7 +16,7 @@ import OrdersController from '../app/controllers/ordersController.js';
 import UmblerWebhook from '../app/webhooks/umbler.js';
 import { storage } from '../config/multer.js';
 import auth from "../middleware/auth.js";
-
+import webhookToken from '../middleware/webhooks.js';
 
 const routes = Router();
 const parser = bodyParser.urlencoded({ extended: false })
@@ -26,8 +26,13 @@ const upload = multer({ storage: storage })
 
 routes.post('/contrato', parser, PostConttroller.sender)
 
-routes.post('/webhook-trello', TrelloWebhook.capture)
-routes.post('/feedback', UmblerWebhook.feedBack)
+
+
+routes.post('/webhook-trello', webhookToken, TrelloWebhook.capture)
+routes.post('/feedback', webhookToken, UmblerWebhook.feedBack)
+
+
+
 routes.post('/primeira-aula', UmblerWebhook.firstClassAppointment)
 
 routes.post('/login', SessionController.store)

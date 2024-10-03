@@ -24,7 +24,7 @@ export async function updateStageRd(data, unity) {
             if (unity.includes("back") || unity.includes("win") || unity.includes("lose")) return
             await SendRematriculaToTrello(res.data, unity)
         })
-        .catch((err) => console.log("rd, ", { name: err.response?.data.name, errors: err.response?.data.errors } || err))
+        .catch((err) => console.log("rd, ", err.response.data.name ? { name: err.response?.data.name, errors: err.response?.data.errors } : err))
 }
 
 
@@ -120,11 +120,15 @@ export async function getDealIdWithCPf(name, cpf, contract) {
                 res.custom_field.label.includes('Curso'))
                 .map(res => res.value)[0]
 
+            let background = cField.filter(res =>
+                res.custom_field.label.includes('Background'))
+                .map(res => res.value)[0]
+
             if (contract) {
-                if (realatedCPF === cpf && contrato === contract) return result = { key: "contrato", value: contrato, tel, pAula, unidade, curso }
+                if (realatedCPF === cpf && contrato === contract) return result = { key: "contrato", value: contrato, tel, pAula, unidade, curso, background }
             }
 
-            if (realatedCPF === cpf) return result = { key: "name", value: element.name, tel, pAula, unidade, curso }
+            if (realatedCPF === cpf) return result = { key: "name", value: element.name, tel, pAula, unidade, curso, background }
         }
         return result
 

@@ -27,8 +27,8 @@ async function SearchOrders(unity) {
 
 
 let destiny = {
-    "PTB": process.env.EMAIL_CENTRO,
-    "Centro": process.env.EMAIL_PTB
+    "Centro": process.env.EMAIL_CENTRO,
+    "PTB": process.env.EMAIL_PTB
 }
 
 
