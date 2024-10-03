@@ -125,10 +125,14 @@ export async function getDealIdWithCPf(name, cpf, contract) {
                 .map(res => res.value)[0]
 
             if (contract) {
-                if (realatedCPF === cpf && contrato === contract) return result = { key: "contrato", value: contrato, tel, pAula, unidade, curso, background }
+                if (realatedCPF === cpf && contrato === contract) return result = {
+                    key: "contrato", value: contrato, tel, pAula, unidade, curso, background
+                }
+            } else {
+                if (realatedCPF === cpf) return result = {
+                    key: "name", value: element.name, tel, pAula, unidade, curso, background
+                }
             }
-
-            if (realatedCPF === cpf) return result = { key: "name", value: element.name, tel, pAula, unidade, curso, background }
         }
         return result
 
