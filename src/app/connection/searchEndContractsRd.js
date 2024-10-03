@@ -19,12 +19,12 @@ async function updateRdData(unity, page) {
 
     await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=200&page=${page}&token=${process.env.RD_TOKEN}&deal_pipeline_id=${funis[unity]}&deal_stage_id=${stages[unity]}`)
         .then(async response => {
-            const deals = response.data.deals
+            const { deals, has_more } = response.data
 
             let array = []
             for (const data of deals) {
                 let index = data.deal_custom_fields.findIndex(item => item.custom_field.label === "Data de fim do contrato")
-                let filtered = { value: data.deal_custom_fields[index].value, id: data.id }
+                let filtered = { value: data.deal_custom_fields[index].value, id: data.id, name: data.name }
 
                 filtered.value !== null && array.push(filtered)
             }
@@ -35,20 +35,21 @@ async function updateRdData(unity, page) {
             let splitedDate = postMonth.split("/")
             let monthAndYear = `${splitedDate[1]}/${splitedDate[2]}`
 
+            console.log(array.length + " [CONTRACTS ACTIVES]")
 
             for (let i = 0; i < array.length; i++) {
                 const value = array[i].value.split("/")
                 const newValue = `${value[1]}/${value[2]}`
 
                 if (newValue === monthAndYear) {
-                    // console.log(data.name)
+                    console.log(array[i].name + " [NEED  TO BE UPDATED]")
                     await updateStageRd(array[i], unity)
                 }
             }
 
-            if (deals.length === 200) {
+            if (has_more) {
                 page += 1
-                updateRdData(unity, page)
+                await updateRdData(unity, page)
             }
         })
         .catch(err => console.log(err))
