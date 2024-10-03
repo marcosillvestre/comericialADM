@@ -122,8 +122,14 @@ export async function CompleteCheckPointOnTrello(array, unity, where) {
 
 
         let { id } = await GotIdFromCardOnList(element.nome, unity)
-        const { id: checkItem, state } = await GetIdCheckListCard(element.nome, unity, where)
+        const checkList = await GetIdCheckListCard(element.nome, unity, where)
 
+        if (!checkList) {
+            console.log("checkList não encontrado")
+            return
+        }
+
+        const { id: checkItem, state } = checkList
 
         const newState = state === "incomplete" ? "complete" : "incomplete"
         try {

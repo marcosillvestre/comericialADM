@@ -30,10 +30,9 @@ routes.post('/contrato', parser, PostConttroller.sender)
 
 routes.post('/webhook-trello', webhookToken, TrelloWebhook.capture)
 routes.post('/feedback', webhookToken, UmblerWebhook.feedBack)
+routes.post('/primeira-aula', webhookToken, UmblerWebhook.firstClassAppointment)
 
 
-
-routes.post('/primeira-aula', UmblerWebhook.firstClassAppointment)
 
 routes.post('/login', SessionController.store)
 

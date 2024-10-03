@@ -20,6 +20,10 @@ class OrderController {
 
     async store(req, res) {
         const { orders, unity } = req.body
+
+
+        console.log({ "store": orders })
+
         const date = new Date()
         const code = await getLastMondayCode(date);
 
@@ -68,11 +72,11 @@ class OrderController {
 
         let founded = bools.every(res => res.isHere === false)
 
-        const update = async (code, data) => {
+        const update = async (id, data) => {
 
             await prisma.orders.update({
                 where: {
-                    code: code
+                    id
                 },
                 data: {
                     orders: {
@@ -114,7 +118,18 @@ class OrderController {
 
             let twin = await getLastMondayCode(await DateTransformer(orders[0].data))
 
-            if (response.find(res => res.code === twin)) return await update(code, orders)
+            if (response.find(res => res.code === twin)) {
+
+                const { id } = await prisma.orders.findFirst({
+                    where: {
+                        code: twin
+                    }
+                })
+
+                console.log(orders)
+                return
+                return await update(id, orders)
+            }
             await creation(code, orders)
         }
 

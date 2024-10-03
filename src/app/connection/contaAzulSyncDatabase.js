@@ -90,11 +90,12 @@ const order = async (name, material, unity, tel, aluno) => {
 
 }
 
+// console.log(await getToken("Centro", "refresh"))
 
 async function SyncOrdersToContaAzul(sale, headers, unity) {
-    console.log("order " + unity)
 
     const { id, customer, payment } = sale
+    console.log(`[ORDER] => ${customer.name} ` + unity)
 
     if (payment.installments[0]?.status === "ACQUITTED") {
 
@@ -125,8 +126,8 @@ async function SyncOrdersToContaAzul(sale, headers, unity) {
                     customer.name,
                     item.filter(res => res.item !== null),
                     unity,
+                    tel || "",
                     aluno || "",
-                    tel || ""
                 ),
                 unity: idList[unity]
             }
@@ -144,63 +145,63 @@ const getSalesByCustomerId = async (list, headers, unity) => {
 
     const allSales = await getAllSales(headers)
 
-    if (!allSales) return "Erro na busca"
+
+    if (!allSales) {
+        console.log("Erro na busca")
+        return
+    }
 
 
-    const data = Promise.all(
-        list.map(async (element, index) => {
-            const sale = allSales.
-                find(allSales =>
-                    spacesAndLowerCase(allSales.customer.name) === spacesAndLowerCase(element.name))
+    const data = [];
 
-            if (!sale) {
-                // console.log("[NOT FOUND] " + element.name + index)
-                return
-            }
+    for (let index = 0; index < list.length; index++) {
+        const element = list[index];
 
-            const { notes, payment, customer, id } = sale
+        const sale = allSales.
+            find(allSales =>
+                spacesAndLowerCase(allSales.customer.name) === spacesAndLowerCase(element.name))
 
-            if (notes === "") {
-                await SyncOrdersToContaAzul(sale, headers, unity)
-                // console.log(customer.name)
-                return
-            }
-            console.log("[FOUNDED] " + customer.name + index)
+        if (!sale) break
 
-            let parsed = () => {
-                let cleanData = notes.replace(/\\n/g, "")
-                const service = JSON.parse(cleanData)["serviço"]
-                return service
-            }
+        const { notes, payment, customer, id } = sale
 
-            let service = await parsed()
+        if (notes === "") {
+            await SyncOrdersToContaAzul(sale, headers, unity)
+            break
+        }
+        let parsed = () => {
+            let cleanData = notes.replace(/\\n/g, "")
+            const service = JSON.parse(cleanData)["serviço"]
+            return service
+        }
 
-            return {
-                id,
-                name: customer.name,
-                pendentes: element.pendents,
-                service,
-                contrato: element.contrato,
-                payment: payment.installments[0],
-            }
+        let service = await parsed()
 
+        if (!element.pendents.some(r => routes[service])) break
 
-
-        }))
-
+        data.push({
+            id,
+            name: customer.name,
+            pendentes: element.pendents,
+            service,
+            contrato: element.contrato,
+            payment: payment.installments[0],
+        })
+    }
 
     return data
-
 }
 
 
 async function Echo(response, where) {
+
     await historic._store("Automatização", where, "Ok", response.contrato)
 
     if (where === "mdStatus") {
 
         let message = `>${response.name}
 realizou o pagamento do material didático
+
 >${response.materialDidatico}`
 
         await SendtoWpp(message, response.unidade)
@@ -334,9 +335,12 @@ async function SearchPendents(unity, headers) {
             }))
 
             const map = await mapped
+
             const forUpdateDb = await getSalesByCustomerId(map, headers, unity)
 
             let paid = forUpdateDb.filter(res => res !== undefined)
+            console.log(forUpdateDb)
+            return
 
 
             console.log(paid.length + " [PAIDS]")
@@ -361,7 +365,10 @@ async function SearchPendents(unity, headers) {
 const syncContaAzul = async () => {
     console.log("Payments ca updates")
 
-    for (const realToken of ["Centro", "PTB"]) {
+    for (const realToken of [
+        "Centro",
+        "PTB"
+    ]) {
         const header = {
             "Authorization": `Bearer ${await getToken(realToken, 'refresh')}`
         }
@@ -379,5 +386,5 @@ const syncContaAzul = async () => {
 export default syncContaAzul
 
 
-
+//o segredo da pesquisa ta na due date, tem que pegar a do mes correto
 // syncContaAzul()

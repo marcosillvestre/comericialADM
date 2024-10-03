@@ -31,7 +31,6 @@ let destiny = {
     "PTB": process.env.EMAIL_PTB
 }
 
-
 async function SendMail(data, unity) {
 
     try {

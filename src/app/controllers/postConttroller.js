@@ -368,9 +368,11 @@ envie uma mensagem para o número pedagógico ${unityNumber[unidade]}.
 Te esperamos na aula 👩‍💻`,
             }
 
+            console.log(key, value, tel, pAula, unidade, curso, background)
+
             if (background !== "Rematrícula") {
 
-                await ScheduleBotMessages(nome, tel, "Olá", pAula, "Lembrete da primeira aula")
+                await ScheduleBotMessages(nome, tel, "", pAula, "Lembrete da primeira aula")
                 await SendSimpleWpp(nome, tel, curseMessages[curso])
 
             }
@@ -389,7 +391,7 @@ Te esperamos na aula 👩‍💻`,
 
 
             if (!contracts) {
-                console.log("Não encontrado no sistema")
+                console.log("Não encontrado no sistema ou já assinado")
                 return res.status(200).json({ message: "Não encontrado no sistema ou já assinado" })
             }
 
