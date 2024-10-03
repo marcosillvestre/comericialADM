@@ -95,7 +95,7 @@ class OrderController {
             await prisma.orders.create({
                 data: {
                     code,
-                    data,
+                    orders: data,
                     unity
                 }
             })
@@ -233,6 +233,7 @@ Temos uma ótima notícia, o seu material didático:
 já está disponível para retirada em nossa unidade. 
 
 Qualquer dúvida, entre em contato com o nosso whatsapp pedagógico através do número da unidade 
+
 > ${res.unity} : ${unityNumber[res.unity]}.
                                 
 Atenciosamente, equipe American Way.
