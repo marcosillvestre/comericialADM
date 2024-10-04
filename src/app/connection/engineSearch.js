@@ -224,7 +224,6 @@ async function searchSync() {
                                 .catch((err) => {
                                     if (err.meta) {
 
-                                        // res.name.includes("Evelyn Nayane de Almeida") && trelloCreateCard(res)
                                         console.log(`${res.name} está com o contrato repetido : ${res.contrato}, ${res.dataMatricula}, ${res.unidade} `)
                                     }
                                     if (!err.meta) {
