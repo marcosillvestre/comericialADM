@@ -22,7 +22,6 @@ class OrderController {
         const { orders, unity } = req.body
 
 
-        console.log({ "store": orders })
 
         const date = new Date()
         const code = await getLastMondayCode(date);

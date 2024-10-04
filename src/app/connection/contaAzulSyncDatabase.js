@@ -90,14 +90,13 @@ const order = async (name, material, unity, tel, aluno) => {
 
 }
 
-// console.log(await getToken("Centro", "refresh"))
 
 async function SyncOrdersToContaAzul(sale, headers, unity) {
 
     const { id, customer, payment } = sale
-    console.log(`[ORDER] => ${customer.name} ` + unity)
-
     if (payment.installments[0]?.status === "ACQUITTED") {
+        console.log(`[ORDER] => ${customer.name} ` + unity)
+
 
         const { data } = await axios.get(
             `https://api.contaazul.com/v1/sales/${id}/items?Type=Product`,
@@ -135,10 +134,9 @@ async function SyncOrdersToContaAzul(sale, headers, unity) {
 
         item.length > 0 && await ordersController.store(bodyOrder)
 
+
     }
-
 }
-
 
 
 const getSalesByCustomerId = async (list, headers, unity) => {
@@ -158,38 +156,46 @@ const getSalesByCustomerId = async (list, headers, unity) => {
         const element = list[index];
 
         const sale = allSales.
-            find(allSales =>
-                spacesAndLowerCase(allSales.customer.name) === spacesAndLowerCase(element.name))
+            filter(allSales =>
+                spacesAndLowerCase(allSales.customer.name) ===
+                spacesAndLowerCase(element.name)
+            )
 
-        if (!sale) break
+        if (sale.length === 0) continue
 
-        const { notes, payment, customer, id } = sale
+        for (let secIndex = 0; secIndex < sale.length; secIndex++) {
+            const secElement = sale[secIndex];
 
-        if (notes === "") {
-            await SyncOrdersToContaAzul(sale, headers, unity)
-            break
+            const { notes, payment, customer, id } = secElement
+
+            if (notes === "") {
+                await SyncOrdersToContaAzul(secElement, headers, unity)
+                continue
+            }
+
+            let parsed = () => {
+                let cleanData = notes.replace(/\\n/g, "")
+                const service = JSON.parse(cleanData)["serviço"]
+                return service
+            }
+
+            let service = await parsed()
+
+            if (!element.pendents.some(r => r === routes[service])) continue
+
+            if (payment.installments[0] && payment.installments[0]?.status === "ACQUITTED") data.push({
+                id,
+                name: customer.name,
+                pendentes: element.pendents,
+                service,
+                contrato: element.contrato,
+                payment: payment.installments[0],
+            })
         }
-        let parsed = () => {
-            let cleanData = notes.replace(/\\n/g, "")
-            const service = JSON.parse(cleanData)["serviço"]
-            return service
-        }
-
-        let service = await parsed()
-
-        if (!element.pendents.some(r => routes[service])) break
-
-        data.push({
-            id,
-            name: customer.name,
-            pendentes: element.pendents,
-            service,
-            contrato: element.contrato,
-            payment: payment.installments[0],
-        })
     }
 
-    return data
+
+    return data.filter(res => res !== undefined)
 }
 
 
@@ -199,10 +205,10 @@ async function Echo(response, where) {
 
     if (where === "mdStatus") {
 
-        let message = `>${response.name}
+        let message = `> *${response.name}*
 realizou o pagamento do material didático
 
->${response.materialDidatico}`
+> ${response.materialDidatico}`
 
         await SendtoWpp(message, response.unidade)
 
@@ -285,11 +291,6 @@ async function SearchPendents(unity, headers) {
     await prisma.person.findMany({
         where: {
             unidade: unity,
-            NOT: [
-                {
-                    background: "Rematrícula"
-                }
-            ],
             OR: [
                 {
                     mdStatus: {
@@ -335,15 +336,8 @@ async function SearchPendents(unity, headers) {
             }))
 
             const map = await mapped
+            const paid = await getSalesByCustomerId(map, headers, unity)
 
-            const forUpdateDb = await getSalesByCustomerId(map, headers, unity)
-
-            let paid = forUpdateDb.filter(res => res !== undefined)
-            console.log(forUpdateDb)
-            return
-
-
-            console.log(paid.length + " [PAIDS]")
 
             for (let index = 0; index < paid.length; index++) {
                 const element = paid[index];
@@ -384,7 +378,3 @@ const syncContaAzul = async () => {
 
 
 export default syncContaAzul
-
-
-//o segredo da pesquisa ta na due date, tem que pegar a do mes correto
-// syncContaAzul()
