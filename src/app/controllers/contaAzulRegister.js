@@ -88,7 +88,7 @@ class RegisterContaAzulController {
             curso, valorCurso, ppFormaPg,
             ppVencimento, dataUltimaParcelaMensalidade, materialDidatico,
             mdValor, mdFormaPg, mdVencimento, service,
-            tmValor, tmFormaPg, tmVencimento, nomeAluno, vendedor, observacaoRd,
+            tmValor, tmFormaPg, tmVencimento, nomeAluno, vendedor, observacaoRd, obsFinanceiro,
             mdDesconto, parcelasAfetadas, descontoPrimeirasParcelas, demaisParcelas, descontoDemaisParcelas, promocao
         } = req.body
         try {
@@ -134,6 +134,7 @@ class RegisterContaAzulController {
                         "serviço": "parcela",
                         "vendedor": vendedor,
                         "observacao do rd": observacaoRd,
+                        "observacao para o financeiro": obsFinanceiro,
                         "desconto no material didatico": mdDesconto,
                         "promoção": promocao === "Sim" ? promo : ""
                     }
@@ -215,7 +216,7 @@ class RegisterContaAzulController {
             curso, valorCurso, ppFormaPg,
             ppVencimento, dataUltimaParcelaMensalidade, materialDidatico,
             mdValor, mdFormaPg, mdVencimento,
-            tmValor, tmFormaPg, tmVencimento, nomeAluno, vendedor,
+            tmValor, tmFormaPg, tmVencimento, nomeAluno, vendedor, obsFinanceiro,
             observacaoRd, mdDesconto, parcelasAfetadas, descontoPrimeirasParcelas, demaisParcelas, descontoDemaisParcelas, promocao
         } = req.body
 
@@ -269,6 +270,8 @@ class RegisterContaAzulController {
                             "contrato": contrato,
                             "serviço": "material didatico",
                             "observacao do rd": observacaoRd,
+                            "observacao para o financeiro": obsFinanceiro,
+
                             "vendedor": vendedor,
                             "desconto no material didatico": mdDesconto,
                             "promoção": promocao === "Sim" ? promo : ""
@@ -398,7 +401,7 @@ class RegisterContaAzulController {
             cargaHoraria, numeroParcelas, descontoTotal,
             curso, valorCurso, ppFormaPg,
             ppVencimento, dataUltimaParcelaMensalidade, materialDidatico,
-            mdValor, mdFormaPg, mdVencimento,
+            mdValor, mdFormaPg, mdVencimento, obsFinanceiro,
             tmValor, tmFormaPg, tmVencimento, nomeAluno, vendedor,
             observacaoRd,
         } = req.body
@@ -440,6 +443,8 @@ class RegisterContaAzulController {
                             "contrato": contrato,
                             "serviço": "taxa de matricula",
                             "observacao do rd": observacaoRd,
+                            "observacao para o financeiro": obsFinanceiro,
+
                             "vendedor": vendedor
 
                         }

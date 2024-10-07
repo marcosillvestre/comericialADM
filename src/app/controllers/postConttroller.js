@@ -294,6 +294,8 @@ class PostController {
                             descontoDemaisParcelas: deal.filter(res => res.custom_field.label.includes('Valor do desconto demais parcelas')).map(res => res.value)[0],
                             promocao: desPrimeirasParcelas === undefined || desPrimeirasParcelas === "0" || desPrimeirasParcelas === "" ? "Não" : "Sim",
                             background: deal.filter(res => res.custom_field.label.includes('Background do Aluno')).map(res => res.value)[0],
+
+                            obsFinanceiro: deal.filter(res => res.custom_field.label.includes('Observações importantes para o financeiro')).map(res => res.value)[0],
                         }
                         array.push(body)
                     }
