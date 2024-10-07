@@ -286,7 +286,7 @@ class PostController {
                             tmFormaPg: deal.filter(res => res.custom_field.label.includes('Forma de pagamento TM')).map(res => res.value)[0],
                             tmVencimento: deal.filter(res => res.custom_field.label.includes('Data de pagamento TM')).map(res => res.value)[0],
                             service: index.deal_products[0]?.name ? index.deal_products[0]?.name : "",
-                            observacaoRd: deal.filter(res => res.custom_field.label.includes('Obersevações importantes para o financeiro')).map(res => res.value)[0],
+                            observacaoRd: deal.filter(res => res.custom_field.label.includes('Observações importantes para o pedagógico')).map(res => res.value)[0],
 
                             parcelasAfetadas: deal.filter(res => res.custom_field.label.includes('Quantidade de primeiras parcelas com desconto')).map(res => res.value)[0],
                             descontoPrimeirasParcelas: desPrimeirasParcelas,
