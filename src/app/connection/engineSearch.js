@@ -2,7 +2,7 @@ import axios from 'axios';
 import "dotenv/config";
 import prisma from '../../database/database.js';
 import { CardCreationOnTrello } from './externalConnections/trello.js';
-import { SendtoWpp } from './externalConnections/wpp.js';
+import { SendSimpleWpp, SendtoWpp } from './externalConnections/wpp.js';
 
 const comebackDays = 2
 const options = { method: 'GET', headers: { accept: 'application/json' } };
@@ -100,6 +100,8 @@ async function searchSync() {
                         mdData: "",
                         comissaoStatus: "Pendente",
                         curso: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Curso')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Curso')).map(res => res.value)[0] : "Sem este dado no rd",
+                        obsPedagogico: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Observações importantes para o pedagógico')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Observações importantes para o pedagógico')).map(res => res.value)[0] : "Sem este dado no rd",
+
                     }
                     array.push(body)
                 }
@@ -318,6 +320,14 @@ async function trelloCreateCard(object) {
 Foi cadastrado no sistema de comissão, voce pode encontra-lo também no trello por esse link: ${url}`
 
             await SendtoWpp(message, data.unidade)
+
+
+            let conference = `> *${body.name}* 
+                
+Foi cadastrado no sistema de comissão.
+                `
+
+            await SendSimpleWpp("Carolina", process.env.CAROLINA, conference)
 
         })
 }
