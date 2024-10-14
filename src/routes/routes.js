@@ -24,10 +24,6 @@ const parser = bodyParser.urlencoded({ extended: false })
 const upload = multer({ storage: storage })
 
 
-routes.post('/files', FilesController.store)
-routes.get('/files', FilesController.index)
-routes.get('/file', FilesController.downloadFiles)
-routes.delete("/file", FilesController.deleteFiles)
 
 
 
@@ -50,6 +46,16 @@ routes.post('/nova-senha', SessionController.redefinePassword)
 
 
 routes.use(auth) // autenticated routes
+
+
+routes.post('/files', FilesController.store)
+routes.get('/files', FilesController.index)
+routes.get('/file', FilesController.downloadFiles)
+routes.delete("/file", FilesController.deleteFiles)
+
+
+
+
 routes.post('/uploads', upload.single('file'), AutentiqueController.store)
 ///////////////////
 
