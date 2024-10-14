@@ -3,7 +3,7 @@ import axios from 'axios';
 import 'dotenv/config';
 import FormData from 'form-data';
 import fs from 'fs';
-import { SendSimpleWpp } from '../connection/externalConnections/wpp.js';
+import { SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
 class AutentiqueController {
     async store(req, res) {
         const { name, number } = req.body

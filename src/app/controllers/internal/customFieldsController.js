@@ -1,5 +1,5 @@
 
-import prisma from "../../database/database.js"
+import prisma from "../../../database/database.js"
 
 class CustomFieldsController {
     async index(req, res) {

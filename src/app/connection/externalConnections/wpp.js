@@ -53,7 +53,7 @@ export async function SendSimpleWpp(name, phone, message) {
 }
 
 
-export async function ScheduleBotMessages(name, phone, message, date, botName) {
+export async function ScheduleBotMessages(name, phone, date, botName) {
 
     const isoDate = await DateTransformer(date)
     const schedule = new Date(isoDate)
@@ -65,7 +65,7 @@ export async function ScheduleBotMessages(name, phone, message, date, botName) {
         "toPhone": phone,
         "fromPhone": process.env.FROM,
         "organizationId": process.env.UMBLER_ORG_ID,
-        "message": message,
+        "message": "message",
         "file": null,
         "contactName": name,
 

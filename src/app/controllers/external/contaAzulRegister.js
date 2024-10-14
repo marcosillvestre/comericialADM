@@ -1,8 +1,8 @@
 import axios from 'axios';
 import 'dotenv/config';
 import moment from 'moment';
-import { DateTransformer } from '../../config/DateTransformer.js';
-import { getToken } from '../core/getToken.js';
+import { DateTransformer } from '../../../config/DateTransformer.js';
+import { getToken } from '../../core/getToken.js';
 
 
 class RegisterContaAzulController {

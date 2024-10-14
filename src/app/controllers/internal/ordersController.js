@@ -1,10 +1,10 @@
-import { DateTransformer } from "../../config/DateTransformer.js";
-import { PastCodes } from "../../config/getLastMonday.js";
+import { DateTransformer } from "../../../config/DateTransformer.js";
+import { PastCodes } from "../../../config/getLastMonday.js";
 
-import prisma from "../../database/database.js";
-import { Historic } from '../../database/historic/properties.js';
-import { CompleteCheckPointOnTrello } from "../connection/externalConnections/trello.js";
-import { SendSimpleWpp } from "../connection/externalConnections/wpp.js";
+import prisma from "../../../database/database.js";
+import { Historic } from '../../../database/historic/properties.js';
+import { CompleteCheckPointOnTrello } from "../../connection/externalConnections/trello.js";
+import { SendSimpleWpp } from "../../connection/externalConnections/wpp.js";
 
 
 const { getLastMondayCode } = new PastCodes()

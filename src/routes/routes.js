@@ -1,18 +1,19 @@
 import bodyParser from 'body-parser';
 import { Router } from 'express';
-import RegisterContaAzulController from '../app/controllers/contaAzulRegister.js';
-import HistoricController from '../app/controllers/historicController.js';
-import PostConttroller from "../app/controllers/postConttroller.js";
-import SessionController from "../app/controllers/sessionController.js";
-import UnityController from "../app/controllers/unitiesController.js";
-import UserController from "../app/controllers/userController.js";
+import RegisterContaAzulController from '../app/controllers/external/contaAzulRegister.js';
+import HistoricController from '../app/controllers/internal/historicController.js';
+import PostConttroller from "../app/controllers/internal/postConttroller.js";
+import SessionController from "../app/controllers/internal/sessionController.js";
+import UnityController from "../app/controllers/internal/unitiesController.js";
+import UserController from "../app/controllers/internal/userController.js";
 import TrelloWebhook from '../app/webhooks/trello.js';
 
 import multer from 'multer';
-import AutentiqueController from '../app/controllers/autentiqueController.js';
+import AutentiqueController from '../app/controllers/external/autentiqueController.js';
 // import ContractsController from '../app/controllers/contractsController.js';
-import CustomFieldsController from '../app/controllers/customFieldsController.js';
-import OrdersController from '../app/controllers/ordersController.js';
+import FilesController from '../app/controllers/external/filesController.js';
+import CustomFieldsController from '../app/controllers/internal/customFieldsController.js';
+import OrdersController from '../app/controllers/internal/ordersController.js';
 import UmblerWebhook from '../app/webhooks/umbler.js';
 import { storage } from '../config/multer.js';
 import auth from "../middleware/auth.js";
@@ -23,9 +24,16 @@ const parser = bodyParser.urlencoded({ extended: false })
 const upload = multer({ storage: storage })
 
 
+routes.post('/files', FilesController.store)
+routes.get('/files', FilesController.index)
+routes.get('/file', FilesController.downloadFiles)
+routes.delete("/file", FilesController.deleteFiles)
+
+
+
+
 
 routes.post('/contrato', parser, PostConttroller.sender)
-
 
 
 routes.post('/webhook-trello', webhookToken, TrelloWebhook.capture)
@@ -51,7 +59,6 @@ routes.delete('/campos-personalizados/:id', CustomFieldsController.delete)
 routes.put('/campos-personalizados', CustomFieldsController.update)
 
 ///////////////////
-
 
 
 // routes.get('/novos-contratos', ContractsController.index)

@@ -1,14 +1,14 @@
 import axios from 'axios';
 import "dotenv/config";
-import { funis } from "../../utils/funnels.js";
-import { stages } from "../../utils/stage.js";
+import { funis } from "../../../utils/funnels.js";
+import { stages } from "../../../utils/stage.js";
 
-import { DateTransformer } from '../../config/DateTransformer.js';
-import prisma from '../../database/database.js';
-import { Historic } from "../../database/historic/properties.js";
-import { getDealIdWithCPf } from '../connection/externalConnections/rdStation.js';
-import { CreateCommentOnTrello } from '../connection/externalConnections/trello.js';
-import { ScheduleBotMessages, SendSimpleWpp } from '../connection/externalConnections/wpp.js';
+import { DateTransformer } from '../../../config/DateTransformer.js';
+import prisma from '../../../database/database.js';
+import { Historic } from "../../../database/historic/properties.js";
+import { getDealIdWithCPf } from '../../connection/externalConnections/rdStation.js';
+import { CreateCommentOnTrello } from '../../connection/externalConnections/trello.js';
+import { ScheduleBotMessages, SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
 
 const historic = new Historic()
 const limit = 200
@@ -370,11 +370,10 @@ envie uma mensagem para o número pedagógico ${unityNumber[unidade]}.
 Te esperamos na aula 👩‍💻`,
             }
 
-            console.log(key, value, tel, pAula, unidade, curso, background)
 
             if (background !== "Rematrícula") {
 
-                await ScheduleBotMessages(nome, tel, "", pAula, "Lembrete da primeira aula")
+                await ScheduleBotMessages(nome, tel, pAula, "Lembrete da primeira aula")
                 await SendSimpleWpp(nome, tel, curseMessages[curso])
 
             }

@@ -118,6 +118,15 @@ model Orders {
 }
 
 
+model files {
+  id            String    @id  @default(cuid())
+  name          String
+  key           String
+  contentType   String
+  contract      String
+  createdAt     DateTime  @default(now())
+}
+
 
 enum TYPE {
 String

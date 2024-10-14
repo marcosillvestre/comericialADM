@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken'
 import nodemailer from 'nodemailer'
 import * as Yup from 'yup'
 
-import prisma from '../../database/database.js'
+import prisma from '../../../database/database.js'
 
 class SessionsController {
 

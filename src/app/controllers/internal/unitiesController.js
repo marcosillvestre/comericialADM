@@ -1,6 +1,6 @@
 
 import * as Yup from 'yup';
-import prisma from '../../database/database.js';
+import prisma from '../../../database/database.js';
 
 
 class UnityController {

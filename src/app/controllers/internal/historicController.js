@@ -1,5 +1,5 @@
 import "dotenv/config";
-import prisma from '../../database/database.js';
+import prisma from '../../../database/database.js';
 
 class Historic {
     async store(req, res) {
