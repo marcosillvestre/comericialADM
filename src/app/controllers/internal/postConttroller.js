@@ -789,7 +789,8 @@ Te esperamos na aula 👩‍💻`,
                 tipoMatricula: true,
                 unidade: true,
                 dataMatricula: true,
-                owner: true
+                owner: true,
+                background: true
             }
         })
 
