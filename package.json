@@ -10,7 +10,7 @@
         "postinstall": "prisma generate && prisma migrate deploy"
     },
     "keywords": [],
-    "author": "",
+    "author": "MarcoSillvestre // marcosillvestre.dev@gmail.com",
     "license": "ISC",
     "dependencies": {
         "@aws-sdk/client-s3": "^3.670.0",
@@ -41,6 +41,6 @@
         "prisma": "^5.20.0"
     },
     "engines": {
-        "node": ">=17.0.0 <18.0.0"
+        "node": ">=17.0.0"
     }
 }
