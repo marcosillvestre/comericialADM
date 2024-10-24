@@ -41,8 +41,11 @@ const order = async (name, material, unity, tel, aluno) => {
 
         const body = material.map(res => {
             let splited = res.split(" / ")
+
+
             const pdFiltered = data.filter(res => res.code.includes(splited[1]))
-            return {
+
+            if (pdFiltered.length > 0) return {
                 id: v4().slice(0, 8),
                 sku: splited[1],
                 nome: name,
@@ -56,6 +59,8 @@ const order = async (name, material, unity, tel, aluno) => {
                 aluno,
                 tel
             }
+
+            console.log(splited)
 
         })
 
@@ -174,9 +179,17 @@ const getSalesByCustomerId = async (list, headers, unity) => {
             }
 
             let parsed = () => {
-                let cleanData = notes.replace(/\\n/g, "")
-                const service = JSON.parse(cleanData)["serviço"]
-                return service
+                try {
+
+                    let cleanData = notes.replace(/\\n/g, "")
+                    cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
+
+                    const service = JSON.parse(cleanData)["serviço"]
+                    return service
+                } catch (error) {
+                    console.log(customer.name)
+                    return "error"
+                }
             }
 
             let service = await parsed()

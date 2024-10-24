@@ -22,7 +22,7 @@ async function SearchOrders(unity) {
     })
 
     const filtered = order?.orders.filter(res => res.dataRetirada === "")
-    if (order?.orders.length > 0) SendMail(filtered, unity)
+    if (order?.orders.length > 0) await SendMail(filtered, unity)
 }
 
 
