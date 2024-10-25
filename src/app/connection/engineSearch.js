@@ -133,7 +133,7 @@ async function searchSync() {
                         })
 
                         const signed = () => {
-                            if (searchHistoric) {
+                            if (searchHistoric.length > 0) {
                                 const isThere = searchHistoric
                                     .find(sign => sign.responsible !== "American Way")
 
