@@ -11,6 +11,7 @@ const { getLastMondayCode } = new PastCodes()
 class OrderController {
 
     async index(req, res) {
+
         const { dates } = req.query
 
         const [initial, final] = dates.split("~")
@@ -18,7 +19,6 @@ class OrderController {
         const initialDate = new Date(initial).setUTCHours(0, 0, 0, 0)
         const finalDate = new Date(final).setUTCHours(0, 0, 0, 0)
 
-        console.log(initial)
 
         const orders = await prisma.orders.findMany()
 
