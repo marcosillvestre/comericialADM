@@ -60,8 +60,6 @@ const order = async (name, material, unity, tel, aluno) => {
                 tel
             }
 
-            console.log(splited)
-
         })
 
         return body
@@ -187,7 +185,7 @@ const getSalesByCustomerId = async (list, headers, unity) => {
                     const service = JSON.parse(cleanData)["serviço"]
                     return service
                 } catch (error) {
-                    console.log(customer.name)
+                    // console.log(customer.name)
                     return "error"
                 }
             }
@@ -213,6 +211,8 @@ const getSalesByCustomerId = async (list, headers, unity) => {
 
 
 async function Echo(response, where) {
+
+
 
     await historic._store("Automatização", where, "Ok", response.contrato)
 
@@ -240,7 +240,6 @@ realizou o pagamento do material didático
                     unity: idList[response.unidade]
                 }
             }
-
             await ordersController.store(bodyOrder)
 
         }
@@ -260,7 +259,6 @@ realizou o pagamento do material didático
     }
 
     let trelloMessage = `${response.name} -- realizou o pagamento da(o) ${routes[where]} via ${type[where]} no dia ${new Date().toLocaleDateString('pt-BR')}`
-
     Promise.all([
         CompleteCheckPointOnTrello([{ nome: response.name }], response.unidade, `ADM - Checkup inicial/${checkup[where]}`),
         CreateCommentOnTrello(response.name, response.unidade, trelloMessage)

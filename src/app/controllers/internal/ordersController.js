@@ -9,11 +9,32 @@ import { SendSimpleWpp } from "../../connection/externalConnections/wpp.js";
 
 const { getLastMondayCode } = new PastCodes()
 class OrderController {
+
     async index(req, res) {
+        const { dates } = req.query
+
+        const [initial, final] = dates.split("~")
+
+        const initialDate = new Date(initial).setUTCHours(0, 0, 0, 0)
+        const finalDate = new Date(final).setUTCHours(0, 0, 0, 0)
+
+        console.log(initial)
 
         const orders = await prisma.orders.findMany()
 
-        return res.status(200).json(orders)
+
+        const DateFilter = await Promise.all(orders.map(async r => {
+            let date = new Date(r.created_at)
+
+            return (date >= initialDate && date <= finalDate) ? r : null;
+
+        }))
+
+
+
+        let generalMonthsBefore = DateFilter.filter(res => res !== null)
+
+        return res.status(200).json(generalMonthsBefore)
     }
 
 
@@ -72,25 +93,29 @@ class OrderController {
         let founded = bools.every(res => res.isHere === false)
 
         const update = async (id, data) => {
+            for (let index = 0; index < data.length; index++) {
+                const element = data[index];
 
-            await prisma.orders.update({
-                where: {
-                    id
-                },
-                data: {
-                    orders: {
-                        push: data
+                await prisma.orders.update({
+                    where: {
+                        id
+                    },
+                    data: {
+                        orders: {
+                            push: element
+                        }
                     }
-                }
-            })
-                .then(() => {
-                    if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
-                    console.log("Pedido agregado")
                 })
-                .catch((err) => {
-                    console.log(err)
-                    if (res) return res.status(400).json({ err })
-                })
+                    .then(() => {
+                        if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
+                        console.log("Pedido agregado")
+                    })
+                    .catch((err) => {
+                        console.log(err)
+                        if (res) return res.status(400).json({ err })
+                    })
+            }
+
         }
 
         const creation = async (code, data) => {
@@ -125,12 +150,11 @@ class OrderController {
                     }
                 })
 
-                console.log(orders)
-                return
                 return await update(id, orders)
             }
             await creation(code, orders)
         }
+
 
     }
 
