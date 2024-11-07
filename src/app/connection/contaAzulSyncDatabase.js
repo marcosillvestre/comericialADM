@@ -7,7 +7,7 @@ import ordersController from "../controllers/internal/ordersController.js"
 import { getToken } from "../core/getToken.js"
 import { getAllSales } from "./externalConnections/contaAzulStrategy.js"
 import { CompleteCheckPointOnTrello, CreateCommentOnTrello } from "./externalConnections/trello.js"
-import { SendtoWpp } from "./externalConnections/wpp.js"
+import { SendSimpleWpp, SendtoWpp } from "./externalConnections/wpp.js"
 
 const historic = new Historic()
 const { spacesAndLowerCase } = new StringsMethods()
@@ -62,7 +62,8 @@ const order = async (name, material, unity, tel, aluno) => {
 
         })
 
-        return body
+        if (body.some(res => res === null || res === undefined)) await SendSimpleWpp("marcos", process.env.MARCOS, `um desses materiais não foi encontrado :${material}`)
+        return body.filter(res => res)
     }
 
     const body = await Promise.all(material.map(async res => {
@@ -89,7 +90,9 @@ const order = async (name, material, unity, tel, aluno) => {
             return error.response.data
         }
     }))
-    return body
+
+    if (body.some(res => res === null || res === undefined)) await SendSimpleWpp("marcos", process.env.MARCOS, `um desses materiais não foi encontrado :${material}`)
+    return body.filter(res => res)
 
 }
 

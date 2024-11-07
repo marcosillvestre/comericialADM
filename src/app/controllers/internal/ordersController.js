@@ -57,7 +57,6 @@ class OrderController {
 
         let bools = []
         if (response.length > 0) {
-
             for (let index = 0; index < response.length; index++) {
                 const resp = response[index];
 
@@ -69,25 +68,26 @@ class OrderController {
 
                     const haveAluno = ord.aluno
 
-                    let whenHaveAluno = orders
-                        .some(res =>
-                            res.materialDidatico === ord.materialDidatico &&
-                            res.nome === ord.nome
-                            && res.aluno === ord.aluno
-                        )
+                    for (let index = 0; index < orders.length; index++) {
+                        const item = orders[index];
 
-                    let whenDontHaveAluno = orders
-                        .some(res =>
-                            res.materialDidatico === ord.materialDidatico &&
-                            res.nome === ord.nome
-                        )
 
-                    let isThere = haveAluno ? whenHaveAluno : whenDontHaveAluno
+                        let whenHaveAluno = item.materialDidatico === ord.materialDidatico &&
+                            item.nome === ord.nome &&
+                            item.aluno === ord.aluno
 
-                    bools.push({ code: resp.id, isHere: isThere })
+
+                        let whenDontHaveAluno = item.materialDidatico === ord.materialDidatico &&
+                            item.nome === ord.nome
+
+                        let isThere = haveAluno ? whenHaveAluno : whenDontHaveAluno
+
+                        bools.push({ code: resp.id, isHere: isThere })
+                    }
+
                 }
-
             }
+
         }
 
         let founded = bools.every(res => res.isHere === false)
