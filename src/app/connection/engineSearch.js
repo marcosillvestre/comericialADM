@@ -109,33 +109,33 @@ async function searchSync() {
                     array.map(async res => {
 
 
-                        const searchHistoric = await prisma.historic.findMany({
-                            where: {
-                                OR: [
 
-                                    {
-                                        information: {
-                                            equals: {
-                                                field: "Contrato",
-                                                to: "Assinado",
-                                                from: res.contrato
+                        const signed = async () => {
+                            const searchHistoric = await prisma.historic.findMany({
+                                where: {
+                                    OR: [
+                                        {
+                                            information: {
+                                                equals: {
+                                                    field: "Contrato",
+                                                    to: "Assinado",
+                                                    from: res.contrato
+                                                }
+                                            }
+                                        },
+                                        {
+                                            responsible: {
+                                                contains: res.name,
+                                                mode: "insensitive"
                                             }
                                         }
-                                    },
-                                    {
-                                        responsible: {
-                                            contains: res.name,
-                                            mode: "insensitive"
-                                        }
-                                    }
-                                ]
-                            }
-                        })
+                                    ]
+                                }
+                            })
 
-                        const signed = () => {
                             if (searchHistoric.length > 0) {
                                 const isThere = searchHistoric
-                                    .find(sign => sign.responsible !== "American Way")
+                                    .find(sign => sign.responsible !== "American Way" || sign.responsible !== "Victor Souza")
 
                                 return isThere ? "Pendente" : "Ok"
                             }
@@ -343,3 +343,9 @@ export default searchSync
 // )
 
 // console.log(personalHistoric)
+
+
+
+let str = "adesao-Alice Figueiredo Alves+P2-04112024(1).docx"
+const cleanedStr = str.replace(/(\d+)(\s*\([^)]*\))?(\.[^\s]+)?$/g, '$1')
+console.log(cleanedStr);

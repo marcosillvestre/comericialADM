@@ -40,7 +40,7 @@ class AutentiqueController {
         }
             `,
                 variables: {
-                    "document": { "name": `${req.file.originalname.replace(".pdf", "")}` },
+                    "document": { "name": `${req.file.originalname.replace(".pdf", "").replace(/(\d+)(\s*\([^)]*\))?(\.[^\s]+)?$/g, '$1')}` },
                     "signers": [{ "name": `${name}`, 'action': "SIGN" },
                     { "name": "Victor", 'action': "SIGN" },
                     ],
