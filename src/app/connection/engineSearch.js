@@ -334,18 +334,3 @@ Foi cadastrado no sistema de comissão.
 
 
 export default searchSync
-
-// const personalHistoric = await prisma.historic.deleteMany({
-//     where: {
-//         responsible: "Marcos"
-//     }
-// }
-// )
-
-// console.log(personalHistoric)
-
-
-
-let str = "adesao-Alice Figueiredo Alves+P2-04112024(1).docx"
-const cleanedStr = str.replace(/(\d+)(\s*\([^)]*\))?(\.[^\s]+)?$/g, '$1')
-console.log(cleanedStr);
