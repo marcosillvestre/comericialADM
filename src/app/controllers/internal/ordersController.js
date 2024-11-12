@@ -161,7 +161,8 @@ class OrderController {
 
                 const weekOrder = await prisma.weekOrder.findFirst({
                     where: {
-                        code: twin
+                        code: twin,
+                        unity
                     }
                 })
 
@@ -189,8 +190,9 @@ class OrderController {
 
         const { id, responsible } = req.body
 
+
         try {
-            const filter = await prisma.books.delete({
+            await prisma.books.delete({
                 where: {
                     id
                 }
@@ -198,7 +200,7 @@ class OrderController {
 
 
 
-            await historic._store(responsible, "Pedido", "Deletado", filter.code)
+            await historic._store(responsible, "Pedido", "Deletado", id)
 
             if (res) return res.status(201).json({ message: "Pedido removido com sucesso" })
             console.log("Pedido editado")
