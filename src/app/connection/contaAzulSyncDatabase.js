@@ -6,12 +6,13 @@ import { Historic } from "../../database/historic/properties.js"
 import ordersController from "../controllers/internal/ordersController.js"
 import { getToken } from "../core/getToken.js"
 import { getAllSales } from "./externalConnections/contaAzulStrategy.js"
-import { CompleteCheckPointOnTrello, CreateCommentOnTrello } from "./externalConnections/trello.js"
+import {
+    CompleteCheckPointOnTrello,
+    CreateCommentOnTrello
+} from "./externalConnections/trello.js"
 import { SendSimpleWpp, SendtoWpp } from "./externalConnections/wpp.js"
-
 const historic = new Historic()
 const { spacesAndLowerCase } = new StringsMethods()
-
 
 
 const routes = {
@@ -36,7 +37,7 @@ const order = async (name, material, unity, tel, aluno) => {
     }
 
 
-    if (material[0].id === undefined) {
+    if (!("id" in material[0])) {
         const { data } = await axios.get("https://api.contaazul.com/v1/products?size=10000", { headers: header })
 
         const body = material.map(res => {
@@ -46,7 +47,6 @@ const order = async (name, material, unity, tel, aluno) => {
             const pdFiltered = data.filter(res => res.code.includes(splited[1]))
 
             if (pdFiltered.length > 0) return {
-                id: v4().slice(0, 8),
                 sku: splited[1],
                 nome: name,
                 materialDidatico: splited[0],
@@ -101,19 +101,18 @@ async function SyncOrdersToContaAzul(sale, headers, unity) {
 
     const { id, customer, payment } = sale
     if (payment.installments[0]?.status === "ACQUITTED") {
-        console.log(`[ORDER] => ${customer.name} ` + unity)
+        // console.log(`[ORDER] => ${customer.name} ` + unity)
 
 
         const { data } = await axios.get(
             `https://api.contaazul.com/v1/sales/${id}/items?Type=Product`,
             { headers: headers })
 
-        let item = data.map(item => {
-            return item.itemType === "PRODUCT" ? item.item : null
-        })
+
+        let item = data.filter(item => item.itemType === "PRODUCT")
 
 
-        const find = await prisma.person.findFirst({
+        const searchOnDatabase = await prisma.person.findFirst({
             where: {
                 name: {
                     contains: customer.name,
@@ -121,31 +120,33 @@ async function SyncOrdersToContaAzul(sale, headers, unity) {
                 }
             }
         })
-        if (find) {
-            var { tel, aluno } = find
+        if (searchOnDatabase) {
+            var { tel, aluno } = searchOnDatabase
         }
 
-        const bodyOrder = {
-            body: {
-                orders: await order(
-                    customer.name,
-                    item.filter(res => res.item !== null),
-                    unity,
-                    tel || "",
-                    aluno || "",
-                ),
-                unity: idList[unity]
-            }
-        }
+        if (item.length > 0) {
+            // log(item, "item")
 
-        item.length > 0 && await ordersController.store(bodyOrder)
+            await ordersController.store({
+                body: {
+                    orders: await order(
+                        customer.name,
+                        item.map(res => res.item),
+                        unity,
+                        tel || "",
+                        aluno || "",
+                    ),
+                    unity: idList[unity]
+                }
+            })
+        }
 
 
     }
 }
 
 
-const getSalesByCustomerId = async (list, headers, unity) => {
+const getSalesByCustomerId = async (databaseFilteredList, headers, unity) => {
 
     const allSales = await getAllSales(headers)
 
@@ -158,54 +159,49 @@ const getSalesByCustomerId = async (list, headers, unity) => {
 
     const data = [];
 
-    for (let index = 0; index < list.length; index++) {
-        const element = list[index];
+    for (let index = 0; index < allSales.length; index++) {
+        const eachSale = allSales[index];
 
-        const sale = allSales.
-            filter(allSales =>
-                spacesAndLowerCase(allSales.customer.name) ===
-                spacesAndLowerCase(element.name)
-            )
+        const { notes, payment, customer, id } = eachSale;
 
-        if (sale.length === 0) continue
+        const user = databaseFilteredList.find(db => spacesAndLowerCase(db.name)
+            === spacesAndLowerCase(customer.name))
 
-        for (let secIndex = 0; secIndex < sale.length; secIndex++) {
-            const secElement = sale[secIndex];
 
-            const { notes, payment, customer, id } = secElement
-
-            if (notes === "") {
-                await SyncOrdersToContaAzul(secElement, headers, unity)
-                continue
-            }
-
-            let parsed = () => {
-                try {
-
-                    let cleanData = notes.replace(/\\n/g, "")
-                    cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
-
-                    const service = JSON.parse(cleanData)["serviço"]
-                    return service
-                } catch (error) {
-                    // console.log(customer.name)
-                    return "error"
-                }
-            }
-
-            let service = await parsed()
-
-            if (!element.pendents.some(r => r === routes[service])) continue
-
-            if (payment.installments[0] && payment.installments[0]?.status === "ACQUITTED") data.push({
-                id,
-                name: customer.name,
-                pendentes: element.pendents,
-                service,
-                contrato: element.contrato,
-                payment: payment.installments[0],
-            })
+        if (!user || notes === "") {
+            await SyncOrdersToContaAzul(eachSale, headers, unity)
+            continue
         }
+
+
+        let parsed = () => {
+            try {
+
+                let cleanData = notes.replace(/\\n/g, "")
+                cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
+
+                const service = JSON.parse(cleanData)["serviço"]
+                return service
+            } catch (error) {
+                // console.log(customer.name)
+                return "error"
+            }
+        }
+
+        let service = await parsed()
+        const pendents = user.pendents
+
+        if (!pendents.some(r => r === routes[service])) continue
+
+
+        if (payment.installments[0] && payment.installments[0]?.status === "ACQUITTED") data.push({
+            id,
+            name: customer.name,
+            pendentes: element.pendents,
+            service,
+            contrato: element.contrato,
+            payment: payment.installments[0],
+        })
     }
 
 
@@ -214,8 +210,6 @@ const getSalesByCustomerId = async (list, headers, unity) => {
 
 
 async function Echo(response, where) {
-
-
 
     await historic._store("Automatização", where, "Ok", response.contrato)
 
@@ -227,7 +221,6 @@ realizou o pagamento do material didático
 > ${response.materialDidatico}`
 
         await SendtoWpp(message, response.unidade)
-
 
         if (!(response.materialDidatico.find(r => r === "Outros" || r === "Office"))) {
 
@@ -243,6 +236,7 @@ realizou o pagamento do material didático
                     unity: idList[response.unidade]
                 }
             }
+            // console.log(JSON.stringify(bodyOrder, null, 2))
             await ordersController.store(bodyOrder)
 
         }
@@ -300,6 +294,9 @@ async function updateOnDatabase(contrato, whereIs) {
     return response ? "Done" : "Error"
 }
 
+
+
+
 async function SearchPendents(unity, headers) {
 
     await prisma.person.findMany({
@@ -334,11 +331,11 @@ async function SearchPendents(unity, headers) {
             curso: true
         }
     })
+
         .then(async r => {
             console.log(r.length + " [PENDINGS]")
 
-
-            const mapped = Promise.all(r.map(async (item) => {
+            const objectForSearch = Promise.all(r.map(async (item) => {
                 const pendentes = Object.keys(item)
                     .filter(key => item[key] === 'Pendente');
 
@@ -349,9 +346,8 @@ async function SearchPendents(unity, headers) {
                 }
             }))
 
-            const map = await mapped
+            const map = await objectForSearch
             const paid = await getSalesByCustomerId(map, headers, unity)
-
 
             for (let index = 0; index < paid.length; index++) {
                 const element = paid[index];
@@ -392,3 +388,77 @@ const syncContaAzul = async () => {
 
 
 export default syncContaAzul
+
+
+
+// await prisma.person.findMany({
+//     where: {
+//         unidade: unity,
+//         name: {
+//             contains: "Regina da si",
+//             mode: "insensitive"
+//         }
+//     },
+//     select: {
+//         name: true,
+//         dataMatricula: true,
+//         mdStatus: true,
+//         ppStatus: true,
+//         tmStatus: true,
+//         unidade: true,
+//         contrato: true,
+//         curso: true
+//     }
+// })
+
+
+
+// await prisma.books.update({
+//     where: { id: "dff81fbd-bee6-4a78-a1a5-453c45277b54" },
+//     data: {
+//         sku: "WL1WB4AP"
+//     },
+//     include: {
+//         orderRelated: true
+//     }
+// })
+//     .then(res => {
+
+//         const { orderId, orderRelated, ...rest } = res
+//         console.log(rest)
+//     })
+
+
+// await prisma.orders.findMany()
+//     .then(async res => {
+//         for (let index = 0; index < res.length; index++) {
+//             const ord = res[index];
+
+//             const k = Promise.all(ord.orders.map(l => {
+//                 return {
+//                     sku: l.sku,
+//                     tel: l.tel ? l.tel : "",
+//                     data: l.data,
+//                     link: l.link,
+//                     nome: l.nome,
+//                     aluno: l.aluno ? l.aluno : "",
+//                     valor: l.valor,
+//                     assinado: l.assinado,
+//                     retiradoPor: l.retiradoPor ? l.retiradoPor : "",
+//                     dataRetirada: l.dataRetirada,
+//                     materialDidatico: l.materialDidatico,
+//                     type: l.type ? l.type : "auto"
+//                 }
+//             }))
+
+//             await prisma.weekOrder.create({
+//                 data: {
+//                     code: ord.code,
+//                     unity: ord.unity,
+//                     orders: {
+//                         create: await k
+//                     }
+//                 }
+//             })
+//         }
+//     })

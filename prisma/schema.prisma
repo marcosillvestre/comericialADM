@@ -117,7 +117,34 @@ model Orders {
   updated_at  DateTime  @updatedAt
 }
 
-
+model weekOrder {
+  id          String   @id  @default(uuid())
+  code        String
+  unity       String
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  
+  orders      books[]
+}
+model books {
+  id      String   @id  @default(uuid())
+  sku    String
+  tel    String?
+  data    String
+  link    String
+  nome    String
+  aluno    String?
+  valor    Float
+  chegada    Boolean  @default(false)
+  assinado    Boolean  @default(false)
+  retiradoPor    String
+  dataRetirada    String
+  materialDidatico    String
+  type     String
+  
+  orderRelated weekOrder @relation(fields: [orderId], references: [id])
+  orderId   String
+}
 model files {
   id            String    @id  @default(cuid())
   name          String
@@ -126,7 +153,6 @@ model files {
   contract      String
   createdAt     DateTime  @default(now())
 }
-
 
 enum TYPE {
 String

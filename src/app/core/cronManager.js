@@ -25,12 +25,11 @@ const functionsArray = [
         fn: firstClassSearch
     },
     {
-        time: "0 */2 * * *",
+        time: "0 */3 * * *",
         fn: syncContaAzul
     },
 
 ]
-
 
 functionsArray.forEach(res => {
     return new CronJob(res.time,

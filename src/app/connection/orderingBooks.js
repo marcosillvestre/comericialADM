@@ -14,17 +14,25 @@ async function SearchOrders(unity) {
     let code = await getLastWeekMondayCode()
 
 
-    const order = await prisma.orders.findFirst({
+    const order = await prisma.weekOrder.findFirst({
         where: {
             code,
             unity
+        },
+        include: {
+            orders: true
         }
     })
 
     const filtered = order?.orders.filter(res => res.dataRetirada === "")
-    if (order?.orders.length > 0) await SendMail(filtered, unity)
-}
 
+    const ap = filtered.filter(res => res.materialDidatico.includes("AP"))
+    const bk = filtered.filter(res => res.materialDidatico.includes("BK"))
+
+    if (ap.length > 0) await SendMail(ap, unity)
+    if (bk.length > 0) await SendMail(bk, unity)
+
+}
 
 let destiny = {
     "Centro": process.env.EMAIL_CENTRO,

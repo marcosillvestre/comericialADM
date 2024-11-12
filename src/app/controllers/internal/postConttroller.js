@@ -314,7 +314,6 @@ class PostController {
 
         if (documento.nome.includes("adesao")) {
 
-
             const [_, contract] = documento.nome.split("+")
 
 
@@ -440,42 +439,29 @@ Te esperamos na aula 👩‍💻`,
 
             const [_, name] = nameTruncked.split("-")
 
-            let possibilities = await prisma.orders.findMany({
+            const ordersSigned = await prisma.books.findFirst({
                 where: {
-                    code
-                },
+                    nome: {
+                        contains: name,
+                        mode: "insensitive"
+                    }
+                }
             })
 
-            const founded = possibilities.find(res => res.orders.find(r => r.nome === name))
 
-            if (!founded) {
+            if (!ordersSigned) {
                 console.log("Contrato de recibo não encontrado")
                 return res.status(400).json({ message: "not found" })
             }
 
-            const { orders, id } = founded
+            const { id } = ordersSigned
 
-            let forBeSetted = []
-
-            for (let index = 0; index < orders.length; index++) {
-                const element = orders[index];
-                if (element.nome === name) {
-                    element["assinado"] = true
-                }
-
-                forBeSetted.push(element)
-
-            }
-
-
-            await prisma.orders.update({
+            await prisma.books.update({
                 where: {
-                    id: id
+                    id
                 },
                 data: {
-                    orders: {
-                        set: forBeSetted
-                    }
+                    assinado: true
                 }
             })
 
@@ -778,7 +764,7 @@ Te esperamos na aula 👩‍💻`,
         const { range, unity, dates } = req.query
 
 
-        const selectedDbData = await prisma.person.findMany({
+        const DbData = await prisma.person.findMany({
             orderBy: {
                 name: 'asc',
             },
@@ -790,9 +776,40 @@ Te esperamos na aula 👩‍💻`,
                 unidade: true,
                 dataMatricula: true,
                 owner: true,
-                background: true
+                background: true,
+                ppFormaPg: true,
+
             }
         })
+
+        const selectedDbData = await Promise.all(DbData.map(async r => {
+
+            const wichFunnel = (unity, background) => {
+
+                const funis = {
+                    "PTB/matricula": "Funil de Vendas PTB",
+                    "PTB/rematricula": "Funil de Rematrícula PTB",
+                    "Centro/matricula": "Funil de Vendas Centro",
+                    "Centro/rematricula": "Funil de Rematrículas Centro",
+                }
+
+                const type = background === "Rematrícula" ? "rematricula" : "matricula"
+                const funil = funis[unity + "/" + type];
+                return funil
+            }
+            return {
+                name: r.name,
+                aluno: r.aluno,
+                curso: r.curso,
+                tipoMatricula: r.tipoMatricula,
+                unidade: r.unidade,
+                dataMatricula: r.dataMatricula,
+                owner: r.owner,
+                background: r.background,
+                ppFormaPg: r.ppFormaPg,
+                funnel: await wichFunnel(r.unidade, r.background)
+            }
+        }))
 
         const settledPeriod = {
             "Mês passado": 1,
@@ -804,7 +821,6 @@ Te esperamos na aula 👩‍💻`,
             "Últimos 7 dias": 7,
             "Todo período": selectedDbData.length,
         }
-
 
 
         const currentDay = new Date()

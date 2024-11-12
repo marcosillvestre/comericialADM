@@ -6,13 +6,29 @@ import { Historic } from '../../../database/historic/properties.js';
 import { CompleteCheckPointOnTrello } from "../../connection/externalConnections/trello.js";
 import { SendSimpleWpp } from "../../connection/externalConnections/wpp.js";
 
-
+const historic = new Historic()
 const { getLastMondayCode } = new PastCodes()
+
+import * as yup from 'yup';
 class OrderController {
 
     async index(req, res) {
 
+
+        const schema = yup.object().shape({
+            dates: yup.string().required(),
+
+        })
+
+        try {
+            await schema.validateSync(req.query, { abortEarly: false })
+
+        } catch (error) {
+            return res.status(400).json({ message: error })
+        }
+
         const { dates } = req.query
+
 
         const [initial, final] = dates.split("~")
 
@@ -20,7 +36,11 @@ class OrderController {
         const finalDate = new Date(final).setUTCHours(0, 0, 0, 0)
 
 
-        const orders = await prisma.orders.findMany()
+        const orders = await prisma.weekOrder.findMany({
+            include: {
+                orders: true
+            }
+        })
 
 
         const DateFilter = await Promise.all(orders.map(async r => {
@@ -40,90 +60,75 @@ class OrderController {
 
 
     async store(req, res) {
+        const schema = yup.object().shape({
+            orders: yup.array().required().of(
+                yup.object().shape({
+                    sku: yup.string().required(),
+                    nome: yup.string().required(),
+                    materialDidatico: yup.string().required(),
+                    valor: yup.number().required(),
+                    data: yup.string().required(),
+                    assinado: yup.boolean().required(),
+                    dataRetirada: yup.string(),
+                    link: yup.string(),
+                    retiradoPor: yup.string(),
+                    aluno: yup.string(),
+                    tel: yup.string(),
+                })
+            ),
+            unity: yup.string().required()
+
+        })
+
+        try {
+            await schema.validateSync(req.body, { abortEarly: false })
+
+        } catch (error) {
+            console.log(error)
+            throw new Error(error);
+
+            // return res.status(400).json({ message: error })
+        }
+
         const { orders, unity } = req.body
-
-
 
         const date = new Date()
         const code = await getLastMondayCode(date);
 
 
-        const response = await prisma.orders.findMany({
-            where: {
-                unity: unity
-            }
-        })
-
-
-        let bools = []
-        if (response.length > 0) {
-            for (let index = 0; index < response.length; index++) {
-                const resp = response[index];
-
-                const { orders: data } = resp
-
-
-                for (let index = 0; index < data.length; index++) {
-                    const ord = data[index];
-
-                    const haveAluno = ord.aluno
-
-                    for (let index = 0; index < orders.length; index++) {
-                        const item = orders[index];
-
-
-                        let whenHaveAluno = item.materialDidatico === ord.materialDidatico &&
-                            item.nome === ord.nome &&
-                            item.aluno === ord.aluno
-
-
-                        let whenDontHaveAluno = item.materialDidatico === ord.materialDidatico &&
-                            item.nome === ord.nome
-
-                        let isThere = haveAluno ? whenHaveAluno : whenDontHaveAluno
-
-                        bools.push({ code: resp.id, isHere: isThere })
-                    }
-
-                }
-            }
-
-        }
-
-        let founded = bools.every(res => res.isHere === false)
-
         const update = async (id, data) => {
-            for (let index = 0; index < data.length; index++) {
-                const element = data[index];
 
-                await prisma.orders.update({
-                    where: {
-                        id
-                    },
-                    data: {
-                        orders: {
-                            push: element
-                        }
+            await prisma.weekOrder.update({
+                where: {
+                    id
+                },
+                data: {
+                    orders: {
+                        create: data
                     }
+                }
+            })
+                .then(() => {
+                    if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
+                    console.log("Pedido agregado")
                 })
-                    .then(() => {
-                        if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
-                        console.log("Pedido agregado")
-                    })
-                    .catch((err) => {
-                        console.log(err)
-                        if (res) return res.status(400).json({ err })
-                    })
-            }
+                .catch((err) => {
+                    console.log(err)
+                    if (res) return res.status(400).json({ err })
+                })
+
 
         }
 
         const creation = async (code, data) => {
 
-            await prisma.orders.create({
+
+            await prisma.weekOrder.create({
                 data: {
                     code,
-                    orders: data,
+                    orders: {
+                        create: data
+                    },
                     unity
                 }
             })
@@ -138,54 +143,60 @@ class OrderController {
                 })
         }
 
-        if (founded) {
 
-            let twin = await getLastMondayCode(await DateTransformer(orders[0].data))
+        for (let index = 0; index < orders.length; index++) {
+            const order = orders[index]
 
-            if (response.find(res => res.code === twin)) {
+            const searchOnDb = await prisma.books.findFirst({
+                where: {
+                    nome: order.nome,
+                    aluno: order.aluno,
+                    materialDidatico: order.materialDidatico
+                }
+            })
 
-                const { id } = await prisma.orders.findFirst({
+            if (!searchOnDb) {
+
+                let twin = await getLastMondayCode(await DateTransformer(orders[0].data))
+
+                const weekOrder = await prisma.weekOrder.findFirst({
                     where: {
                         code: twin
                     }
                 })
 
-                return await update(id, orders)
+                weekOrder ? await update(weekOrder.id, orders) : await creation(code, orders)
             }
-            await creation(code, orders)
         }
-
 
     }
 
 
-    async update(req, res) {
-        const { id, where, value, responsible } = req.body
+    async edit(req, res) {
+        const schema = yup.object().shape({
 
-        const historic = new Historic()
+            id: yup.string().required(),
+            responsible: yup.string().required()
+
+        })
 
         try {
-            const filter = await prisma.orders.findUnique({
+            await schema.validateSync(req.body, { abortEarly: false })
+
+        } catch (error) {
+            return res.status(400).json({ message: error })
+        }
+
+        const { id, responsible } = req.body
+
+        try {
+            const filter = await prisma.books.delete({
                 where: {
-                    id: id
+                    id
                 }
             })
 
 
-            let filtered = filter?.orders.filter(res => res.id !== value)
-
-
-            await prisma.orders.update({
-                where: {
-                    id: id
-                },
-                data: {
-                    orders: {
-                        set: filtered
-                    }
-                }
-
-            })
 
             await historic._store(responsible, "Pedido", "Deletado", filter.code)
 
@@ -202,57 +213,52 @@ class OrderController {
     }
 
     async putDataOrders(req, res) {
-        const { id, where, value, order } = req.body
+        const schema = yup.object().shape({
+            where: yup.string().required(),
+            value: yup.string(),
+            order: yup.array().required().of(yup.string())
+        })
+
+        try {
+            await schema.validateSync(req.body, { abortEarly: false })
+
+        } catch (error) {
+            console.log(error)
+            return res.status(400).json({ message: error })
+        }
+
+        const { where, value, order } = req.body
 
         //orders é um array de ids dos pedidos 
 
-        const data = await prisma.orders.findUnique({
-            where: {
-                id: id
-            }
-        })
-
-        const set = []
-
-        for (let index = 0; index < data.orders.length; index++) {
-
-            const element = data.orders[index];
-
-            const filtered = order.findIndex(res => res === element.id)
-
-
-            if (filtered !== -1) element[where] = value
-
-
-            set.push(element)
-
-        }
-
-
         try {
-            await prisma.orders.update({
-                where: {
-                    id: id
-                },
-                data: {
-                    orders: {
-                        set: set
+
+            for (let index = 0; index < order.length; index++) {
+                const bookId = order[index];
+
+                await prisma.books.update({
+                    where: {
+                        id: bookId
+                    },
+                    data: {
+                        [where]: value
+                    },
+                    include: {
+                        orderRelated: true
                     }
-                }
-            })
-                .then(async res => {
-                    if (where === "dataRetirada") await CompleteCheckPointOnTrello(
-                        res.orders.find(o => o.id === order[0]),
-                        res.unity,
-                        "Material Didático/Confirmação de retirada pelo aluno ou responsável")
+                })
+                    .then(async response => {
+                        const { orderId, orderRelated, ...rest } = response
 
-                    if (where === "chegada" && value) {
-                        const rightOrder = res.orders.find(o => o.id === order[0])
-                        if (rightOrder) {
+                        if (where === "dataRetirada") await CompleteCheckPointOnTrello(
+                            rest,
+                            orderRelated.unity,
+                            "Material Didático/Confirmação de retirada pelo aluno ou responsável")
 
+                        if (where === "chegada" && value) {
                             await CompleteCheckPointOnTrello(
-                                rightOrder,
-                                res.unity,
+                                rest,
+                                orderRelated.unity,
                                 "Material Didático/Confirmação de disponibilidade para retirada do material na escola")
 
 
@@ -262,23 +268,24 @@ class OrderController {
                                 'Centro': "31 8284-0590"
                             }
 
-                            if (rightOrder.tel) await SendSimpleWpp(rightOrder.nome, rightOrder.tel,
-                                `Olá *${rightOrder.nome}*, 
+                            if ("tel" in rest) await SendSimpleWpp(rest.nome, rest.tel,
+                                `Olá *${rest.nome}*, 
 Temos uma ótima notícia, o seu material didático: 
 
-> ${rightOrder.materialDidatico}
+> ${rest.materialDidatico}
 
 já está disponível para retirada em nossa unidade. 
 
 Qualquer dúvida, entre em contato com o nosso whatsapp pedagógico através do número da unidade 
 
-> ${res.unity} : ${unityNumber[res.unity]}.
+> ${rest.unity} : ${unityNumber[rest.unity]}.
                                 
 Atenciosamente, equipe American Way.
 FAVOR NÃO RESPONDER ESTA MENSAGEM 🗽.`)
+
                         }
-                    }
-                })
+                    })
+            }
 
             return res.status(201).json({ message: "link atribuido com sucesso" })
 
