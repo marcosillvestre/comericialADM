@@ -137,7 +137,7 @@ async function searchSync() {
                                 const isThere = searchHistoric
                                     .find(sign => sign.responsible !== "American Way" || sign.responsible !== "Victor Souza")
 
-                                return isThere ? "Pendente" : "Ok"
+                                return isThere ? "Ok" : "Pendente"
                             }
                             return "Pendente"
                         }
@@ -334,3 +334,7 @@ Foi cadastrado no sistema de comissão.
 
 
 export default searchSync
+
+
+
+
