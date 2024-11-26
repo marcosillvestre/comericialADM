@@ -164,13 +164,15 @@ MultiSelect
 
 model customFields {
   id          String   @id  @default(uuid())
-  label       String
-  type        TYPE     @default(String)
+  
+  name        String
+  type        String
+  options     String[]  
+
   order       Int
+
   required    Boolean  @default(false)
   created_at  DateTime @default(now())
-  options     Json?
-  for         String
 }
 
 // model logs {

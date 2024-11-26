@@ -226,7 +226,7 @@ class PostController {
         const { unity } = req.params
 
         try {
-            await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=100&token=${process.env.RD_TOKEN}&deal_pipeline_id=${funis[unity]}&deal_stage_id=${stages[unity]}`)
+            await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=1000&token=${process.env.RD_TOKEN}&deal_pipeline_id=${funis[unity]}&deal_stage_id=${stages[unity]}`)
                 .then(response => {
                     const array = []
                     for (const index of response?.data?.deals) {

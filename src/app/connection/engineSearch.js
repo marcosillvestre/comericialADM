@@ -137,7 +137,7 @@ async function searchSync() {
                                 const isThere = searchHistoric
                                     .find(sign => sign.responsible !== "American Way" || sign.responsible !== "Victor Souza")
 
-                                return isThere ? "Pendente" : "Ok"
+                                return isThere ? "Ok" : "Pendente"
                             }
                             return "Pendente"
                         }
@@ -334,3 +334,38 @@ Foi cadastrado no sistema de comissão.
 
 
 export default searchSync
+
+
+
+
+
+
+
+async function NewSearchSync(params) {
+    fetch(`https://crm.rdstation.com/api/v1/custom_fields?token=${process.env.RD_TOKEN}&for=deal`, options)
+        .then(response => response.json())
+        .then(res => res.map(async (r, i) => {
+            await prisma.customFields.upsert({
+                where: {
+                    id: r.id,
+                },
+                create: {
+                    name: r.label,
+                    type: r.type,
+                    options: r.opts,
+                    order: i,
+                    required: r.required
+                },
+                update: {
+                    name: r.label,
+                    type: r.type,
+                    options: r.opts,
+                    order: i,
+                    required: r.required
+                }
+
+            })
+        }))
+}
+
+NewSearchSync()
