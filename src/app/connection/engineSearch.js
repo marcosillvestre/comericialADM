@@ -263,18 +263,43 @@ async function trelloCreateCard(object) {
     let today = new Date();
     let futureDate = addUsefullDays(today, 7);
 
-    const data = object
+    const { name, unidade, background } = object
 
     const templates = {
-        "Golfinho azul": process.env.PTB_TEMPLATE,
-        'PTB': process.env.PTB_TEMPLATE,
-        'Centro': process.env.CENTRO_TEMPLATE
+        "Golfinho azul/Novo aluno": process.env.PTB_TEMPLATE,
+        'PTB/Novo aluno': process.env.PTB_TEMPLATE,
+        'Centro/Novo aluno': process.env.CENTRO_TEMPLATE,
+
+        "Golfinho azul/Ex-aluno": process.env.PTB_TEMPLATE,
+        'PTB/Ex-aluno': process.env.PTB_TEMPLATE,
+        'Centro/Ex-aluno': process.env.CENTRO_TEMPLATE,
+
+        "Golfinho azul/Aluno vigente": process.env.PTB_TEMPLATE,
+        'PTB/Aluno vigente': process.env.PTB_TEMPLATE,
+        'Centro/Aluno vigente': process.env.CENTRO_TEMPLATE,
+
+        "Golfinho azul/Rematrícula": process.env.PTB_TEMPLATE_REM,
+        'PTB/Rematrícula': process.env.PTB_TEMPLATE_REM,
+        'Centro/Rematrícula': process.env.CENTRO_TEMPLATE_REM
     }
 
     const idList = {
-        "Golfinho Azul": process.env.PTB_LIST,
-        'PTB': process.env.PTB_LIST,
-        'Centro': process.env.CENTRO_LIST
+        "Golfinho Azul/Novo aluno": process.env.PTB_LIST,
+        'PTB/Novo aluno': process.env.PTB_LIST,
+        'Centro/Novo aluno': process.env.CENTRO_LIST,
+
+        "Golfinho Azul/Ex-aluno": process.env.PTB_LIST,
+        'PTB/Ex-aluno': process.env.PTB_LIST,
+        'Centro/Ex-aluno': process.env.CENTRO_LIST,
+
+        "Golfinho Azul/Aluno vigente": process.env.PTB_LIST,
+        'PTB/Aluno vigente': process.env.PTB_LIST,
+        'Centro/Aluno vigente': process.env.CENTRO_LIST,
+
+        "Golfinho Azul/Rematrícula": process.env.PTB_LIST_REM,
+        'PTB/Rematrícula': process.env.PTB_LIST_REM,
+        'Centro/Rematrícula': process.env.CENTRO_LIST_REM
+
     }
     const description = {
         "background": data.background,
@@ -303,13 +328,13 @@ async function trelloCreateCard(object) {
 
 
     const body = {
-        name: data.name,
+        name: name,
         desc: JSON.stringify(description, null, 2).replace("{", "").replace("}", ""),
         pos: 'bottom',
         due: futureDate,
         start: today,
-        idList: idList[data.unidade],
-        idCardSource: templates[data.unidade]
+        idList: idList[unidade.concat("/").concat(background)],
+        idCardSource: templates[unidade.concat("/").concat(background)]
     }
 
 
@@ -319,7 +344,7 @@ async function trelloCreateCard(object) {
 
 Foi cadastrado no sistema de comissão, voce pode encontra-lo também no trello por esse link: ${url}`
 
-            await SendtoWpp(message, data.unidade)
+            await SendtoWpp(message, unidade)
 
 
             let conference = `> *${body.name}* 
