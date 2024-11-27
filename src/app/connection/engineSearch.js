@@ -341,31 +341,90 @@ export default searchSync
 
 
 
-async function NewSearchSync(params) {
+async function UpdateTheCustomFields(params) {
     fetch(`https://crm.rdstation.com/api/v1/custom_fields?token=${process.env.RD_TOKEN}&for=deal`, options)
         .then(response => response.json())
-        .then(res => res.map(async (r, i) => {
-            await prisma.customFields.upsert({
-                where: {
-                    id: r.id,
-                },
-                create: {
-                    name: r.label,
-                    type: r.type,
-                    options: r.opts,
-                    order: i,
-                    required: r.required
-                },
-                update: {
-                    name: r.label,
-                    type: r.type,
-                    options: r.opts,
-                    order: i,
-                    required: r.required
-                }
+        .then(res => {
+            console.log(res.length)
+            res.map(async (r, i) => {
+                await prisma.customFields.upsert({
+                    where: {
+                        id: r.id,
+                    },
+                    create: {
+                        id: r.id,
+                        name: r.label,
+                        type: r.type,
+                        options: r.opts,
+                        order: i,
+                        required: r.required
+                    },
+                    update: {
+                        name: r.label,
+                        type: r.type,
+                        options: r.opts,
+                        order: i,
+                        required: r.required
+                    }
 
+                })
             })
-        }))
+        })
 }
 
-NewSearchSync()
+
+async function NewSearchSync(params) {
+
+
+    const backDay = new Date()
+    backDay.setDate(backDay.getDate() - comebackDays)
+    const startDate = backDay.toISOString()
+
+    const currentDate = new Date()
+    const endDate = currentDate.toISOString()
+    let limit = 200
+
+    fetch(`https://crm.rdstation.com/api/v1/deals?limit=${limit}&token=${process.env.RD_TOKEN}&win=true&closed_at_period=true&start_date=${startDate}&end_date=${endDate}`, options)
+        .then(response => response.json())
+        .then(async response => {
+            const { total, deals } = response
+            if (total > 0) {
+
+                const dealsssss = [deals[0]]
+                for (const deal of dealsssss) {
+
+                    const { id, deal_custom_fields } = deal
+
+                    const customFields = async () => {
+                        const cf = await prisma.customFields.findMany()
+                        const result = {}
+
+                        for (let index = 0; index < cf.length; index++) {
+                            const element = cf[index];
+                            const { name } = element;
+
+                            result[name] = deal_custom_fields.filter(res => res.custom_field.label.includes(name)).map(res => res.value)[0]
+                        }
+
+                        return await result
+
+                    }
+
+                    console.log(await customFields())
+
+                    const json = await customFields()
+                    await prisma.registers.create({
+                        data: {
+                            id,
+                            name: json['Nome  do responsável'],
+                            owner: json['Vendedor'],
+
+
+                        }
+                    })
+                }
+            }
+        })
+        .catch(err => console.log(err))
+}
+// NewSearchSync()

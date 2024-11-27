@@ -13,7 +13,6 @@ model conec {
   refresh_token   String
 }
 
-
 model login {
   id       Int      @id @default(autoincrement())
   name     String
@@ -23,31 +22,85 @@ model login {
   role     String
   unity    String[]
 }
+////////////////////
+model registers {
+  //intrínseco
+  id                    String   @id  @default(uuid())
+  name                  String
+  owner                 String
+
+  //independentes
+  // 1:T
+  aprovacaoADM          String  @default("pendente")
+  pagamentoStatus       String  @default("pendente")
+  taxaMatriculaStatus   String  @default("pendente")
+  materialStatus        String  @default("pendente")
+  responsavelADM        String  @default("pendente")
+  aprovacaoDirecao      String  @default("pendente")
+  comissaoStatus        String  @default("pendente")
+  paStatus              String  @default("pendente")
+  assinaturaContrato    String  @default("pendente")
+  // 2:T
+  diretorResponsavel    String  @default("")
+  dataComissionamento   String  @default("")
+  dataMatricula         String  @default("")
+  dataValidacao         String  @default("")
+
+  //campos personalizados
+  customFields          Json
+
+  //config
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt 
+
+  //relações
+  historic   logHistoric[]
+}
+
+model logHistoric {
+  id             String    @id @default(uuid())
+  responsible    String
+  created_at     DateTime  @default(now())
+  information    Json
+
+  registerId     String
+  register       registers @relation(fields: [registerId], references: [id])
+}
+////////////////////
 
 model person {
+  // intrínseco
   name                String
   owner               String
+
+  // independem
+  aprovacaoADM        String
+  ppStatus            String
+  tmStatus            String
+  mdStatus            String
+  responsavelADM      String
+  aprovacaoDirecao    String
+  diretorResponsavel  String
+  comissaoStatus      String
+  paStatus            String
+  acStatus            String
+  // * Status da matricula 
+  
+  // campos personalizados
   aluno               String
   unidade             String
   contrato            String   @id
   background          String
   classe              String
   subclasse           String
-  tmStatus            String
   tmVencimento        String
   tmValor             String
   ppVencimento        String
-  ppStatus            String
   mdValor             String
-  mdStatus            String
   acFormato           String
   tipoMatricula       String
   tipoComissao        String
   comissaoValor       String
-  aprovacaoADM        String
-  responsavelADM      String
-  aprovacaoDirecao    String
-  diretorResponsavel  String
   paDATA              String
   inicioContrato      String
   fimContrato         String
@@ -55,9 +108,7 @@ model person {
   email               String
   Valor               Float
   id                  Int
-  paStatus            String
   situMatric          String
-  acStatus            String
   alunoNascimento     String
   cargaHoraria        String
   contratoStatus      String
@@ -89,7 +140,6 @@ model person {
   tmParcelas          String
   dataAC              Json[]
   diaAula             String[]
-  comissaoStatus      String
   professor           String[]
   curso               String
 }
@@ -105,16 +155,6 @@ model historic {
   responsible    String
   date           DateTime  @default(now())
   information    Json
-}
-
-model Orders {
-  id          String   @id  @default(uuid())
-  code        String
-  orders      Json[]
-  arrived     Boolean @default(false)
-  unity       String
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @updatedAt
 }
 
 model weekOrder {
@@ -174,6 +214,7 @@ model customFields {
   required    Boolean  @default(false)
   created_at  DateTime @default(now())
 }
+
 
 // model logs {
 // id       String  @id @default(uuid()) 
