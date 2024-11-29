@@ -31,27 +31,31 @@ model registers {
 
   //independentes
   // 1:T
-  aprovacaoADM          String  @default("pendente")
-  pagamentoStatus       String  @default("pendente")
-  taxaMatriculaStatus   String  @default("pendente")
-  materialStatus        String  @default("pendente")
-  responsavelADM        String  @default("pendente")
-  aprovacaoDirecao      String  @default("pendente")
-  comissaoStatus        String  @default("pendente")
-  paStatus              String  @default("pendente")
-  assinaturaContrato    String  @default("pendente")
+  assinaturaContratoStatus         String  @default("pendente")
+  taxaMatriculaStatus              String  @default("pendente")
+  pagamentoPrimeiraParcelaStatus   String  @default("pendente")
+  materialDidaticoStatus           String  @default("pendente")
+  primeiraAulaStatus               String  @default("pendente")
+  comissaoStatus                   String  @default("pendente")
+  aprovacaoADM                     String  @default("pendente")
+  aprovacaoDirecao                 String  @default("pendente")
+
   // 2:T
-  diretorResponsavel    String  @default("")
-  dataComissionamento   String  @default("")
-  dataMatricula         String  @default("")
-  dataValidacao         String  @default("")
+  dataMatricula                    String  @default("")
+  dataValidacao                    String  @default("")
+  dataComissionamento              String  @default("")
+  diretorResponsavel               String  @default("")
+  admResponsavel                   String  @default("")
+  dataPagamentoTaxaMatricula       String  @default("")
+  dataPagamentoPrimeiraParcela     String  @default("")
+  dataPagamentoMaterialDidatico    String  @default("")
 
   //campos personalizados
-  customFields          Json
+  customFields                     Json
 
   //config
-  created_at            DateTime  @default(now())
-  updated_at            DateTime  @updatedAt 
+  created_at                       DateTime  @default(now())
+  updated_at                       DateTime  @updatedAt 
 
   //relações
   historic   logHistoric[]
@@ -202,6 +206,16 @@ Select
 MultiSelect
 }
 
+enum CATEGORY {
+StatusMatricula
+Observacoes
+Contrato 
+Financeiro
+InformacoesAlunoEResponsavel
+Pedagogico
+Outros
+}
+
 model customFields {
   id          String   @id  @default(uuid())
   
@@ -210,6 +224,8 @@ model customFields {
   options     String[]  
 
   order       Int
+
+  category    CATEGORY @default(Outros)
 
   required    Boolean  @default(false)
   created_at  DateTime @default(now())

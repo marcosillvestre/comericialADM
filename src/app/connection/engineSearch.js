@@ -388,10 +388,11 @@ async function NewSearchSync(params) {
         .then(response => response.json())
         .then(async response => {
             const { total, deals } = response
+            console.log(total)
             if (total > 0) {
 
                 const dealsssss = [deals[0]]
-                for (const deal of dealsssss) {
+                for (const deal of deals) {
 
                     const { id, deal_custom_fields } = deal
 
@@ -410,21 +411,21 @@ async function NewSearchSync(params) {
 
                     }
 
-                    console.log(await customFields())
+                    // console.log(await customFields())
 
                     const json = await customFields()
+
                     await prisma.registers.create({
                         data: {
                             id,
                             name: json['Nome  do responsável'],
                             owner: json['Vendedor'],
-
-
+                            customFields: json
                         }
-                    })
+                    }).catch(err => console.log(err.meta))
                 }
             }
         })
-        .catch(err => console.log(err))
+    // .catch(err => console.log(err))
 }
-// NewSearchSync()
+NewSearchSync()
