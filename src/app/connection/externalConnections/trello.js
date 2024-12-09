@@ -126,7 +126,7 @@ export async function CompleteCheckPointOnTrello(array, unity, where) {
 
         if (!checkList) {
 
-            await SendSimpleWpp("Marcos", process.env.MARCOS, `${array}, checklist não encontrado no trello // ${where}`)
+            await SendSimpleWpp("Marcos", process.env.MARCOS, `${JSON.stringify(element)}, checklist não encontrado no trello // ${where}`)
             console.log("checkList não encontrado")
             return
         }

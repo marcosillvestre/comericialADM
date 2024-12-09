@@ -24,6 +24,9 @@ async function SearchOrders(unity) {
         }
     })
 
+
+    if (!order) return
+
     const filtered = order?.orders.filter(res => res.dataRetirada === "")
 
     const ap = filtered.filter(res => res.materialDidatico.includes("AP"))

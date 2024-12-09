@@ -197,9 +197,9 @@ const getSalesByCustomerId = async (databaseFilteredList, headers, unity) => {
         if (payment.installments[0] && payment.installments[0]?.status === "ACQUITTED") data.push({
             id,
             name: customer.name,
-            pendentes: element.pendents,
+            pendentes: user.pendents,
             service,
-            contrato: element.contrato,
+            contrato: user.contrato,
             payment: payment.installments[0],
         })
     }
@@ -244,7 +244,7 @@ realizou o pagamento do material didático
 
     let checkup = {
         "ppStatus": "AUTOMÁTICO - Confirmação de pagamento da primeira mensalidade.",
-        "tmStatus": "AUTOMÁTICO - Confirmação pagamento da taxa de matrícula (se haver)",
+        "tmStatus": "AUTOMÁTICO - Confirmação pagamento da taxa de matrícula (se houver)",
         "mdStatus": "AUTOMÁTICO - Confirmação de pagamento do material didático."
     }
 
@@ -369,10 +369,7 @@ async function SearchPendents(unity, headers) {
 const syncContaAzul = async () => {
     console.log("Payments ca updates")
 
-    for (const realToken of [
-        "Centro",
-        "PTB"
-    ]) {
+    for (const realToken of ["Centro", "PTB"]) {
         const header = {
             "Authorization": `Bearer ${await getToken(realToken, 'refresh')}`
         }
