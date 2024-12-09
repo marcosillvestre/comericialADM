@@ -194,6 +194,8 @@ class RegisterContaAzulController {
                             })
                         })
                         .catch((err) => {
+
+                            console.log(err.response.data)
                             return res.status(400).json({ message: `Erro no cpf digitado: ${cpf}` })
                         })
 
@@ -386,6 +388,7 @@ class RegisterContaAzulController {
                 }
             })
                 .catch(err => {
+                    console.log(err.response.data)
                     return res.status(400).json({ message: `Erro no cpf digitado: ${cpf}` })
 
                 })
@@ -533,7 +536,7 @@ class RegisterContaAzulController {
                 }
             })
                 .catch(err => {
-                    console.log(err)
+                    console.log(err.response.data)
                     return res.status(400).json({ message: `Erro no cpf digitado: ${cpf}` })
 
                 })
