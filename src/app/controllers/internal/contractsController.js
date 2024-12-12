@@ -4,7 +4,12 @@ import prisma from "../../../database/database.js"
 class ContractsController {
     async index(req, res) {
         try {
-            const response = await prisma.contracts.findMany()
+            const response = await prisma.registers.findMany({
+                include: {
+                    historic: true
+                }
+            })
+
             return res.status(200).json(response)
         } catch (error) {
             return res.status(200).json(response)

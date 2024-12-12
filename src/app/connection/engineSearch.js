@@ -436,29 +436,37 @@ async function NewSearchSync() {
 // NewSearchSync()
 
 
-async function k(SearchWhere, SearchWhat, UpdateWhere, UpdateWhat) {
+async function UpdateForRegisters(SearchWhere, SearchWhat, UpdateWhere, UpdateWhat) {
+
+    try {
+
+        const register = await prisma.registers.findFirst({
+            where: {
+                [SearchWhere]: SearchWhat
+            }
+        })
+
+        if (!register) throw new Error("Not found")
+
+        const { id, customFields } = register
+
+        customFields[UpdateWhere] = UpdateWhat
 
 
-    const { id, customFields } = await prisma.registers.findFirst({
-        where: {
-            [SearchWhere]: SearchWhat
-        }
-    })
+        // console.log(customFields)
 
+        await prisma.registers.update({
+            where: {
+                id
+            },
+            data: {
+                customFields
+            }
+        })
 
-    customFields[UpdateWhere] = UpdateWhat
-
-
-    // console.log(customFields)
-
-    await prisma.registers.update({
-        where: {
-            id
-        },
-        data: {
-            customFields
-        }
-    })
+    } catch (error) {
+        console.log(error)
+    }
 }
 
 let where = "name"
