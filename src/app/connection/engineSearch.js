@@ -244,6 +244,8 @@ async function searchSync() {
         }
         )
 }
+
+
 export function addUsefullDays(data, diasUteis) {
     var dataAtual = new Date(data);
     var diasAdicionados = 0;
@@ -341,7 +343,7 @@ export default searchSync
 
 
 
-async function UpdateTheCustomFields(params) {
+async function UpdateTheCustomFields() {
     fetch(`https://crm.rdstation.com/api/v1/custom_fields?token=${process.env.RD_TOKEN}&for=deal`, options)
         .then(response => response.json())
         .then(res => {
@@ -373,8 +375,9 @@ async function UpdateTheCustomFields(params) {
 }
 
 
-async function NewSearchSync(params) {
+async function NewSearchSync() {
 
+    await UpdateTheCustomFields()
 
     const backDay = new Date()
     backDay.setDate(backDay.getDate() - comebackDays)
@@ -391,7 +394,7 @@ async function NewSearchSync(params) {
             console.log(total)
             if (total > 0) {
 
-                const dealsssss = [deals[0]]
+                // const dealsssss = [deals[0]]
                 for (const deal of deals) {
 
                     const { id, deal_custom_fields } = deal
@@ -404,7 +407,9 @@ async function NewSearchSync(params) {
                             const element = cf[index];
                             const { name } = element;
 
-                            result[name] = deal_custom_fields.filter(res => res.custom_field.label.includes(name)).map(res => res.value)[0]
+                            result[name] = deal_custom_fields
+                                .filter(res => res.custom_field.label.includes(name))
+                                .map(res => res.value)[0]
                         }
 
                         return await result
@@ -429,3 +434,36 @@ async function NewSearchSync(params) {
     // .catch(err => console.log(err))
 }
 // NewSearchSync()
+
+
+async function k(SearchWhere, SearchWhat, UpdateWhere, UpdateWhat) {
+
+
+    const { id, customFields } = await prisma.registers.findFirst({
+        where: {
+            [SearchWhere]: SearchWhat
+        }
+    })
+
+
+    customFields[UpdateWhere] = UpdateWhat
+
+
+    // console.log(customFields)
+
+    await prisma.registers.update({
+        where: {
+            id
+        },
+        data: {
+            customFields
+        }
+    })
+}
+
+let where = "name"
+let what = "Catia da Silva Romao"
+let updWhere = "UF"
+let updWhat = "Bocaiuva"
+
+k(where, what, updWhere, updWhat)
