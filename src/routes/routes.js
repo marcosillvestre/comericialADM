@@ -11,9 +11,9 @@ import TrelloWebhook from '../app/webhooks/trello.js';
 import multer from 'multer';
 import AutentiqueController from '../app/controllers/external/autentiqueController.js';
 import FilesController from '../app/controllers/external/filesController.js';
-import ContractsController from '../app/controllers/internal/contractsController.js';
 import CustomFieldsController from '../app/controllers/internal/customFieldsController.js';
 import OrdersController from '../app/controllers/internal/ordersController.js';
+import RegistersController from '../app/controllers/internal/registersController.js';
 import UmblerWebhook from '../app/webhooks/umbler.js';
 import { storage } from '../config/multer.js';
 import auth from "../middleware/auth.js";
@@ -67,7 +67,6 @@ routes.put('/campos-personalizados', CustomFieldsController.update)
 ///////////////////
 
 
-routes.get('/registros', (req, res) => ContractsController.index(req.body))
 // routes.post('/novos-contratos', ContractsController.store)
 // routes.delete('/novos-contratos/:id', ContractsController.delete)
 // routes.put('/novos-contratos', ContractsController.update)
@@ -112,7 +111,10 @@ routes.delete('/unidades/:id', UnityController.deleteUnities)
 
 
 
-routes.get('/periodo', PostConttroller.indexPeriod)
+// routes.get('/periodo', PostConttroller.indexPeriod)
+// routes.get('/registros', RegistersController.index)
+routes.get('/periodo', RegistersController.index)
+
 routes.get('/query', PostConttroller.query)
 
 

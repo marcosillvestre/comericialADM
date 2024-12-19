@@ -32,8 +32,8 @@ class OrderController {
 
         const [initial, final] = dates.split("~")
 
-        const initialDate = new Date(initial).setUTCHours(0, 0, 0, 0)
-        const finalDate = new Date(final).setUTCHours(0, 0, 0, 0)
+        const initialDate = new Date(initial)
+        const finalDate = new Date(final)
 
 
         const orders = await prisma.weekOrder.findMany({

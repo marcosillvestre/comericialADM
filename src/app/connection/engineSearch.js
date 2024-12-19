@@ -469,9 +469,35 @@ async function UpdateForRegisters(SearchWhere, SearchWhat, UpdateWhere, UpdateWh
     }
 }
 
-let where = "name"
-let what = "Catia da Silva Romao"
-let updWhere = "UF"
-let updWhat = "Bocaiuva"
+// let where = "name"
+// let what = "Catia da Silva Romao"
+// let updWhere = "UF"
+// let updWhat = "Bocaiuva"
 
 // k(where, what, updWhere, updWhat)
+
+const initial = "2024-11-28T00:00:00.000Z"
+// const final = "2024-12-17T23:59:59.999Z"
+
+const take = 30
+const skipParsed = 0
+
+const response = await prisma.registers.findMany({
+    where: {
+        created_at: {
+            gte: initial,
+            // lte: final
+        }
+    },
+    include: {
+        historic: true
+    },
+    orderBy: {
+        created_at: 'desc'
+    },
+    take,
+    skip: skipParsed,
+})
+
+// console.log(response.length)
+// console.log(new Date("pt-Br"))

@@ -1,18 +1,87 @@
 
+import * as yup from 'yup'
 import prisma from "../../../database/database.js"
-
-class ContractsController {
+class RegistersController {
     async index(req, res) {
-        try {
-            const response = await prisma.registers.findMany({
-                include: {
-                    historic: true
-                }
-            })
 
-            return res.status(200).json(response)
+        const { range, role, name, dates, skip, take } = req.query
+
+        const schema = yup.object().shape({
+            range: yup.string().required(),
+            role: yup.string().required(),
+            name: yup.string().required(),
+            dates: yup.string().required(),
+            skip: yup.string().required(),
+            take: yup.string().required(),
+
+        })
+
+        try {
+            await schema.validateSync(req.query, { abortEarly: false })
+
         } catch (error) {
-            return res.status(200).json(response)
+            return res.status(400).json({ message: error })
+        }
+        const skipParsed = parseInt(skip)
+        const takeParsed = parseInt(take)
+
+        const [initial, final] = dates.split("~")
+
+        try {
+            const comercial = async () => {
+                const response = await prisma.registers.findMany({
+                    where: {
+                        created_at: {
+                            gte: initial,
+                            lte: final
+                        },
+                        owner: {
+                            contains: name,
+                            mode: "insensitive"
+                        }
+                    },
+                    include: {
+                        historic: true
+                    },
+                    orderBy: {
+                        created_at: 'desc'
+                    },
+                    take: takeParsed,
+                    skip: skipParsed,
+                })
+                return await response
+            }
+
+            const admiministrative = async () => {
+                const response = await prisma.registers.findMany({
+                    where: {
+                        created_at: {
+                            gte: new Date(initial),
+                            lte: new Date(final)
+                        }
+                    },
+                    include: {
+                        historic: true
+                    },
+                    orderBy: {
+                        created_at: 'desc'
+                    },
+                    take: takeParsed,
+                    skip: skipParsed,
+                })
+                return await response
+            }
+
+            const response = role === "comercial" ? await comercial() : await admiministrative()
+
+            return res.status(200).json({
+                period: range,
+                total: response.length,
+                deals: response
+            })
+        } catch (error) {
+            console.log(error)
+            return res.status(200).json(error)
         }
     }
 
@@ -131,4 +200,4 @@ class ContractsController {
 
 }
 
-export default new ContractsController()
+export default new RegistersController()
