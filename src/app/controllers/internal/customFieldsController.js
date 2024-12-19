@@ -4,7 +4,12 @@ import prisma from "../../../database/database.js"
 class CustomFieldsController {
     async index(req, res) {
         try {
-            const response = await prisma.customFields.findMany()
+            const response = await prisma.customFields.findMany({
+                orderBy: {
+                    order: "desc"
+                }
+            })
+
             return res.status(200).json(response)
         } catch (error) {
             return res.status(400).json({ error })
