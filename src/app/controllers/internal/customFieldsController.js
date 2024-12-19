@@ -6,7 +6,7 @@ class CustomFieldsController {
         try {
             const response = await prisma.customFields.findMany({
                 orderBy: {
-                    order: "desc"
+                    order: "asc"
                 }
             })
 
