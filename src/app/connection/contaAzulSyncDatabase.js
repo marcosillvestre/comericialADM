@@ -37,7 +37,7 @@ const order = async (name, material, unity, tel, aluno) => {
     }
 
 
-    if (!("id" in material[0])) {
+    if (!material[0].id) {
         const { data } = await axios.get("https://api.contaazul.com/v1/products?size=10000", { headers: header })
 
         const body = material.map(res => {
@@ -57,7 +57,8 @@ const order = async (name, material, unity, tel, aluno) => {
                 link: "",
                 retiradoPor: "",
                 aluno,
-                tel
+                tel,
+                type: "auto"
             }
 
         })
