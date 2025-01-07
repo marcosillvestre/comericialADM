@@ -1,3 +1,9 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -6,6 +12,7 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 
 model conec {
   id              Int         @id @default(autoincrement())
@@ -49,6 +56,7 @@ model registers {
   dataPagamentoTaxaMatricula       String  @default("")
   dataPagamentoPrimeiraParcela     String  @default("")
   dataPagamentoMaterialDidatico    String  @default("")
+  observacao          Json[]
 
   //campos personalizados
   customFields                     Json
@@ -73,29 +81,38 @@ model logHistoric {
 ////////////////////
 
 model person {
+  // intrínseco
   name                String
   owner               String
+
+  // independem
+  aprovacaoADM        String
+  ppStatus            String
+  tmStatus            String
+  mdStatus            String
+  responsavelADM      String
+  aprovacaoDirecao    String
+  diretorResponsavel  String
+  comissaoStatus      String
+  paStatus            String
+  acStatus            String
+  // * Status da matricula 
+  
+  // campos personalizados
   aluno               String
   unidade             String
   contrato            String   @id
   background          String
   classe              String
   subclasse           String
-  tmStatus            String
   tmVencimento        String
   tmValor             String
   ppVencimento        String
-  ppStatus            String
   mdValor             String
-  mdStatus            String
   acFormato           String
   tipoMatricula       String
   tipoComissao        String
   comissaoValor       String
-  aprovacaoADM        String
-  responsavelADM      String
-  aprovacaoDirecao    String
-  diretorResponsavel  String
   paDATA              String
   inicioContrato      String
   fimContrato         String
@@ -103,9 +120,7 @@ model person {
   email               String
   Valor               Float
   id                  Int
-  paStatus            String
   situMatric          String
-  acStatus            String
   alunoNascimento     String
   cargaHoraria        String
   contratoStatus      String
@@ -137,7 +152,6 @@ model person {
   tmParcelas          String
   dataAC              Json[]
   diaAula             String[]
-  comissaoStatus      String
   professor           String[]
   curso               String
 }
