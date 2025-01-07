@@ -111,9 +111,10 @@ routes.delete('/unidades/:id', UnityController.deleteUnities)
 
 
 
-// routes.get('/periodo', PostConttroller.indexPeriod)
-// routes.get('/registros', RegistersController.index)
-routes.get('/periodo', RegistersController.index)
+routes.get('/periodo', PostConttroller.indexPeriod)
+routes.get('/periodos', RegistersController.index)
+
+// routes.get('/periodo', RegistersController.index)
 
 routes.get('/query', PostConttroller.query)
 

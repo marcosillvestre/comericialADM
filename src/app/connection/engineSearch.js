@@ -476,28 +476,41 @@ async function UpdateForRegisters(SearchWhere, SearchWhat, UpdateWhere, UpdateWh
 
 // k(where, what, updWhere, updWhat)
 
-const initial = "2024-11-28T00:00:00.000Z"
-// const final = "2024-12-17T23:59:59.999Z"
+// const initial = "2024-11-01T00:00:00.000Z"
+// const final = "2024-11-30T23:59:59.999Z"
 
-const take = 30
-const skipParsed = 0
+// const take = 5
+// const skipParsed = 0
 
-const response = await prisma.registers.findMany({
-    where: {
-        created_at: {
-            gte: initial,
-            // lte: final
-        }
-    },
-    include: {
-        historic: true
-    },
-    orderBy: {
-        created_at: 'desc'
-    },
-    take,
-    skip: skipParsed,
-})
+// const [result, count] = await prisma.$transaction([
 
-// console.log(response.length)
+//     prisma.registers.findMany({
+//         where: {
+//             created_at: {
+//                 gte: initial,
+//                 lte: final
+//             }
+//         },
+//         include: {
+//             historic: true
+//         },
+//         orderBy: {
+//             created_at: 'desc'
+//         },
+//         take,
+//         skip: skipParsed,
+//     }),
+
+//     prisma.registers.count({
+//         where: {
+//             created_at: {
+//                 gte: initial,
+//                 lte: final
+//             }
+//         },
+//     })
+
+// ])
+
+// console.log(result, count)
 // console.log(new Date("pt-Br"))

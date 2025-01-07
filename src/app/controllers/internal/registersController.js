@@ -4,7 +4,7 @@ import prisma from "../../../database/database.js"
 class RegistersController {
     async index(req, res) {
 
-        const { range, role, name, dates, skip, take } = req.query
+        const { range, role, name, dates, skip, take, orderBy } = req.query
 
         const schema = yup.object().shape({
             range: yup.string().required(),
@@ -13,6 +13,7 @@ class RegistersController {
             dates: yup.string().required(),
             skip: yup.string().required(),
             take: yup.string().required(),
+            orderBy: yup.string().required(),
 
         })
 
@@ -22,6 +23,7 @@ class RegistersController {
         } catch (error) {
             return res.status(400).json({ message: error })
         }
+
         const skipParsed = parseInt(skip)
         const takeParsed = parseInt(take)
 
@@ -29,55 +31,92 @@ class RegistersController {
 
         try {
             const comercial = async () => {
-                const response = await prisma.registers.findMany({
-                    where: {
-                        created_at: {
-                            gte: initial,
-                            lte: final
+                const [result, count] = await prisma.$transaction([
+
+
+                    prisma.registers.findMany({
+                        where: {
+                            created_at: {
+                                gte: initial,
+                                lte: final
+                            },
+                            owner: {
+                                contains: name,
+                                mode: "insensitive"
+                            }
                         },
-                        owner: {
-                            contains: name,
-                            mode: "insensitive"
+                        include: {
+                            historic: true
+                        },
+                        orderBy: {
+                            [orderBy]: 'desc'
+                        },
+                        take: takeParsed,
+                        skip: skipParsed,
+                    }),
+                    prisma.registers.count({
+                        where: {
+                            created_at: {
+                                gte: initial,
+                                lte: final
+                            },
+                            owner: {
+                                contains: name,
+                                mode: "insensitive"
+                            }
                         }
-                    },
-                    include: {
-                        historic: true
-                    },
-                    orderBy: {
-                        created_at: 'desc'
-                    },
-                    take: takeParsed,
-                    skip: skipParsed,
-                })
-                return await response
+                    }
+                    )
+                ])
+                return await { result, count }
             }
 
             const admiministrative = async () => {
-                const response = await prisma.registers.findMany({
-                    where: {
-                        created_at: {
-                            gte: new Date(initial),
-                            lte: new Date(final)
+                const [result, count] = await prisma.$transaction([
+
+                    prisma.registers.findMany({
+                        where: {
+                            created_at: {
+                                gte: new Date(initial),
+                                lte: new Date(final)
+                            }
+                        },
+                        include: {
+                            historic: true
+                        },
+                        orderBy: {
+                            [orderBy]: 'desc'
+                        },
+                        take: takeParsed,
+                        skip: skipParsed,
+                    }),
+
+                    prisma.registers.count({
+                        where: {
+                            created_at: {
+                                gte: new Date(initial),
+                                lte: new Date(final)
+                            }
                         }
-                    },
-                    include: {
-                        historic: true
-                    },
-                    orderBy: {
-                        created_at: 'desc'
-                    },
-                    take: takeParsed,
-                    skip: skipParsed,
-                })
-                return await response
+                    })
+
+                ])
+                return await { result, count }
             }
 
-            const response = role === "comercial" ? await comercial() : await admiministrative()
+            const { result, count } = role === "comercial" ? await comercial() : await admiministrative()
+
+
+
+            console.log(count)
+            // console.log(initial)
+            // console.log(final)
+
 
             return res.status(200).json({
                 period: range,
-                total: response.length,
-                deals: response
+                total: count,
+                deals: result
             })
         } catch (error) {
             console.log(error)
