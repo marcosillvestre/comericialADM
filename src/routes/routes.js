@@ -112,11 +112,12 @@ routes.delete('/unidades/:id', UnityController.deleteUnities)
 
 
 routes.get('/periodo', PostConttroller.indexPeriod)
-routes.get('/periodos', RegistersController.index)
+routes.get('/registro', RegistersController.index)
 
-// routes.get('/periodo', RegistersController.index)
-
-routes.get('/query', PostConttroller.query)
+routes.put('/registro/:id', RegistersController.update)
+//////////////////
+routes.get('/query', RegistersController.query)
+// routes.get('/query', PostConttroller.query)
 
 
 routes.get('/contrato/:unity', PostConttroller.getRecent)
@@ -125,9 +126,14 @@ routes.get('/users', UserController.index)
 
 routes.delete('/users/:id', UserController.delete)
 
-routes.put('/controle/:id', PostConttroller.update) //
+
+
+// routes.put('/controle/:id', PostConttroller.update) //
 
 routes.delete('/controle/:id', PostConttroller.delete)//
+
+
+
 
 routes.put('/multi-update', PostConttroller.updateMany) //
 

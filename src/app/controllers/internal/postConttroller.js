@@ -9,7 +9,6 @@ import { Historic } from "../../../database/historic/properties.js";
 import { getDealIdWithCPf } from '../../connection/externalConnections/rdStation.js';
 import { CreateCommentOnTrello } from '../../connection/externalConnections/trello.js';
 import { ScheduleBotMessages, SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
-
 const historic = new Historic()
 const limit = 200
 const comebackDays = 3
@@ -470,108 +469,50 @@ Te esperamos na aula 👩‍💻`,
 
     }
 
-    async update(req, res) {
-        const { area, value, day, responsible } = req.body
-        const { id } = req.params
+    // async update(req, res) {
+    //     const { area, value, responsible } = req.body
+    //     const { id } = req.params
+
+    //     const schema = yup.object().shape({
+    //         area: yup.string().required(),
+    //         // value: yup.string().required(),
+    //         responsible: yup.object().shape({
+    //             name: yup.string().required(),
+    //             role: yup.string().required(),
+    //         })
+    //     }).required()
+
+    //     try {
+    //         await schema.validateSync(req.body, { abortEarly: false })
+
+    //         const response = await prisma.registers.update({
+    //             where: {
+    //                 id
+    //             },
+    //             data: {
+    //                 [area]: value,
+    //                 historic: {
+
+    //                     create: {
+    //                         responsible: responsible.name,
+    //                         information: {
+    //                             field: area,
+    //                             text: `O campo ${area} foi alterado`,
+    //                             from: id,
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         })
 
 
-        if (value.delete === undefined) {
-            const alreadyHave = await prisma.person.findFirst({
-                where: { contrato: id }
-            })
-            const newObj = alreadyHave.observacao.some(res => res.obs === "") ?
-                value : [...alreadyHave.observacao.filter(item => item.obs !== ""), value]
+    //         return res.status(201).json(response)
 
-            const update = async () => {
-
-                let object = alreadyHave.observacao.some(res => res.obs === "") ? [newObj] : newObj
-
-                const bodyAdmValidation = {
-                    [area]: area === "observacao" ? object : value,
-                    responsavelADM: responsible.name
-                }
-                const bodyDirectorValidation = {
-                    [area]: area === "observacao" ? object : value,
-                    dataValidacao: day,
-                    diretorResponsavel: responsible.name
-                }
-                const bodyDirector = {
-                    [area]: area === "observacao" ? object : value,
-                    diretorResponsavel: responsible.name
-                }
-
-
-                const body = {
-                    [area]: area === "observacao" ? object : value,
-                }
-
-                let realBdoy = {}
-
-                if (responsible.role === 'administrativo') realBdoy = bodyAdmValidation
-                if (responsible.role === 'direcao' && area === 'aprovacaoDirecao') realBdoy = bodyDirectorValidation
-                if (responsible.role === 'direcao' && area !== 'aprovacaoDirecao') realBdoy = bodyDirector
-                if (responsible.role !== 'administrativo' && responsible.role !== 'direcao') realBdoy = body
-
-
-                return new Promise(resolve => {
-                    resolve(prisma.person.update({
-                        where: { contrato: id },
-                        data: realBdoy
-                    }))
-                })
-            }
-
-            const historic = async () => {
-                return new Promise(resolve => {
-                    resolve(prisma.historic.create({
-                        data: {
-                            responsible: area === "observacao" ? value.name : responsible.name,
-                            information: {
-                                field: area,
-                                to: area === "observacao" ? value.obs : value,
-                                from: id,
-                            }
-                        }
-                    })
-                    )
-                })
-            }
-
-
-            await Promise.all([
-                historic(),
-                update()
-            ])
-                .then(() => {
-                    return res.status(200).json({ message: "Success" })
-                })
-                .catch(() => {
-                    return res.status(400).json({ message: "Something went wrong" })
-                })
-        }
-
-        if (value.delete === true) {
-            const alreadyHave = await prisma.person.findFirst({
-                where: { contrato: id }
-            })
-            const newObj = alreadyHave.observacao.length === 1 ?
-                { "obs": "", "name": "" } :
-                alreadyHave.observacao.filter(item => item.obs !== value.deleted)
-
-
-            await prisma.person.update({
-                where: { contrato: id },
-                data: {
-                    observacao: [newObj]
-                }
-            }).then(() => {
-                return res.status(200).json({ message: "Success" })
-            })
-                .catch((err) => {
-                    return res.status(400).json({ message: "Something went wrong" })
-                })
-        }
-    }
+    //     } catch (error) {
+    //         console.log(error)
+    //         return res.status(400).json({ message: error })
+    //     }
+    // }
 
     async delete(req, res) {
         const { id } = req.params
@@ -663,65 +604,65 @@ Te esperamos na aula 👩‍💻`,
 
     }
 
-    async query(req, res) {
-        const { param, value, range, name, role } = req.query
+    // async query(req, res) {
+    //     const { param, value, range, name, role } = req.query
 
-        if (range) {
-            const [initial, final] = range.split("~")
-            const dbData = await prisma.person.findMany({
-                where: {
-                    [param]: {
-                        contains: value,
-                        mode: "insensitive"
-                    }
-                }
-            })
-            const filtered = role === 'comercial' ?
-                dbData.filter(res => res.owner.toLowerCase().includes(name.toLowerCase())) :
-                dbData
+    //     if (range) {
+    //         const [initial, final] = range.split("~")
+    //         const dbData = await prisma.person.findMany({
+    //             where: {
+    //                 [param]: {
+    //                     contains: value,
+    //                     mode: "insensitive"
+    //                 }
+    //             }
+    //         })
+    //         const filtered = role === 'comercial' ?
+    //             dbData.filter(res => res.owner.toLowerCase().includes(name.toLowerCase())) :
+    //             dbData
 
-            const initialDate = new Date(initial)
-            const finalDate = new Date(final)
+    //         const initialDate = new Date(initial)
+    //         const finalDate = new Date(final)
 
-            const DateFilter = await Promise.all(filtered.map(async r => {
-                let date = await DateTransformer(r.dataMatricula)
+    //         const DateFilter = await Promise.all(filtered.map(async r => {
+    //             let date = await DateTransformer(r.dataMatricula)
 
-                return (date >= initialDate && date <= finalDate) ? r : null;
+    //             return (date >= initialDate && date <= finalDate) ? r : null;
 
-            }))
+    //         }))
 
-            let generalMonthsBefore = DateFilter.filter(res => res !== null)
+    //         let generalMonthsBefore = DateFilter.filter(res => res !== null)
 
-            return res.status(200).json({
-                period: range,
-                total: generalMonthsBefore.length,
-                deals: generalMonthsBefore
-            })
+    //         return res.status(200).json({
+    //             period: range,
+    //             total: generalMonthsBefore.length,
+    //             deals: generalMonthsBefore
+    //         })
 
-        } else {
+    //     } else {
 
-            try {
-                const dbData = await prisma.person.findMany({
-                    where: {
-                        [param]: {
-                            contains: value,
-                            mode: "insensitive"
-                        }
-                    }
-                })
+    //         try {
+    //             const dbData = await prisma.person.findMany({
+    //                 where: {
+    //                     [param]: {
+    //                         contains: value,
+    //                         mode: "insensitive"
+    //                     }
+    //                 }
+    //             })
 
 
-                if (dbData) return res.status(200).json({
-                    period: dbData[0]?.name,
-                    total: dbData.length,
-                    deals: dbData
-                })
-            } catch (error) {
-                console.log(error)
-                return res.status(400).json({ message: "Não encontrado" })
-            }
-        }
-    }
+    //             if (dbData) return res.status(200).json({
+    //                 period: dbData[0]?.name,
+    //                 total: dbData.length,
+    //                 deals: dbData
+    //             })
+    //         } catch (error) {
+    //             console.log(error)
+    //             return res.status(400).json({ message: "Não encontrado" })
+    //         }
+    //     }
+    // }
 
     async updateMany(req, res) {
         const { contracts, where, value, responsible } = req.body

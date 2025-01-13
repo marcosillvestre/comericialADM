@@ -2,21 +2,28 @@ import prisma from "../database.js"
 
 export class Historic {
 
-    _store(responsible, field, to, id) {
-        let data = {
-            responsible: responsible,
-            information: {
-                field: field,
-                to: to,
-                from: id,
+    _store(responsible, field, text, id) {
 
-            }
-        }
         try {
             return new Promise(resolve => {
-                resolve(prisma.historic.create({
-                    data: data
-                })
+                resolve(
+
+                    prisma.logHistoric.create({
+                        data: {
+                            responsible: responsible,
+                            information: {
+                                field: field,
+                                text: text,
+                                from: id,
+                            },
+                            register: {
+                                connect: {
+                                    id: id
+                                }
+                            }
+                        }
+
+                    })
                 )
             })
 

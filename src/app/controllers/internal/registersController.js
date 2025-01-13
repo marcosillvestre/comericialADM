@@ -6,6 +6,7 @@ class RegistersController {
 
         const { range, role, name, dates, skip, take, orderBy } = req.query
 
+
         const schema = yup.object().shape({
             range: yup.string().required(),
             role: yup.string().required(),
@@ -49,7 +50,7 @@ class RegistersController {
                             historic: true
                         },
                         orderBy: {
-                            [orderBy]: 'desc'
+                            [orderBy]: 'asc'
                         },
                         take: takeParsed,
                         skip: skipParsed,
@@ -85,7 +86,7 @@ class RegistersController {
                             historic: true
                         },
                         orderBy: {
-                            [orderBy]: 'desc'
+                            [orderBy]: 'asc'
                         },
                         take: takeParsed,
                         skip: skipParsed,
@@ -104,13 +105,10 @@ class RegistersController {
                 return await { result, count }
             }
 
-            const { result, count } = role === "comercial" ? await comercial() : await admiministrative()
+            const { result, count } = role === "comercial" ?
+                await comercial() :
+                await admiministrative()
 
-
-
-            console.log(count)
-            // console.log(initial)
-            // console.log(final)
 
 
             return res.status(200).json({
@@ -175,25 +173,48 @@ class RegistersController {
     }
 
     async update(req, res) {
-        const { } = req.body
+        const { key, area, value, responsible } = req.body
+        const { id } = req.params
 
-
-        await prisma.contracts.update({
-            where: { id: optionId },
-            data: {
-                options: data
-            }
-        })
-            .then((e) => {
-                return res.status(201).json({ message: "Success" })
+        const schema = yup.object().shape({
+            area: yup.string().required(),
+            responsible: yup.object().shape({
+                name: yup.string().required(),
+                role: yup.string().required(),
             })
-            .catch((err) => {
-                return res.status(401).json({ message: err })
+        }).required()
+
+        try {
+            await schema.validateSync(req.body, { abortEarly: false })
+
+            const response = await prisma.registers.update({
+                where: {
+                    id
+                },
+                data: {
+                    [area]: value,
+                    admResponsavel: responsible.name,
+                    historic: {
+
+                        create: {
+                            responsible: responsible.name,
+                            information: {
+                                field: key,
+                                text: `O campo ${area} foi alterado para ${value}`,
+                                from: id,
+                            }
+                        }
+                    }
+                }
             })
 
-        return res.status(201).json({ message: "Success" })
-        return res.status(401).json(error)
 
+            return res.status(201).json(response)
+
+        } catch (error) {
+            console.log(error)
+            return res.status(400).json({ message: error })
+        }
     }
 
     async delete(req, res) {
@@ -237,6 +258,182 @@ class RegistersController {
             })
     }
 
+
+    async query(req, res) {
+        const { param, value, dates, name, role, orderBy, path } = req.query
+
+        const schema = yup.object().shape({
+            role: yup.string().required(),
+            name: yup.string().required(),
+            dates: yup.string().required(),
+            orderBy: yup.string().required(),
+            param: yup.string().required(),
+            value: yup.string().required(),
+            path: yup.string()
+
+        })
+
+        try {
+            await schema.validateSync(req.query, { abortEarly: false })
+
+        } catch (error) {
+            return res.status(400).json({ message: error })
+        }
+
+
+        const [initial, final] = dates.split("~")
+
+        try {
+            const comercial = async () => {
+                const [result, count] = await prisma.$transaction([
+
+
+                    prisma.registers.findMany({
+                        where: {
+                            created_at: {
+                                gte: new Date(initial),
+                                lte: new Date(final)
+                            },
+                            owner: {
+                                contains: name,
+                                mode: "insensitive"
+                            },
+                            OR: [
+                                {
+                                    [param]: {
+                                        contains: value,
+                                        mode: "insensitive"
+                                    }
+                                },
+                                {
+                                    customFields: {
+                                        path: [path],
+                                        string_contains: value,
+
+                                    }
+                                }
+
+                            ]
+                        },
+                        include: {
+                            historic: true
+                        },
+                        orderBy: {
+                            [orderBy]: 'asc'
+                        },
+
+                    }),
+                    prisma.registers.count({
+                        where: {
+                            created_at: {
+                                gte: initial,
+                                lte: final
+                            },
+                            owner: {
+                                contains: name,
+                                mode: "insensitive"
+                            },
+                            OR: [
+                                {
+                                    [param]: {
+                                        contains: value,
+                                        mode: "insensitive"
+                                    }
+                                },
+                                {
+                                    customFields: {
+                                        path: [path],
+                                        string_contains: value,
+
+                                    }
+                                }
+
+                            ]
+                        }
+                    }
+                    )
+                ])
+                return await { result, count }
+            }
+
+            const admiministrative = async () => {
+                const [result, count] = await prisma.$transaction([
+
+                    prisma.registers.findMany({
+                        where: {
+                            created_at: {
+                                gte: new Date(initial),
+                                lte: new Date(final)
+                            },
+                            OR: [
+                                {
+                                    [param]: {
+                                        contains: value,
+                                        mode: "insensitive"
+                                    }
+                                },
+                                {
+                                    customFields: {
+                                        path: [path],
+                                        string_contains: value,
+
+                                    }
+                                }
+
+                            ]
+                        },
+                        include: {
+                            historic: true
+                        },
+                        orderBy: {
+                            [orderBy]: 'asc'
+                        },
+
+                    }),
+
+                    prisma.registers.count({
+                        where: {
+                            created_at: {
+                                gte: new Date(initial),
+                                lte: new Date(final)
+                            },
+                            OR: [
+                                {
+                                    [param]: {
+                                        contains: value,
+                                        mode: "insensitive"
+                                    }
+                                },
+                                {
+                                    customFields: {
+                                        path: [path],
+                                        string_contains: value,
+
+                                    }
+                                }
+
+                            ]
+                        }
+                    })
+
+                ])
+                return await { result, count }
+            }
+
+            const { result, count } = role === "comercial" ?
+                await comercial() : await admiministrative()
+
+
+
+            return res.status(200).json({
+                total: count,
+                deals: result
+            })
+        } catch (error) {
+            console.log(error)
+            return res.status(200).json(error)
+        }
+    }
 }
 
 export default new RegistersController()

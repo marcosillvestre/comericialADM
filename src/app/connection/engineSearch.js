@@ -397,7 +397,9 @@ async function NewSearchSync() {
                 // const dealsssss = [deals[0]]
                 for (const deal of deals) {
 
-                    const { id, deal_custom_fields } = deal
+                    const { id, deal_custom_fields, user, name } = deal
+
+
 
                     const customFields = async () => {
                         const cf = await prisma.customFields.findMany()
@@ -416,58 +418,68 @@ async function NewSearchSync() {
 
                     }
 
-                    // console.log(await customFields())
-
                     const json = await customFields()
+
+
+
 
                     await prisma.registers.create({
                         data: {
                             id,
                             name: json['Nome  do responsável'],
-                            owner: json['Vendedor'],
+                            owner: json['Vendedor'] || user.name,
                             customFields: json
                         }
-                    }).catch(err => console.log(err.meta))
+                    })
+                        .catch((err) => {
+                            if (err.meta) {
+
+                                console.log(`${name} já está cadastrado no sistema : ${json['Unidade']} / ${user.name} `)
+                            }
+                            if (!err.meta) {
+                                console.log("Error : " + err)
+                            }
+                        })
                 }
             }
         })
     // .catch(err => console.log(err))
 }
-// NewSearchSync()
+NewSearchSync()
 
 
-async function UpdateForRegisters(SearchWhere, SearchWhat, UpdateWhere, UpdateWhat) {
+// async function UpdateForRegisters(SearchWhere, SearchWhat, UpdateWhere, UpdateWhat) {
 
-    try {
+//     try {
 
-        const register = await prisma.registers.findFirst({
-            where: {
-                [SearchWhere]: SearchWhat
-            }
-        })
+//         const register = await prisma.registers.findFirst({
+//             where: {
+//                 [SearchWhere]: SearchWhat
+//             }
+//         })
 
-        if (!register) throw new Error("Not found")
+//         if (!register) throw new Error("Not found")
 
-        const { id, customFields } = register
+//         const { id, customFields } = register
 
-        customFields[UpdateWhere] = UpdateWhat
+//         customFields[UpdateWhere] = UpdateWhat
 
 
-        // console.log(customFields)
+//         // console.log(customFields)
 
-        await prisma.registers.update({
-            where: {
-                id
-            },
-            data: {
-                customFields
-            }
-        })
+//         await prisma.registers.update({
+//             where: {
+//                 id
+//             },
+//             data: {
+//                 customFields
+//             }
+//         })
 
-    } catch (error) {
-        console.log(error)
-    }
-}
+//     } catch (error) {
+//         console.log(error)
+//     }
+// }
 
 // let where = "name"
 // let what = "Catia da Silva Romao"
@@ -476,41 +488,167 @@ async function UpdateForRegisters(SearchWhere, SearchWhat, UpdateWhere, UpdateWh
 
 // k(where, what, updWhere, updWhat)
 
-// const initial = "2024-11-01T00:00:00.000Z"
-// const final = "2024-11-30T23:59:59.999Z"
-
-// const take = 5
-// const skipParsed = 0
-
-// const [result, count] = await prisma.$transaction([
-
-//     prisma.registers.findMany({
-//         where: {
-//             created_at: {
-//                 gte: initial,
-//                 lte: final
-//             }
-//         },
-//         include: {
-//             historic: true
-//         },
-//         orderBy: {
-//             created_at: 'desc'
-//         },
-//         take,
-//         skip: skipParsed,
-//     }),
-
-//     prisma.registers.count({
-//         where: {
-//             created_at: {
-//                 gte: initial,
-//                 lte: final
-//             }
-//         },
-//     })
-
-// ])
-
-// console.log(result, count)
 // console.log(new Date("pt-Br"))
+
+async function names(params) {
+
+    const p = await prisma.person.findMany()
+    const pq = p.filter(res => res.aluno.includes("Kaique Fernando de Lima"))
+
+
+    console.log(pq.length)
+    // pq.filter(async res => {
+
+    const dated = "18/12/2024".split("/")
+    const date = new Date(`${dated[1]}-${dated[0]}-${dated[2]}`)
+    console.log(date)
+
+
+    const found = await prisma.registers.findFirst({
+        where: {
+            customFields: {
+                path: ["Nome do aluno"],
+                string_contains: "Kaua Victor Oliveira de Almeida"
+            }
+        }
+    })
+
+    if (!found) return
+    const { id } = found
+
+    await prisma.registers.update({
+        where: {
+            id
+        },
+        data: {
+            created_at: date,
+            updated_at: date,
+        }
+    })
+        .then(res => console.log(res.name))
+
+    // })
+}
+
+
+async function name(params) {
+    await prisma.registers.findMany()
+
+        .then(res => {
+            res.map(async p => {
+                const cont = p.customFields["Nº do contrato"]
+
+                const found = await prisma.person.findFirst({
+                    where: {
+                        contrato: cont
+                    }
+                })
+
+
+                if (!found) {
+                    console.log(p.name)
+                    return
+                }
+                const { observacao } = found
+
+                await prisma.registers.update({
+                    where: {
+                        id: p.id
+                    },
+                    data: {
+                        observacao
+                    }
+                })
+                    .then(res => clg)
+            })
+        })
+}
+// name()
+
+async function namess(params) {
+    await prisma.registers.findMany({
+        where: {
+            OR: [
+                {
+                    name: {
+                        contains: "nathan",
+                        mode: "insensitive"
+                    }
+                },
+                {
+                    customFields: {
+                        path: ["Nome do aluno"],
+                        string_contains: "nathan",
+
+                    }
+                }
+            ]
+        }
+    })
+        .then(async response => {
+            console.log(response)
+        })
+}
+// namess()
+
+
+const [result, count] = await prisma.$transaction([
+
+    prisma.registers.findMany({
+        where: {
+            created_at: {
+                gte: new Date("Sun Dec 01 2024 00:00:00 GMT-0300 (Horário Padrão de Brasília)"),
+                lte: new Date("Fri Jan 10 2025 00:00:00 GMT-0300 (Horário Padrão de Brasília)")
+            },
+            OR: [
+                {
+                    ["id"]: {
+                        contains: "Inglês",
+                        mode: "insensitive"
+                    }
+                },
+                {
+                    customFields: {
+                        path: ["Curso"],
+                        string_contains: "Inglês",
+
+                    }
+                }
+
+            ]
+        },
+        include: {
+            historic: true
+        },
+        orderBy: {
+            ["created_at"]: 'asc'
+        },
+
+    }),
+
+    prisma.registers.count({
+        where: {
+            created_at: {
+                gte: new Date("Sun Dec 01 2024 00:00:00 GMT-0300 (Horário Padrão de Brasília)"),
+                lte: new Date("Fri Jan 10 2025 00:00:00 GMT-0300 (Horário Padrão de Brasília)")
+            },
+            OR: [
+                {
+                    ["id"]: {
+                        contains: "Inglês",
+                        mode: "insensitive"
+                    }
+                },
+                {
+                    customFields: {
+                        path: ["Curso"],
+                        string_contains: "Inglês",
+
+                    }
+                }
+
+            ]
+        }
+    })
+
+])

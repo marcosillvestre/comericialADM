@@ -13,20 +13,21 @@ const { _store } = new Historic()
 
 class FilesController {
     async store(req, res) {
-        const { name, contentType, size, contrato, responsible } = req.body
+        const { name, contentType, size, id, responsible } = req.body
 
 
         const schema = Yup.object({
             name: Yup.string().required(),
             contentType: Yup.string().required(),
-            contrato: Yup.string().required()
+            id: Yup.string().required()
         })
 
 
         const regex = /\w+\/[-+.\w]+/;
 
 
-        if (!(await schema.validateSync(req.body, { abortEarly: false })) || !regex.test(contentType)) return res.status(400).json("Erro")
+        if (!(await schema.validateSync(req.body, { abortEarly: false })) ||
+            !regex.test(contentType)) return res.status(400).json("Erro")
 
 
         const time = new Date().getTime()
@@ -53,10 +54,11 @@ class FilesController {
                             name,
                             contentType,
                             key: fileName,
-                            contract: contrato
+                            contract: id
                         }
                     }),
-                    _store(responsible, "Anexos", "Novo", contrato)
+
+                    _store(responsible, "Anexos", "Um novo arquivo foi adicionado", id)
                 ])
 
 
@@ -108,14 +110,14 @@ class FilesController {
 
     async deleteFiles(req, res) {
 
-        const { key, contract, responsible } = req.query
+        const { key, idRegister, responsible } = req.query
 
 
         try {
             const { id } = await prisma.files.findFirst({
                 where: {
                     key,
-                    contract
+                    contract: idRegister
                 }
             })
 
@@ -137,7 +139,7 @@ class FilesController {
             await Promise.all([
 
                 r2.send(cmd),
-                _store(responsible, "Anexos", "Deletado", contract)
+                _store(responsible, "Anexos", "Um documento foi deletado", idRegister)
 
             ])
 
