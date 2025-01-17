@@ -230,6 +230,7 @@ async function searchSync() {
                                     }
                                     if (!err.meta) {
                                         console.log("Error : " + err)
+                                        console.log(err)
                                     }
                                 })
                         }
@@ -260,6 +261,8 @@ export function addUsefullDays(data, diasUteis) {
 }
 
 async function trelloCreateCard(object) {
+
+
     let today = new Date();
     let futureDate = addUsefullDays(today, 7);
 
@@ -302,28 +305,28 @@ async function trelloCreateCard(object) {
 
     }
     const description = {
-        "background": data.background,
-        "nome do aluno": data.aluno,
-        "idade ": data.idadeAluno,
-        "vendedor": data.owner,
-        "responsável": data.professor,
-        "whatsapp": data.tel,
-        "Precisa de nivelamento": data.nivelamento,
-        "Professor": data.professor,
-        "Dia de aula": data.diaAula.map(res => res),
-        "Dia da Primeira aula": data.paDATA,
-        "Horario": `${data.horarioInicio}  às  ${data.horarioFim}`,
-        "Caga Horaria do curso": data.cargaHoraria,
-        "Curso": data.curso,
-        "Classe": data.classe,
-        "Sub Classe": data.subclasse,
-        "Material": data.materialDidatico.map(res => res),
-        "modalidade": data.tipoModalidade,
-        "Formato das aulas": data.formatoAula,
-        "anotações": data.observacao.map(res => res.value),
-        "Valor do material": data.mdValor,
-        "Vaor da taxa de matricula": data.tmValor,
-        "Valor da mensalidade": data.ppValor,
+        "background": object.background,
+        "nome do aluno": object.aluno,
+        "idade ": object.idadeAluno,
+        "vendedor": object.owner,
+        "responsável": object.professor,
+        "whatsapp": object.tel,
+        "Precisa de nivelamento": object.nivelamento,
+        "Professor": object.professor,
+        "Dia de aula": object.diaAula.map(res => res),
+        "Dia da Primeira aula": object.paDATA,
+        "Horario": `${object.horarioInicio}  às  ${object.horarioFim}`,
+        "Caga Horaria do curso": object.cargaHoraria,
+        "Curso": object.curso,
+        "Classe": object.classe,
+        "Sub Classe": object.subclasse,
+        "Material": object.materialDidatico.map(res => res),
+        "modalidade": object.tipoModalidade,
+        "Formato das aulas": object.formatoAula,
+        "anotações": object.observacao.map(res => res.value),
+        "Valor do material": object.mdValor,
+        "Vaor da taxa de matricula": object.tmValor,
+        "Valor da mensalidade": object.ppValor,
     }
 
 
@@ -362,4 +365,119 @@ export default searchSync
 
 
 
+// console.log(Math.ceil(7.01 * 0.111111 + 7.01))
 
+
+// console.log(Math.floor(ç - ç * 0.2))
+// console.log(Math.floor(ç - ç * 0.1))
+
+
+// async function t(params) {
+//     params.map(async res => {
+
+//         let acres = Math.ceil(res.price * 0.111111 + res.price)
+
+//         let decreaseTen = Math.floor(acres - acres * 0.1)
+//         let decreaseTwenty = Math.floor(acres - acres * 0.2)
+
+
+
+
+//         await prisma.insume.create({
+//             data: {
+//                 category: "Product",
+//                 name: res.name,
+//                 sku: res.sku,
+//                 price_selling: res.price,
+//                 price_ticket: acres,
+//                 price_card: decreaseTen,
+//                 price_cash: decreaseTwenty,
+//                 color: ""
+//             }
+//         })
+//     })
+// }
+
+// let a = [
+//     { name: "Dream Kids 1 - PK - 3rd Ed - BK", sku: "9786557702611", price: 181.00 },
+//     { name: "Dream Kids 2 - PK - 3rd Ed - BK", sku: "9786557702567", price: 181.00 },
+//     { name: "Dream Kids 3 - PK - 3rd Ed - BK", sku: "9786557702550", price: 181.00 },
+//     { name: "Stars and Heroes Starter - SB - 1 st Ed - BK", sku: "9781292441597", price: 204.00 },
+//     { name: "Stars and Heroes Starter - WB - 1 st Ed - BK", sku: "9781292441696", price: 111.00 },
+//     { name: "Stars and Heroes 1 - SB - 1 st Ed - BK", sku: "9781292441580", price: 204.00 },
+//     { name: "Stars and Heroes 1 - WB - 1 st Ed - BK", sku: "9781292441672", price: 111.00 },
+//     { name: "Stars and Heroes 2 - SB - 1 st Ed - BK", sku: "9781292441573", price: 204.00 },
+//     { name: "Stars and Heroes 2 - WB - 1 st Ed - BK", sku: "9781292441641", price: 111.00 },
+//     { name: "Stars and Heroes 3 - SB - 1 st Ed - BK", sku: "9781292441702", price: 204.00 },
+//     { name: "Stars and Heroes 3 - WB - 1 st Ed - BK", sku: "9781292441658", price: 111.00 },
+//     { name: "Stars and Heroes 4 - SB - 1 st Ed - BK", sku: "9781292441719", price: 204.00 },
+//     { name: "Stars and Heroes 4 - WB - 1 st Ed - BK", sku: "9781292441665", price: 111.00 },
+//     { name: "Stars and Heroes 5 - SB - 1 st Ed - BK", sku: "9781292441726", price: 204.00 },
+//     { name: "Stars and Heroes 5 - WB - 1 st Ed - BK", sku: "9781292441764", price: 111.00 },
+//     { name: "World Link Intro - SB - 4TH ED - BK", sku: "9780357502105", price: 226.90 },
+//     { name: "World Link Intro - WB - 3TH ED - BK", sku: "9781305647848", price: 119.90 },
+//     { name: "World Link Intro - WB - 3TH ED - AP", sku: "WLIWB3AP", price: 9.42 },
+//     { name: "World Link 1 - SB - 4TH ED - BK", sku: "9780357502143", price: 226.90 },
+//     { name: "World Link 1 - WB - 4TH ED - BK", sku: "9780357503768", price: 119.90 },
+//     { name: "World Link 1 - WB - 4TH ED - AP", sku: "WL1WB4AP", price: 9.42 },
+//     { name: "World Link 2 - SB - 4TH ED - BK", sku: "9780357503867", price: 226.90 },
+//     { name: "World Link 2 - WB - 4TH ED - BK", sku: "9780357503867", price: 119.90 },
+//     { name: "World Link 2 - WB - 4TH ED - AP", sku: "WL2WB4AP", price: 9.42 },
+//     { name: "World Link 3 - SB - 4TH ED - BK", sku: "WL3WB4BK", price: 226.90 },
+//     { name: "World Link 3 - WB - 4TH ED - BK", sku: "9780357503966", price: 119.90 },
+//     { name: "World Link 3 - WB - 4TH ED - AP", sku: "WL3WB4BK", price: 9.42 },
+//     { name: "World Link 4 - SB - 4TH ED - BK", sku: "WL4SB4BK", price: 226.90 },
+//     { name: "World Link 4 - WB - 4TH ED - BK", sku: "9780357504062", price: 119.90 },
+//     { name: "World Link 4 - WB - 4TH ED - AP", sku: "WL4WB4AP", price: 9.42 },
+//     { name: "Short Course Adults - PK - 1st Ed - AP", sku: "SCA1PK1AP", price: 7.01 },
+//     { name: "Interchange Intro W / EBOOK - SB - 5th Ed - BK", sku: "9781009040419", price: 327.00 },
+//     { name: "Interchange Intro w / PACK - SB + WB - 5th Ed - BK", sku: "9781009040556", price: 409.00 },
+//     { name: "Interchange Intro - WB - 5th Ed - AP", sku: "INIWB5AP", price: 10.94 },
+//     { name: "Interchange Intro - WB - 5th Ed - BK", sku: "9781316622377", price: 210.00 },
+//     { name: "Interchange Intro B - W / EBOOK - SB - 5th Ed - BK", sku: "9781009040433", price: 214.00 },
+//     { name: "Beginner Way Intro - WB - 1st Ed - AP", sku: "BWIWB1AP", price: 6.70 },
+//     { name: "Interchange Intro B - WB - 5th Ed - BK", sku: "9781316622407", price: 162.00 },
+//     { name: "Interchange 1 - W / EBOOK - SB - 5th Ed - BK", sku: "9781009040440", price: 327.00 },
+//     { name: "Interchange 1 - WB - 5th Ed - BK", sku: "9781316622476", price: 210.00 },
+//     { name: "Interchange 1 - WB - 5th Ed - AP", sku: "IN1WB5AP", price: 10.94 },
+//     { name: "Interchange 1B - W / EBOOK - SB - 5th Ed - BK", sku: "9781009040488", price: 214.00 },
+//     { name: "Interchange 1B - WB - 5th Ed - BK", sku: "9781316622667", price: 162.00 },
+//     { name: "Interchange 2 - W / EBOOK - SB - 5th Ed - BK", sku: "9781009040495", price: 327.00 },
+//     { name: "Interchange 2 - WB - 5th Ed - BK", sku: "9781316622698", price: 210.00 },
+//     { name: "Interchange 2 - WB - 5th Ed - AP", sku: "IN2WB5AP", price: 10.94 },
+//     { name: "Interchange 3 - W / EBOOK - SB - 5th Ed - BK", sku: "9781009040525", price: 327.00 },
+//     { name: "Interchange 3 - WB - 5th Ed - BK", sku: "9781316622766", price: 210.00 },
+//     { name: "Interchange 3 - WB - 5th Ed - AP", sku: "IN3WB5AP", price: 11.58 },
+//     { name: "Evolve 5 - SB - 1st Ed - BK", sku: "9781009230858", price: 325.00 },
+//     { name: "Evolve 5 - WB - 1st Ed - BK", sku: "9781108409070", price: 221.00 },
+//     { name: "Evolve 5 - WB - 1st Ed - AP", sku: "EV5WB1AP", price: 11.74 },
+//     { name: "Evolve 6 - SB - 1st Ed - BK", sku: "9781009230889", price: 325.00 },
+//     { name: "Evolve 6 - WB - 1st Ed - BK", sku: "9781108409094", price: 221.00 },
+//     { name: "Evolve 6 - WB - 1st Ed - AP", sku: "EV6WB1AP", price: 11.74 },
+//     { name: "Short Course Espanhol - PK - 1st Ed - AP", sku: "SCEPK1BK", price: 4.90 },
+//     { name: "Vitamina B1 - SB - 1st Ed - BK", sku: "9788416782932", price: 284.55 },
+//     { name: "Vitamina B1 - WB - 1st Ed - BK", sku: "9788416782949", price: 178.43 },
+//     { name: "Vitamina B1 - WB - 1st Ed - AP", sku: "VB1WB1AP", price: 14.62 },
+//     { name: "Vitamina B2 - SB - 1st Ed - BK", sku: "9788416782963", price: 284.55 },
+//     { name: "Vitamina B2 - WB - 1st Ed - BK", sku: "9788416782970", price: 178.43 },
+//     { name: "Vitamina B2 - WB - 1st Ed - AP", sku: "VB2WB1AP", price: 14.62 },
+//     { name: "Vitamina Básico(A1 - A2) - SB - 1st Ed - BK", sku: "9788419065230", price: 320.16 },
+//     { name: "Vitamina Básico(A1 - A2) - WB - 1st Ed - BK", sku: "9788419065247", price: 203.51 },
+//     { name: "Vitamina Básico(A1 - A2) - WB - 1st Ed - AP", sku: "VBAWB1AP", price: 16.54 }
+// ]
+
+// t(a)
+
+
+// await await prisma.customFields.findFirst({
+//     where: {
+//         name: {
+//             contains: "Material d"
+//         }
+//     }
+// }).then(res => console.log(res))
+
+
+
+
+// console.log(a.length)

@@ -31,10 +31,13 @@ const functionsArray = [
 
 ]
 
+// console.log((327 * 0.111111 + 327).toFixed(2))
+// syncContaAzul()
+
 functionsArray.forEach(res => {
     return new CronJob(res.time,
         function () {
-            res.fn()
+            // res.fn()
         },
         null,
         true,

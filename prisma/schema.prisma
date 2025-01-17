@@ -239,50 +239,53 @@ model customFields {
   created_at  DateTime @default(now())
 }
 
+enum descountType {
+  Percentage
+  Value
+}
 
-// model logs {
-// id       String  @id @default(uuid()) 
-// name     String
-// email    String   @unique
-// password String
-// admin    Boolean  @default(false)
-// role     String
-// unity    String[]
-// created_at DateTime  @default(now())
-// updated_at DateTime  @updatedAt
-// active   Boolean @default(true)
+enum destiny {
+  Parcel
+  Material
+  Tax
+}
 
-// persons  contracts[]
-// }
-// model contracts {
-// id      String  @id @default(uuid()) 
-// name    String 
+model campaign {
+  id                String   @id  @default(cuid())
+  name              String
+  description       String
+  affectedParcels   Int           @default(1)
+  value             Int
+  descountType      descountType  @default(Percentage)
+  for               destiny
+  status            Boolean       @default(true)
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+}
+enum typeInsume {
+  Product
+  Service
+}
 
-// customFields  Json
+model insume {
+  id                String   @id  @default(cuid())
+  name              String
+  sku               String
+  color             String
+  status            Boolean       @default(true)
+  price_selling     Float
+  price_ticket      Float
+  price_card        Float
+  price_cash        Float
+  category          typeInsume 
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+}
 
-// created_at DateTime  @default(now())
-// updated_at DateTime  @updatedAt
-
-// userId  String 
-// user    logs  @relation(fields: [userId], references: [id])
-
-// servicesId  servicesOrProducts[]
-// }
-
-// enum TYPESERVICE {
-//   Service
-//   Product
-// }
-// model servicesOrProducts {
-// id      String  @id @default(uuid()) 
-// name    String 
-// description String?
-// value       Decimal?
-// type      TYPESERVICE
-// created_at DateTime  @default(now())
-// updated_at DateTime  @updatedAt
-
-
-// // contractId String?
-// contracts contracts[] 
-// }
+model contract {
+  id                String   @id  @default(cuid())
+  name              String
+  text              String
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+}

@@ -12,7 +12,9 @@ import multer from 'multer';
 import AutentiqueController from '../app/controllers/external/autentiqueController.js';
 // import ContractsController from '../app/controllers/contractsController.js';
 import FilesController from '../app/controllers/external/filesController.js';
+import CampaignController from '../app/controllers/internal/campaignController.js';
 import CustomFieldsController from '../app/controllers/internal/customFieldsController.js';
+import InsumeController from '../app/controllers/internal/insumeController.js';
 import OrdersController from '../app/controllers/internal/ordersController.js';
 import UmblerWebhook from '../app/webhooks/umbler.js';
 import { storage } from '../config/multer.js';
@@ -44,8 +46,20 @@ routes.post('/redefinir-senha', SessionController.forgetPassword)
 
 routes.post('/nova-senha', SessionController.redefinePassword)
 
-
 routes.use(auth) // autenticated routes
+
+////////////////////////////
+routes.post("/campanha", CampaignController.store)
+routes.get("/campanha", CampaignController.index)
+routes.put("/campanha", CampaignController.update)
+routes.delete("/campanha", CampaignController.delete)
+
+routes.post("/insumos", InsumeController.store)
+routes.get("/insumos", InsumeController.index)
+routes.put("/insumos/:id", InsumeController.update)
+routes.delete("/insumos/:od", InsumeController.delete)
+
+///////////////////////////
 
 
 routes.post('/files', FilesController.store)

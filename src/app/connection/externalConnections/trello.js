@@ -29,9 +29,14 @@ export async function CardCreationOnTrello(body) {
 
         console.log(`${body.name} foi enviado ao trello`)
 
+        console.log(response)
+
+
         return response.data.shortUrl;
 
+
     } catch (error) {
+        console.log(error)
         throw new Error(error)
     }
 
