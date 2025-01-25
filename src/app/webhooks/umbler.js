@@ -10,10 +10,12 @@ class UmblerWebhook {
 
         let formatedNumber = telefone.slice(5, telefone.length)
 
-        const search = await prisma.person.findFirst({
+
+        const search = await prisma.registers.findFirst({
             where: {
-                tel: {
-                    contains: formatedNumber
+                customFields: {
+                    path: ["Phone"],
+                    string_contains: formatedNumber
                 }
             }
         })
@@ -21,8 +23,12 @@ class UmblerWebhook {
 
         if (!search) return res.status(400).json({ message: `${nome} não encontrado na base de dado` })
 
-        const { name, unidade, professor, aluno } = search
-        await CreateCommentOnTrello(name, unidade, `${aluno} realizou a pesquisa de satisfação da primeira aula, Professor: ${professor} , Nota: ${nota},Relato: "${relato}".`)
+        const { name, customFields } = search
+
+        await CreateCommentOnTrello(
+            name,
+            customFields["Unidade"],
+            `${customFields["Nome do Aluno"]} realizou a pesquisa de satisfação da primeira aula, Professor: ${customFields["Professor"]} , Nota: ${nota},Relato: "${relato}".`)
 
 
         return res.status(200).json({ name, unidade, professor, aluno })

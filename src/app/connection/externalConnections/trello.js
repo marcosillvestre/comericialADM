@@ -29,7 +29,10 @@ export async function CardCreationOnTrello(body) {
 
         console.log(`${body.name} foi enviado ao trello`)
 
+
+
         return response.data.shortUrl;
+
 
     } catch (error) {
         throw new Error(error)
@@ -54,13 +57,14 @@ async function getData(listId) {
 async function filteredData(name, array) {
 
 
-    const filtered = array.filter(res =>
+    const filtered = await array.filter(res =>
         spacesAndLowerCase(res.name)
             .includes(spacesAndLowerCase(name)))
 
     if (filtered.length > 0) {
         filtered.map(res => {
             const md = res.desc.replace(/^\s*-\s*\*\*.*(\n|\r\n|\r)?/gm, '');
+            console.log(md)
             const material = JSON.parse("{" + md + "}")
 
             if (!material.Material
@@ -126,7 +130,7 @@ export async function CompleteCheckPointOnTrello(array, unity, where) {
 
         if (!checkList) {
 
-            await SendSimpleWpp("Marcos", process.env.MARCOS, `${array}, checklist não encontrado no trello // ${where}`)
+            await SendSimpleWpp("Marcos", process.env.MARCOS, `${JSON.stringify(element)}, checklist não encontrado no trello // ${where}`)
             console.log("checkList não encontrado")
             return
         }

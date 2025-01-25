@@ -6,7 +6,6 @@ class RegistersController {
 
         const { range, role, name, dates, skip, take, orderBy } = req.query
 
-
         const schema = yup.object().shape({
             range: yup.string().required(),
             role: yup.string().required(),

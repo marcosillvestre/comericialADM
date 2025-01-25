@@ -4,7 +4,7 @@ import prisma from '../../database/database.js';
 import { CardCreationOnTrello } from './externalConnections/trello.js';
 import { SendSimpleWpp, SendtoWpp } from './externalConnections/wpp.js';
 
-const comebackDays = 2
+const comebackDays = 5
 const options = { method: 'GET', headers: { accept: 'application/json' } };
 
 async function searchSync() {
@@ -230,6 +230,7 @@ async function searchSync() {
                                     }
                                     if (!err.meta) {
                                         console.log("Error : " + err)
+                                        console.log(err)
                                     }
                                 })
                         }
@@ -244,7 +245,6 @@ async function searchSync() {
         }
         )
 }
-
 
 export function addUsefullDays(data, diasUteis) {
     var dataAtual = new Date(data);
@@ -262,56 +262,83 @@ export function addUsefullDays(data, diasUteis) {
 }
 
 async function trelloCreateCard(object) {
+
+
     let today = new Date();
     let futureDate = addUsefullDays(today, 7);
 
-    const data = object
+    const { name, unidade, background } = object
 
     const templates = {
-        "Golfinho azul": process.env.PTB_TEMPLATE,
-        'PTB': process.env.PTB_TEMPLATE,
-        'Centro': process.env.CENTRO_TEMPLATE
+        "Golfinho azul/Novo aluno": process.env.PTB_TEMPLATE,
+        'PTB/Novo aluno': process.env.PTB_TEMPLATE,
+        'Centro/Novo aluno': process.env.CENTRO_TEMPLATE,
+
+        "Golfinho azul/Ex-aluno": process.env.PTB_TEMPLATE,
+        'PTB/Ex-aluno': process.env.PTB_TEMPLATE,
+        'Centro/Ex-aluno': process.env.CENTRO_TEMPLATE,
+
+        "Golfinho azul/Aluno vigente": process.env.PTB_TEMPLATE,
+        'PTB/Aluno vigente': process.env.PTB_TEMPLATE,
+        'Centro/Aluno vigente': process.env.CENTRO_TEMPLATE,
+
+        "Golfinho azul/Rematrícula": process.env.PTB_TEMPLATE_REM,
+        'PTB/Rematrícula': process.env.PTB_TEMPLATE_REM,
+        'Centro/Rematrícula': process.env.CENTRO_TEMPLATE_REM
     }
 
     const idList = {
-        "Golfinho Azul": process.env.PTB_LIST,
-        'PTB': process.env.PTB_LIST,
-        'Centro': process.env.CENTRO_LIST
+        "Golfinho Azul/Novo aluno": process.env.PTB_LIST,
+        'PTB/Novo aluno': process.env.PTB_LIST,
+        'Centro/Novo aluno': process.env.CENTRO_LIST,
+
+        "Golfinho Azul/Ex-aluno": process.env.PTB_LIST,
+        'PTB/Ex-aluno': process.env.PTB_LIST,
+        'Centro/Ex-aluno': process.env.CENTRO_LIST,
+
+        "Golfinho Azul/Aluno vigente": process.env.PTB_LIST,
+        'PTB/Aluno vigente': process.env.PTB_LIST,
+        'Centro/Aluno vigente': process.env.CENTRO_LIST,
+
+        "Golfinho Azul/Rematrícula": process.env.PTB_LIST_REM,
+        'PTB/Rematrícula': process.env.PTB_LIST_REM,
+        'Centro/Rematrícula': process.env.CENTRO_LIST_REM
+
     }
     const description = {
-        "background": data.background,
-        "nome do aluno": data.aluno,
-        "idade ": data.idadeAluno,
-        "vendedor": data.owner,
-        "responsável": data.professor,
-        "whatsapp": data.tel,
-        "Precisa de nivelamento": data.nivelamento,
-        "Professor": data.professor,
-        "Dia de aula": data.diaAula.map(res => res),
-        "Dia da Primeira aula": data.paDATA,
-        "Horario": `${data.horarioInicio}  às  ${data.horarioFim}`,
-        "Caga Horaria do curso": data.cargaHoraria,
-        "Curso": data.curso,
-        "Classe": data.classe,
-        "Sub Classe": data.subclasse,
-        "Material": data.materialDidatico.map(res => res),
-        "modalidade": data.tipoModalidade,
-        "Formato das aulas": data.formatoAula,
-        "anotações": data.observacao.map(res => res.value),
-        "Valor do material": data.mdValor,
-        "Vaor da taxa de matricula": data.tmValor,
-        "Valor da mensalidade": data.ppValor,
+        "background": object.background,
+        "nome do aluno": object.aluno,
+        "idade ": object.idadeAluno,
+        "vendedor": object.owner,
+        "responsável": object.professor,
+        "whatsapp": object.tel,
+        "Precisa de nivelamento": object.nivelamento,
+        "Professor": object.professor,
+        "Dia de aula": object.diaAula.map(res => res),
+        "Dia da Primeira aula": object.paDATA,
+        "Horario": `${object.horarioInicio}  às  ${object.horarioFim}`,
+        "Caga Horaria do curso": object.cargaHoraria,
+        "Curso": object.curso,
+        "Classe": object.classe,
+        "Sub Classe": object.subclasse,
+        "Material": object.materialDidatico.map(res => res),
+        "modalidade": object.tipoModalidade,
+        "Formato das aulas": object.formatoAula,
+        "anotações": object.observacao.map(res => res.value),
+        "Valor do material": object.mdValor,
+        "Vaor da taxa de matricula": object.tmValor,
+        "Valor da mensalidade": object.ppValor,
     }
 
 
     const body = {
-        name: data.name,
+        name: name,
         desc: JSON.stringify(description, null, 2).replace("{", "").replace("}", ""),
         pos: 'bottom',
         due: futureDate,
         start: today,
-        idList: idList[data.unidade],
-        idCardSource: templates[data.unidade]
+        idList: idList[unidade.concat("/").concat(background)],
+        idCardSource: templates[unidade.concat("/").concat(background)]
     }
 
 
@@ -321,7 +348,7 @@ async function trelloCreateCard(object) {
 
 Foi cadastrado no sistema de comissão, voce pode encontra-lo também no trello por esse link: ${url}`
 
-            await SendtoWpp(message, data.unidade)
+            await SendtoWpp(message, unidade)
 
 
             let conference = `> *${body.name}* 
@@ -334,321 +361,199 @@ Foi cadastrado no sistema de comissão.
         })
 }
 
-
 export default searchSync
 
 
+async function deletadorDeLivrosDuplicados(params) {
 
-
-
-
-
-async function UpdateTheCustomFields() {
-    fetch(`https://crm.rdstation.com/api/v1/custom_fields?token=${process.env.RD_TOKEN}&for=deal`, options)
-        .then(response => response.json())
+    await prisma.books.findMany()
         .then(res => {
-            console.log(res.length)
-            res.map(async (r, i) => {
-                await prisma.customFields.upsert({
+            res.map(async r => {
+                await prisma.books.findFirst({
                     where: {
-                        id: r.id,
-                    },
-                    create: {
-                        id: r.id,
-                        name: r.label,
-                        type: r.type,
-                        options: r.opts,
-                        order: i,
-                        required: r.required
-                    },
-                    update: {
-                        name: r.label,
-                        type: r.type,
-                        options: r.opts,
-                        order: i,
-                        required: r.required
+                        id: {
+                            not: r.id
+                        },
+                        aluno: r.aluno,
+                        materialDidatico: r.materialDidatico,
+                        nome: r.nome
                     }
-
                 })
-            })
-        })
-}
+                    .then(async find => {
+                        // console.log(find)
+                        if (find) {
 
+                            await prisma.books.delete({
+                                where: {
+                                    id: find.id
+                                }
+                            })
+                                .then(() => console.log("deletado"))
+                                .then((err) => console.log(err))
 
-async function NewSearchSync() {
-
-    await UpdateTheCustomFields()
-
-    const backDay = new Date()
-    backDay.setDate(backDay.getDate() - comebackDays)
-    const startDate = backDay.toISOString()
-
-    const currentDate = new Date()
-    const endDate = currentDate.toISOString()
-    let limit = 200
-
-    fetch(`https://crm.rdstation.com/api/v1/deals?limit=${limit}&token=${process.env.RD_TOKEN}&win=true&closed_at_period=true&start_date=${startDate}&end_date=${endDate}`, options)
-        .then(response => response.json())
-        .then(async response => {
-            const { total, deals } = response
-            console.log(total)
-            if (total > 0) {
-
-                // const dealsssss = [deals[0]]
-                for (const deal of deals) {
-
-                    const { id, deal_custom_fields, user, name } = deal
-
-
-
-                    const customFields = async () => {
-                        const cf = await prisma.customFields.findMany()
-                        const result = {}
-
-                        for (let index = 0; index < cf.length; index++) {
-                            const element = cf[index];
-                            const { name } = element;
-
-                            result[name] = deal_custom_fields
-                                .filter(res => res.custom_field.label.includes(name))
-                                .map(res => res.value)[0]
-                        }
-
-                        return await result
-
-                    }
-
-                    const json = await customFields()
-
-
-
-
-                    await prisma.registers.create({
-                        data: {
-                            id,
-                            name: json['Nome  do responsável'],
-                            owner: json['Vendedor'] || user.name,
-                            customFields: json
                         }
                     })
-                        .catch((err) => {
-                            if (err.meta) {
-
-                                console.log(`${name} já está cadastrado no sistema : ${json['Unidade']} / ${user.name} `)
-                            }
-                            if (!err.meta) {
-                                console.log("Error : " + err)
-                            }
-                        })
-                }
-            }
-        })
-    // .catch(err => console.log(err))
-}
-NewSearchSync()
 
 
-// async function UpdateForRegisters(SearchWhere, SearchWhat, UpdateWhere, UpdateWhat) {
 
-//     try {
-
-//         const register = await prisma.registers.findFirst({
-//             where: {
-//                 [SearchWhere]: SearchWhat
-//             }
-//         })
-
-//         if (!register) throw new Error("Not found")
-
-//         const { id, customFields } = register
-
-//         customFields[UpdateWhere] = UpdateWhat
-
-
-//         // console.log(customFields)
-
-//         await prisma.registers.update({
-//             where: {
-//                 id
-//             },
-//             data: {
-//                 customFields
-//             }
-//         })
-
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-
-// let where = "name"
-// let what = "Catia da Silva Romao"
-// let updWhere = "UF"
-// let updWhat = "Bocaiuva"
-
-// k(where, what, updWhere, updWhat)
-
-// console.log(new Date("pt-Br"))
-
-async function names(params) {
-
-    const p = await prisma.person.findMany()
-    const pq = p.filter(res => res.aluno.includes("Kaique Fernando de Lima"))
-
-
-    console.log(pq.length)
-    // pq.filter(async res => {
-
-    const dated = "18/12/2024".split("/")
-    const date = new Date(`${dated[1]}-${dated[0]}-${dated[2]}`)
-    console.log(date)
-
-
-    const found = await prisma.registers.findFirst({
-        where: {
-            customFields: {
-                path: ["Nome do aluno"],
-                string_contains: "Kaua Victor Oliveira de Almeida"
-            }
-        }
-    })
-
-    if (!found) return
-    const { id } = found
-
-    await prisma.registers.update({
-        where: {
-            id
-        },
-        data: {
-            created_at: date,
-            updated_at: date,
-        }
-    })
-        .then(res => console.log(res.name))
-
-    // })
-}
-
-
-async function name(params) {
-    await prisma.registers.findMany()
-
-        .then(res => {
-            res.map(async p => {
-                const cont = p.customFields["Nº do contrato"]
-
-                const found = await prisma.person.findFirst({
-                    where: {
-                        contrato: cont
-                    }
-                })
-
-
-                if (!found) {
-                    console.log(p.name)
-                    return
-                }
-                const { observacao } = found
-
-                await prisma.registers.update({
-                    where: {
-                        id: p.id
-                    },
-                    data: {
-                        observacao
-                    }
-                })
-                    .then(res => clg)
             })
         })
 }
-// name()
 
-async function namess(params) {
-    await prisma.registers.findMany({
-        where: {
-            OR: [
-                {
-                    name: {
-                        contains: "nathan",
-                        mode: "insensitive"
-                    }
-                },
-                {
-                    customFields: {
-                        path: ["Nome do aluno"],
-                        string_contains: "nathan",
 
+async function deletadorDeInsumosDuplicados(params) {
+
+    await prisma.insume.findMany()
+        .then(res => {
+            res.map(async r => {
+                await prisma.insume.findFirst({
+                    where: {
+                        id: {
+                            not: r.id
+                        },
+                        name: r.name,
+                        sku: r.sku,
+                        color: r.color
                     }
-                }
-            ]
-        }
-    })
-        .then(async response => {
-            console.log(response)
+                })
+                    .then(async find => {
+                        // console.log(find)
+                        if (find) {
+
+                            await prisma.insume.delete({
+                                where: {
+                                    id: find.id
+                                }
+                            })
+                                .then(() => console.log("deletado"))
+                                .catch((err) => console.log(err))
+
+                        }
+                    })
+
+
+
+            })
         })
 }
-// namess()
+
+// deletadorDeInsumosDuplicados()
 
 
-const [result, count] = await prisma.$transaction([
 
-    prisma.registers.findMany({
-        where: {
-            created_at: {
-                gte: new Date("Sun Dec 01 2024 00:00:00 GMT-0300 (Horário Padrão de Brasília)"),
-                lte: new Date("Fri Jan 10 2025 00:00:00 GMT-0300 (Horário Padrão de Brasília)")
-            },
-            OR: [
-                {
-                    ["id"]: {
-                        contains: "Inglês",
-                        mode: "insensitive"
-                    }
-                },
-                {
-                    customFields: {
-                        path: ["Curso"],
-                        string_contains: "Inglês",
+// console.log(a.length)
 
-                    }
-                }
+// t(a)
 
-            ]
-        },
-        include: {
-            historic: true
-        },
-        orderBy: {
-            ["created_at"]: 'asc'
-        },
 
-    }),
 
-    prisma.registers.count({
-        where: {
-            created_at: {
-                gte: new Date("Sun Dec 01 2024 00:00:00 GMT-0300 (Horário Padrão de Brasília)"),
-                lte: new Date("Fri Jan 10 2025 00:00:00 GMT-0300 (Horário Padrão de Brasília)")
-            },
-            OR: [
-                {
-                    ["id"]: {
-                        contains: "Inglês",
-                        mode: "insensitive"
-                    }
-                },
-                {
-                    customFields: {
-                        path: ["Curso"],
-                        string_contains: "Inglês",
 
-                    }
-                }
+// const a = [
+//     { color: "#d1d1d1", name: "Kit do aluno personalizado", sku: "KDA1KITKT", price: 145.00 },
+//     { color: "#dde87f", name: "Stars and Heroes Starter Combo", sku: "9788543029047", price: 221.00 },
+//     { color: "#dde87f", name: "Stars and Heroes Starter - SB - 1 st Ed - BK", sku: "9781292441597", price: 204.00 },
+//     { color: "#dde87f", name: "Stars and Heroes Starter - WB - 1 st Ed - BK", sku: "9781292441696", price: 111.00 },
+//     { color: "#dde87f", name: "Stars and Heroes 1 ", sku: "9788543029818", price: 221.00 },
+//     { color: "#dde87f", name: "Stars and Heroes 1 - SB - 1 st Ed - BK", sku: "9781292441580", price: 204.00 },
+//     { color: "#dde87f", name: "Stars and Heroes 1 - WB - 1 st Ed - BK", sku: "9781292441672", price: 111.00 },
+//     { color: "#dde87f", name: "Stars and Heroes 2 ", sku: "9788543029825", price: 205.00 },
+//     { color: "#dde87f", name: "Stars and Heroes 2 - SB - 1 st Ed - BK", sku: "9781292441573", price: 204.00 },
+//     { color: "#dde87f", name: "Stars and Heroes 2 - WB - 1 st Ed - BK", sku: "9781292441641", price: 111.00 },
+//     { color: "#dde87f", name: "Stars and Heroes 3 ", sku: "9788543029832", price: 205.00 },
+//     { color: "#dde87f", name: "Stars and Heroes 3 - SB - 1 st Ed - BK", sku: "9781292441702", price: 204.00 },
+//     { color: "#dde87f", name: "Stars and Heroes 3 - WB - 1 st Ed - BK", sku: "9781292441658", price: 111.00 },
+//     { color: "#dde87f", name: "Stars and Heroes 4 ", sku: "9788543029849", price: 205.00 },
+//     { color: "#dde87f", name: "Stars and Heroes 4 - SB - 1 st Ed - BK", sku: "9781292441719", price: 204.00 },
+//     { color: "#dde87f", name: "Stars and Heroes 4 - WB - 1 st Ed - BK", sku: "9781292441665", price: 111.00 },
+//     { color: "#dde87f", name: "Stars and Heroes 5 ", sku: "9788543029856", price: 205.00 },
+//     { color: "#dde87f", name: "Stars and Heroes 5 - SB - 1 st Ed - BK", sku: "9781292441726", price: 204.00 },
+//     { color: "#dde87f", name: "Stars and Heroes 5 - WB - 1 st Ed - BK", sku: "9781292441764", price: 111.00 },
 
-            ]
-        }
-    })
+//     { color: "#e8be7f", name: "World Link Intro - SB - 4TH ED - BK", sku: "9780357502105", price: 226.90 },
+//     { color: "#e8be7f", name: "World Link Intro - WB - 3TH ED - BK", sku: "9781305647848", price: 119.90 },
+//     { color: "#e8be7f", name: "World Link Intro - WB - 3TH ED - AP", sku: "WLIWB3AP", price: 21.20 },
+//     { color: "#e8be7f", name: "World Link 1 - SB - 4TH ED - BK", sku: "9780357502143", price: 226.90 },
+//     { color: "#e8be7f", name: "World Link 1 - WB - 4TH ED - BK", sku: "9780357503768", price: 119.90 },
+//     { color: "#e8be7f", name: "World Link 1 - WB - 4TH ED - AP", sku: "WL1WB4AP", price: 21.20 },
+//     { color: "#e8be7f", name: "World Link 2 - SB - 4TH ED - BK", sku: "9780357503867", price: 226.90 },
+//     { color: "#e8be7f", name: "World Link 2 - WB - 4TH ED - BK", sku: "9780357503867", price: 119.90 },
+//     { color: "#e8be7f", name: "World Link 2 - WB - 4TH ED - AP", sku: "WL2WB4AP", price: 21.20 },
+//     { color: "#e8be7f", name: "World Link 3- SB - 4TH ED - BK", sku: "", price: 226.90 },
+//     { color: "#e8be7f", name: "World Link 3 - WB - 4TH ED - BK", sku: "9780357503966", price: 119.90 },
+//     { color: "#e8be7f", name: "World Link 3 - WB - 4TH ED - AP", sku: "", price: 21.20 },
+//     { color: "#e8be7f", name: "World Link 4- SB - 4TH ED - BK", sku: "", price: 226.90 },
+//     { color: "#e8be7f", name: "World Link 4 - WB - 4TH ED - BK", sku: "9780357504062", price: 119.90 },
+//     { color: "#e8be7f", name: "World Link 4 - WB - 4TH ED - AP", sku: "WL4WB4AP", price: 21.20 },
 
-])
+//     { color: "#7fa7e8", name: "Short Course Adults - PK - 1st Ed- AP", sku: "SCA1PK1AP", price: 15.80 },
+//     { color: "#7fa7e8", name: "Interchange Intro W/ EBOOK - SB - 5th Ed - BK", sku: "9781009040419", price: 327.00 },
+//     { color: "#7fa7e8", name: "Interchange Intro w/ PACK - SB+WB - 5th Ed - BK", sku: "9781009040556", price: 409.00 },
+//     { color: "#7fa7e8", name: "Interchange Intro - WB - 5th Ed - AP", sku: "INIWB5AP", price: 24.70 },
+//     { color: "#7fa7e8", name: "Interchange Intro - WB - 5th Ed - BK", sku: "9781316622377", price: 210.00 },
+//     { color: "#7fa7e8", name: "Interchange Intro B - W/EBOOK - SB - 5th Ed - BK", sku: "9781009040433", price: 214.00 },
+//     { color: "#7fa7e8", name: "Beginner Way Intro - WB - 1st Ed- AP", sku: "BWIWB1AP", price: 15.10 },
+//     { color: "#7fa7e8", name: "Interchange 2 - W/ EBOOK - SB - 5th Ed - BK", sku: "9781009040495", price: 327.00 },
+//     { color: "#7fa7e8", name: "Interchange 1 - W/ EBOOK - SB - 5th Ed - BK", sku: "9781009040440", price: 327.00 },
+//     { color: "#7fa7e8", name: "Interchange 1 - WB - 5th Ed - BK", sku: "9781316622476", price: 210.00 },
+//     { color: "#7fa7e8", name: "Interchange 1 - WB - 5th Ed - AP", sku: "IN1WB5AP", price: 24.70 },
+//     { color: "#7fa7e8", name: "Interchange 1B - W/EBOOK - SB - 5th Ed - BK", sku: "9781009040488", price: 214.00 },
+//     { color: "#7fa7e8", name: "Interchange 1B - WB - 5th Ed - BK", sku: "9781316622667", price: 162.00 },
+//     { color: "#7fa7e8", name: "Interchange 2 - WB - 5th Ed - BK", sku: "9781316622698", price: 210.00 },
+//     { color: "#7fa7e8", name: "Interchange 2 - WB - 5th Ed - AP", sku: "IN2WB5AP", price: 24.70 },
+//     { color: "#7fa7e8", name: "Interchange 3 - W/ EBOOK - SB - 5th Ed - BK", sku: "9781009040525", price: 327.00 },
+//     { color: "#7fa7e8", name: "Interchange 3 - WB - 5th Ed - BK", sku: "9781316622766", price: 210.00 },
+//     { color: "#7fa7e8", name: "Interchange 3 - WB - 5th Ed - AP", sku: "IN3WB5AP", price: 26.10 },
+//     { color: "#7fa7e8", name: "Evolve 5 - SB - 1st Ed - BK", sku: "9781009230858", price: 325.00 },
+//     { color: "#7fa7e8", name: "Evolve 5 - WB - 1st Ed - BK", sku: "9781108409070", price: 221.00 },
+//     { color: "#7fa7e8", name: "Evolve 5 - WB - 1st Ed - AP", sku: "EV5WB1AP", price: 26.50 },
+//     { color: "#7fa7e8", name: "Evolve 6 - SB - 1st Ed - BK", sku: "9781009230889", price: 325.00 },
+//     { color: "#7fa7e8", name: "Evolve 6 - WB - 1st Ed - BK", sku: "9781108409094", price: 221.00 },
+//     { color: "#7fa7e8", name: "Evolve 6 - WB - 1st Ed - AP", sku: "EV6WB1AP", price: 26.50 },
+
+//     { color: "#81e87f", name: "Short Course Espanhol - PK - 1st Ed - AP", sku: "SCEPK1AP", price: 11.10 },
+//     { color: "#81e87f", name: "Vitamina B1 -  SB - 1st Ed - BK", sku: "9788416782932", price: 284.55 },
+//     { color: "#81e87f", name: "Vitamina B1 - WB - 1st Ed - BK", sku: "9788416782949", price: 178.43 },
+//     { color: "#81e87f", name: "Vitamina B1 - WB - 1st Ed - AP", sku: "VB1WB1AP", price: 32.90 },
+//     { color: "#81e87f", name: "Vitamina B2 - SB - 1st Ed - BK", sku: "9788416782963", price: 284.55 },
+//     { color: "#81e87f", name: "Vitamina B2 -  WB - 1st Ed - BK", sku: "9788416782970", price: 178.43 },
+//     { color: "#81e87f", name: "Vitamina B2 -  WB - 1st Ed - AP", sku: "VB2WB1AP", price: 32.90 },
+//     { color: "#81e87f", name: "Vitamina Básico (A1-A2) - SB - 1st Ed - BK", sku: "9788419065230", price: 320.16 },
+//     { color: "#81e87f", name: "Vitamina Básico (A1-A2) - WB - 1st Ed - BK", sku: "9788419065247", price: 203.51 },
+//     { color: "#81e87f", name: "Vitamina Básico (A1-A2) - WB - 1st Ed - AP", sku: "VBAWB1AP", price: 37.30 },
+// ]
+
+
+// const t = a.map(res => {
+//     const increseTax = Math.ceil(res.price * 0.25 + res.price)
+//     const descreaseTw = Math.floor(increseTax - increseTax * 0.2)
+//     const descreaseThird = Math.floor(increseTax - increseTax * 0.3)
+
+//     return {
+//         name: res.name,
+//         sku: res.sku,
+//         color: res.color,
+//         category: "Product",
+//         price_selling: res.price,
+//         price_ticket: increseTax,
+//         price_card: descreaseTw,
+//         price_cash: descreaseThird,
+//     }
+// })
+
+// console.log(t.length)
+// await prisma.insume.createMany({
+//     data: t
+// })
+//     .then(res => console.log(res))
+//     .catch(res => console.log(res))
+
+// await await prisma.customFields.findFirst({
+//     where: {
+//         name: {
+//             contains: "Material d"
+//         }
+//     }
+// }).then(res => console.log(res))
+
+
+

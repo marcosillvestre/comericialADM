@@ -11,7 +11,9 @@ import TrelloWebhook from '../app/webhooks/trello.js';
 import multer from 'multer';
 import AutentiqueController from '../app/controllers/external/autentiqueController.js';
 import FilesController from '../app/controllers/external/filesController.js';
+import CampaignController from '../app/controllers/internal/campaignController.js';
 import CustomFieldsController from '../app/controllers/internal/customFieldsController.js';
+import InsumeController from '../app/controllers/internal/insumeController.js';
 import OrdersController from '../app/controllers/internal/ordersController.js';
 import RegistersController from '../app/controllers/internal/registersController.js';
 import UmblerWebhook from '../app/webhooks/umbler.js';
@@ -46,6 +48,19 @@ routes.post('/nova-senha', SessionController.redefinePassword)
 
 
 routes.use(auth) // autenticated routes
+
+////////////////////////////
+routes.post("/campanha", CampaignController.store)
+routes.get("/campanha", CampaignController.index)
+routes.put("/campanha/:id", CampaignController.update)
+routes.delete("/campanha/:id", CampaignController.delete)
+
+routes.post("/insumos", InsumeController.store)
+routes.get("/insumos", InsumeController.index)
+routes.put("/insumos/:id", InsumeController.update)
+routes.delete("/insumos/:id", InsumeController.delete)
+
+///////////////////////////
 
 
 routes.post('/files', FilesController.store)
@@ -90,25 +105,11 @@ routes.get('/pessoal', HistoricController.indexPersonalHistoric)
 routes.get('/historico', HistoricController.index)
 
 
-routes.post('/page-update', PostConttroller.searchSync)
-
-routes.post('/grafico', PostConttroller.graphData)
-
-
 routes.get('/comissao', PostConttroller.comissionData)
-
-
-
-
-
-
-
 
 routes.get('/unidades', UnityController.unities)
 routes.post('/unidades', UnityController.storeUnities)
 routes.delete('/unidades/:id', UnityController.deleteUnities)
-
-
 
 
 routes.get('/periodo', PostConttroller.indexPeriod)

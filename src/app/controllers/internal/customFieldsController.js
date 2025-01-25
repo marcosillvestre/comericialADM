@@ -4,7 +4,12 @@ import prisma from "../../../database/database.js"
 class CustomFieldsController {
     async index(req, res) {
         try {
-            const response = await prisma.customFields.findMany()
+            const response = await prisma.customFields.findMany({
+                orderBy: {
+                    order: "asc"
+                }
+            })
+
             return res.status(200).json(response)
         } catch (error) {
             return res.status(400).json({ error })
@@ -18,22 +23,27 @@ class CustomFieldsController {
         let index = Math.max(...findLastIndex.map(response => response.order))
 
 
-        const createCustomField = await prisma.customFields.create({
-            data: {
-                name,
-                type,
-                order: index + 1,
-                required,
-                options,
-            }
+        await createNewCustomField({
+            name, type, required, options, order: index
         })
+            .then(async res => {
 
-        new Promise(resolve => {
-            resolve(createCustomField)
-        })
-            .then(() => {
+                await prisma.customFields.create({
+                    data: {
+                        name,
+                        type,
+                        order: index + 1,
+                        required,
+                        options,
+                    }
+                })
+
                 return res.status(201).json({ message: "Success" })
             })
+            .catch(err => {
+                return res.status(400).json({ error: err })
+            })
+
 
 
     }
@@ -54,79 +64,9 @@ class CustomFieldsController {
             return res.status(200).json({ message: "Success" })
         } catch (error) {
             console.log(error)
-            return res.status(400).json({ message: "Error" })
+
+            return res.status(401).json(error)
         }
-
-        // if (updateOptionType) {
-        //     const { id: optionId, data } = updateOptionType
-        //     await prisma.customFields.update({
-        //         where: { id: optionId },
-        //         data: {
-        //             options: data
-        //         }
-        //     })
-        //         .then((e) => {
-        //             return res.status(201).json({ message: "Success" })
-        //         })
-        //         .catch((err) => {
-        //             return res.status(201).json({ message: err })
-        //         })
-        // }
-
-        // try {
-        //     const update = async (int) => {
-        //         await prisma.customFields.update({
-        //             where: { id: id },
-        //             data: {
-        //                 [field]: int === undefined ? value : int
-        //             }
-        //         })
-        //             .then(() => console.log("Done"))
-        //     }
-
-        //     const updateOrder = async () => {
-        //         const cfToChange = await prisma.customFields.findFirst({
-        //             where: { id: id }
-        //         })
-
-        //         const cfAffected = await prisma.customFields.findFirst({
-        //             where: { order: parseInt(value) }
-        //         })
-
-        //         if (cfAffected) {
-        //             return await prisma.customFields.update({
-        //                 where: { id: cfAffected.id },
-        //                 data: {
-        //                     order: parseInt(cfToChange.order)
-        //                 }
-        //             }).then(async () => {
-        //                 await prisma.customFields.update({
-        //                     where: { id: cfToChange.id },
-        //                     data: {
-        //                         order: parseInt(value)
-        //                     }
-        //                 })
-        //             })
-        //         }
-
-        //         update(parseInt(value))
-
-        //     }
-        //     new Promise(resolve => {
-        //         if (field === "order") {
-        //             return resolve(updateOrder())
-        //         }
-        //         resolve(update())
-        //     })
-        //         .then(() => {
-        //             return res.status(201).json({ message: "Success" })
-        //         })
-
-        // } catch (error) {
-        //     console.log(error)
-
-        //     return res.status(401).json(error)
-        // }
     }
 
     async delete(req, res) {

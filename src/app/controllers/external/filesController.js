@@ -9,7 +9,7 @@ import 'dotenv';
 import { Historic } from "../../../database/historic/properties.js";
 
 const { spacesAndLowerCase } = new StringsMethods()
-const { _store } = new Historic()
+const { _store, _storeLog } = new Historic()
 
 class FilesController {
     async store(req, res) {
@@ -58,7 +58,7 @@ class FilesController {
                         }
                     }),
 
-                    _store(responsible, "Anexos", "Um novo arquivo foi adicionado", id)
+                    _storeLog(responsible, "Anexos", "Um novo arquivo foi adicionado", id)
                 ])
 
 
@@ -139,7 +139,7 @@ class FilesController {
             await Promise.all([
 
                 r2.send(cmd),
-                _store(responsible, "Anexos", "Um documento foi deletado", idRegister)
+                _storeLog(responsible, "Anexos", "Um documento foi deletado", idRegister)
 
             ])
 

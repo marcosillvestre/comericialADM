@@ -95,32 +95,26 @@ class TrelloWebhook {
 
             if (boolean) {
                 const nameSearch = webhook.data.card.name
-                const data = await prisma.person.findMany({
+
+                const data = await prisma.registers.findFirst({
                     where: {
-                        AND: [
-                            {
-                                name: {
-                                    contains: nameSearch,
-                                    mode: "insensitive"
-                                },
-                            },
-                            {
-                                paStatus: {
-                                    contains: "Pendente",
-                                },
-                            },
-                        ],
+                        name: {
+                            contains: nameSearch,
+                            mode: "insensitive"
+                        }
                     }
                 })
 
                 console.log(nameSearch)
-                if (data.length > 0) {
+                if (data) {
                     const update = async () => {
 
-                        await prisma.person.update({
-                            where: { contrato: data[0].contrato },
+                        await prisma.registers.update({
+                            where: {
+                                id: data.id
+                            },
                             data: {
-                                paStatus: "Ok"
+                                primeiraAulaStatus: "Ok"
                             }
                         }).then(() => console.log('pa updated'))
                     }
@@ -128,14 +122,20 @@ class TrelloWebhook {
 
 
                     const storeHistoric = async () => {
-                        await historic._store("Automatização", "paStatus", "Ok", data[0].contrato)
+                        await historic._store("Automatização", "paStatus", "Ok", data.id)
                     }
 
                     Promise.all([
                         storeHistoric(),
                         update(),
-                        createTasks(data[0].name, data[0].aluno, data[0].classe),
-                        StartChatbot(data[0].name, data[0].tel, process.env.BOT_INICIO, "Feedback de primeira aula")
+                        createTasks(data.name,
+                            data.customFields["Nome do Aluno"],
+                            data.customFields["Classe"]),
+
+                        StartChatbot(data.name,
+                            data.customFields["Phone"],
+                            process.env.BOT_INICIO,
+                            "Feedback de primeira aula")
                     ])
                 }
             }

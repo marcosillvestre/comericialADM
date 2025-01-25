@@ -2,7 +2,7 @@ import prisma from "../database.js"
 
 export class Historic {
 
-    _store(responsible, field, text, id) {
+    _storeLog(responsible, field, text, id) {
 
         try {
             return new Promise(resolve => {
@@ -24,6 +24,29 @@ export class Historic {
                         }
 
                     })
+                )
+            })
+
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    _store(responsible, field, to, id) {
+        let data = {
+            responsible: responsible,
+            information: {
+                field: field,
+                to: to,
+                from: id,
+
+            }
+        }
+        try {
+            return new Promise(resolve => {
+                resolve(prisma.historic.create({
+                    data: data
+                })
                 )
             })
 

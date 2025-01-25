@@ -82,12 +82,9 @@ export async function createTasks(name, aluno, classe) {
 }
 
 
-
-
 export async function getDealIdWithCPf(name, cpf, contract) {
 
     // console.log(name, cpf, contract)
-
 
     try {
         const { data } = await axios.get(`https://crm.rdstation.com/api/v1/deals?token=${process.env.RD_TOKEN}&name=${name}`)
@@ -143,4 +140,72 @@ export async function getDealIdWithCPf(name, cpf, contract) {
 
 }
 
+
+
+export async function getContactsWithId(id) {
+
+    const [{ data: contacts }, { data: deal }] = await Promise.all([
+        axios.get(`https://crm.rdstation.com/api/v1/deals/${id}/contacts?token=${process.env.RD_TOKEN}`),
+        axios.get(`https://crm.rdstation.com/api/v1/deals/${id}?token=${process.env.RD_TOKEN}`),
+    ])
+
+    return {
+        phone: contacts.contacts[0].phones[0].phone,
+        email: contacts.contacts[0].emails[0].email,
+        deal
+    }
+
+}
+
+
+
+export async function winADeal(id) {
+    await axios.put(`https://crm.rdstation.com/api/v1/deals/${id}?token=${process.env.RD_TOKEN}`, {
+        deal: {
+            win: "true"
+        }
+    })
+        .then(res => console.log(res))
+        .catch(err => console.log(err))
+
+}
+
+
+export async function createNewCustomField(params) {
+    try {
+
+
+        await axios.
+            post(`https://crm.rdstation.com/api/v1/custom_fields?token=${process.env.RD_TOKEN}`, {
+                custom_field: {
+                    "allow_new": false,
+                    "for": "deal",
+                    "opts": params.options,
+                    "label": params.name,
+                    "required": true,
+                    "type": params.type,
+                    "unique": true,
+                    "order": params.order
+                }
+            })
+
+        return true
+    } catch (error) {
+
+        return new Error(error)
+    }
+
+}
+
+export async function deleteCustomField(id) {
+    try {
+        await axios.
+            delete(`https://crm.rdstation.com/api/v1/custom_fields/${id}?token=${process.env.RD_TOKEN}`)
+
+        return true
+    } catch (error) {
+
+        return new Error(error)
+    }
+}
 

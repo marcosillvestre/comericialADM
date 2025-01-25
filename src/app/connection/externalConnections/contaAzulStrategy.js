@@ -21,3 +21,23 @@ export const getAllSales = async (headers) => {
 }
 
 
+export const getSaleProducts = async (headers, id) => {
+
+    const start = new Date()
+    start.setDate(start.getDate() - 70)
+
+    const end = new Date()
+
+    try {
+        const { data } = await axios
+            .get(`https://api.contaazul.com/v1/sales/${id}/items?Type=Product`,
+                { headers: headers })
+
+        return data
+    } catch (error) {
+        console.log("error")
+        return null
+    }
+}
+
+

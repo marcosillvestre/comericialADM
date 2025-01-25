@@ -83,93 +83,100 @@ class OrderController {
         try {
             await schema.validateSync(req.body, { abortEarly: false })
 
+
+            const { orders, unity } = req.body
+
+
+            console.log({
+                orders,
+                unity
+            })
+
+            return
+
+            const date = new Date()
+            const code = await getLastMondayCode(date);
+
+
+            const update = async (id, data) => {
+
+                await prisma.weekOrder.update({
+                    where: {
+                        id
+                    },
+                    data: {
+                        orders: {
+                            create: data
+                        }
+                    }
+                })
+                    .then(() => {
+                        if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
+                        console.log("Pedido agregado")
+                    })
+                    .catch((err) => {
+                        console.log(err)
+                        if (res) return res.status(400).json({ err })
+                    })
+
+
+            }
+
+            const creation = async (code, data) => {
+
+
+                await prisma.weekOrder.create({
+                    data: {
+                        code,
+                        orders: {
+                            create: data
+                        },
+                        unity
+                    }
+                })
+
+                    .then(() => {
+                        if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
+                        console.log("Pedido criado com sucesso")
+                    })
+                    .catch((err) => {
+                        console.log(err)
+                        if (res) return res.status(400).json({ err })
+                    })
+            }
+
+
+            for (let index = 0; index < orders.length; index++) {
+                const order = orders[index]
+
+                const searchOnDb = await prisma.books.findUnique({
+                    where: {
+                        id: order.idBook
+                    }
+                })
+
+                if (!searchOnDb) {
+
+                    let twin = await getLastMondayCode(await DateTransformer(orders[0].data))
+
+                    const weekOrder = await prisma.weekOrder.findFirst({
+                        where: {
+                            code: twin,
+                            unity
+                        }
+                    })
+
+                    weekOrder ?
+                        await update(weekOrder.id, orders) :
+                        await creation(code, orders)
+                }
+            }
         } catch (error) {
             console.log(error)
             throw new Error(error);
 
             // return res.status(400).json({ message: error })
         }
-
-        const { orders, unity } = req.body
-
-        const date = new Date()
-        const code = await getLastMondayCode(date);
-
-
-        const update = async (id, data) => {
-
-            await prisma.weekOrder.update({
-                where: {
-                    id
-                },
-                data: {
-                    orders: {
-                        create: data
-                    }
-                }
-            })
-                .then(() => {
-                    if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
-                    console.log("Pedido agregado")
-                })
-                .catch((err) => {
-                    console.log(err)
-                    if (res) return res.status(400).json({ err })
-                })
-
-
-        }
-
-        const creation = async (code, data) => {
-
-
-            await prisma.weekOrder.create({
-                data: {
-                    code,
-                    orders: {
-                        create: data
-                    },
-                    unity
-                }
-            })
-
-                .then(() => {
-                    if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
-                    console.log("Pedido criado com sucesso")
-                })
-                .catch((err) => {
-                    console.log(err)
-                    if (res) return res.status(400).json({ err })
-                })
-        }
-
-
-        for (let index = 0; index < orders.length; index++) {
-            const order = orders[index]
-
-            const searchOnDb = await prisma.books.findFirst({
-                where: {
-                    nome: order.nome,
-                    aluno: order.aluno,
-                    materialDidatico: order.materialDidatico
-                }
-            })
-
-            if (!searchOnDb) {
-
-                let twin = await getLastMondayCode(await DateTransformer(orders[0].data))
-
-                const weekOrder = await prisma.weekOrder.findFirst({
-                    where: {
-                        code: twin,
-                        unity
-                    }
-                })
-
-                weekOrder ? await update(weekOrder.id, orders) : await creation(code, orders)
-            }
-        }
-
     }
 
 
@@ -200,7 +207,7 @@ class OrderController {
 
 
 
-            await historic._store(responsible, "Pedido", "Deletado", id)
+            await historic._storeLog(responsible, "Pedido", "Deletado", id)
 
             if (res) return res.status(201).json({ message: "Pedido removido com sucesso" })
             console.log("Pedido editado")

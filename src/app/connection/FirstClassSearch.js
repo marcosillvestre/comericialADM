@@ -25,39 +25,33 @@ const databaseSearch = async (unity) => {
     const month = date.getMonth() + 1
     const period = "/0" + month + "/" + date.getFullYear()
 
-    const search = await prisma.person.findMany({
+    const search = await prisma.registers.findMany({
         where: {
-            paDATA: {
-                contains: period
+            customFields: {
+                path: ["Data da primeira aula"],
+                string_contains: period
             },
-            unidade: unity
-        },
-        select: {
-            paDATA: true,
-            horarioInicio: true,
-            horarioFim: true,
-            name: true,
-            aluno: true,
-            professor: true,
-            tel: true,
-            classe: true
+            customFields: {
+                path: ["Unidade"],
+                string_contains: unity
+            },
+
         }
     })
 
-    return search.map(res => {
+    return search.map((res) => {
         return {
-            "Data da aula": res.paDATA,
-            "Horário": `${res.horarioInicio} às ${res.horarioFim}`,
+            "Data da aula": res.customFields["Data da primeira aula"],
+            "Horário": `${res.customFields["Horário de Inicio"]} às ${res.customFields["Horário de fim"]}`,
             "Responsável": res.name,
-            "Aluno": res.aluno,
-            "Professor": res.professor[0],
-            "Telefone": res.tel,
-            "Classe": res.classe,
+            "Aluno": res.customFields["Nome do aluno"],
+            "Professor": res.customFields["Professor"],
+            "Telefone": res.customFields["Phone"] || "Sem esse dado",
+            "Classe": res.customFields["Classe"],
         }
     })
 
 }
-
 
 async function SearchFirstClassWeek(unity) {
 
@@ -73,9 +67,15 @@ const firstClassSearch = async () => {
     for (const unity of ["Centro", "PTB"]) {
 
         const list = await SearchFirstClassWeek(unity)
+        await SendtoWpp(`Lista de novas matrículas na unidade: *${unity}*`, unity)
+        let lists = [list[0]]
+        for (const element of lists) {
 
-        list.length > 0 ? await SendtoWpp(`Esses são os alunos que terão sua primeira aula esta semana na unidade do ${unity}: ${JSON.stringify(list, null, 2).replace(/\[|\]/g, '')}`, unity) :
-            await SendtoWpp(`Não há aulas programadas para esta semana na unidade do ${unity}`, unity)
+            await SendtoWpp(
+                JSON.stringify(element, null, 2).replace(/[{}]/g, ''),
+                unity
+            )
+        }
     }
 }
 

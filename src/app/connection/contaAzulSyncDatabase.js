@@ -24,6 +24,16 @@ const routes = {
     "tmStatus": "taxa de matricula",
     "mdStatus": "material didatico"
 }
+const routesRegister = {
+    "parcela": "pagamentoPrimeiraParcelaStatus",
+    "taxa de matricula": "taxaMatriculaStatus",
+    "material didatico": "materialDidaticoStatus",
+
+    "pagamentoPrimeiraParcelaStatus": "parcela",
+    "taxaMatriculaStatus": "taxa de matricula",
+    "materialDidaticoStatus": "material didatico",
+
+}
 const idList = {
     "Golfinho Azul": "PTB",
     'PTB': "PTB",
@@ -37,7 +47,7 @@ const order = async (name, material, unity, tel, aluno) => {
     }
 
 
-    if (!("id" in material[0])) {
+    if (!material[0].id) {
         const { data } = await axios.get("https://api.contaazul.com/v1/products?size=10000", { headers: header })
 
         const body = material.map(res => {
@@ -57,7 +67,8 @@ const order = async (name, material, unity, tel, aluno) => {
                 link: "",
                 retiradoPor: "",
                 aluno,
-                tel
+                tel,
+                type: "auto"
             }
 
         })
@@ -95,7 +106,6 @@ const order = async (name, material, unity, tel, aluno) => {
     return body.filter(res => res)
 
 }
-
 
 async function SyncOrdersToContaAzul(sale, headers, unity) {
 
@@ -144,7 +154,6 @@ async function SyncOrdersToContaAzul(sale, headers, unity) {
 
     }
 }
-
 
 const getSalesByCustomerId = async (databaseFilteredList, headers, unity) => {
 
@@ -197,9 +206,9 @@ const getSalesByCustomerId = async (databaseFilteredList, headers, unity) => {
         if (payment.installments[0] && payment.installments[0]?.status === "ACQUITTED") data.push({
             id,
             name: customer.name,
-            pendentes: element.pendents,
+            pendentes: user.pendents,
             service,
-            contrato: element.contrato,
+            contrato: user.contrato,
             payment: payment.installments[0],
         })
     }
@@ -207,7 +216,6 @@ const getSalesByCustomerId = async (databaseFilteredList, headers, unity) => {
 
     return data.filter(res => res !== undefined)
 }
-
 
 async function Echo(response, where) {
 
@@ -244,7 +252,7 @@ realizou o pagamento do material didático
 
     let checkup = {
         "ppStatus": "AUTOMÁTICO - Confirmação de pagamento da primeira mensalidade.",
-        "tmStatus": "AUTOMÁTICO - Confirmação pagamento da taxa de matrícula (se haver)",
+        "tmStatus": "AUTOMÁTICO - Confirmação pagamento da taxa de matrícula (se houver)",
         "mdStatus": "AUTOMÁTICO - Confirmação de pagamento do material didático."
     }
 
@@ -293,9 +301,6 @@ async function updateOnDatabase(contrato, whereIs) {
 
     return response ? "Done" : "Error"
 }
-
-
-
 
 async function SearchPendents(unity, headers) {
 
@@ -369,96 +374,21 @@ async function SearchPendents(unity, headers) {
 const syncContaAzul = async () => {
     console.log("Payments ca updates")
 
-    for (const realToken of [
-        "Centro",
-        "PTB"
-    ]) {
+    for (const realToken of ["Centro", "PTB"]) {
         const header = {
             "Authorization": `Bearer ${await getToken(realToken, 'refresh')}`
         }
 
 
         await Promise.all([
-            SearchPendents(realToken, header),
+            // SearchPendents(realToken, header),
+            // SearchPendentsRegister(realToken, header),
 
         ])
+
 
     }
 }
 
-
 export default syncContaAzul
-
-
-
-// await prisma.person.findMany({
-//     where: {
-//         unidade: unity,
-//         name: {
-//             contains: "Regina da si",
-//             mode: "insensitive"
-//         }
-//     },
-//     select: {
-//         name: true,
-//         dataMatricula: true,
-//         mdStatus: true,
-//         ppStatus: true,
-//         tmStatus: true,
-//         unidade: true,
-//         contrato: true,
-//         curso: true
-//     }
-// })
-
-
-
-// await prisma.books.update({
-//     where: { id: "dff81fbd-bee6-4a78-a1a5-453c45277b54" },
-//     data: {
-//         sku: "WL1WB4AP"
-//     },
-//     include: {
-//         orderRelated: true
-//     }
-// })
-//     .then(res => {
-
-//         const { orderId, orderRelated, ...rest } = res
-//         console.log(rest)
-//     })
-
-
-// await prisma.orders.findMany()
-//     .then(async res => {
-//         for (let index = 0; index < res.length; index++) {
-//             const ord = res[index];
-
-//             const k = Promise.all(ord.orders.map(l => {
-//                 return {
-//                     sku: l.sku,
-//                     tel: l.tel ? l.tel : "",
-//                     data: l.data,
-//                     link: l.link,
-//                     nome: l.nome,
-//                     aluno: l.aluno ? l.aluno : "",
-//                     valor: l.valor,
-//                     assinado: l.assinado,
-//                     retiradoPor: l.retiradoPor ? l.retiradoPor : "",
-//                     dataRetirada: l.dataRetirada,
-//                     materialDidatico: l.materialDidatico,
-//                     type: l.type ? l.type : "auto"
-//                 }
-//             }))
-
-//             await prisma.weekOrder.create({
-//                 data: {
-//                     code: ord.code,
-//                     unity: ord.unity,
-//                     orders: {
-//                         create: await k
-//                     }
-//                 }
-//             })
-//         }
-//     })
+////////////////////////////////////////////////////////////
