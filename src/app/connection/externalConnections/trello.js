@@ -18,9 +18,6 @@ const secList = {
     "Centro": "65ea38613c42b228b4ac315d"
 }
 
-
-
-
 //create 
 export async function CardCreationOnTrello(body) {
 
@@ -29,10 +26,7 @@ export async function CardCreationOnTrello(body) {
 
         console.log(`${body.name} foi enviado ao trello`)
 
-
-
         return response.data.shortUrl;
-
 
     } catch (error) {
         throw new Error(error)
