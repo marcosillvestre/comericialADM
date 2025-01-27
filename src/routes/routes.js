@@ -55,10 +55,11 @@ routes.get("/campanha", CampaignController.index)
 routes.put("/campanha/:id", CampaignController.update)
 routes.delete("/campanha/:id", CampaignController.delete)
 
-routes.post("/insumos", InsumeController.store)
-routes.get("/insumos", InsumeController.index)
-routes.put("/insumos/:id", InsumeController.update)
-routes.delete("/insumos/:id", InsumeController.delete)
+routes.post("/insumo", InsumeController.store)
+routes.get("/insumo", InsumeController.index)
+routes.get("/insumos", InsumeController.getAll)
+routes.put("/insumo/:id", InsumeController.update)
+routes.delete("/insumo/:id", InsumeController.delete)
 
 ///////////////////////////
 

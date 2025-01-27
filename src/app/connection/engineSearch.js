@@ -364,6 +364,7 @@ Foi cadastrado no sistema de comissão.
 export default searchSync
 
 
+
 async function deletadorDeLivrosDuplicados(params) {
 
     await prisma.books.findMany()
@@ -399,7 +400,7 @@ async function deletadorDeLivrosDuplicados(params) {
             })
         })
 }
-
+// deletadorDeLivrosDuplicados()
 
 async function deletadorDeInsumosDuplicados(params) {
 

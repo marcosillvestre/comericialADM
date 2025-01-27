@@ -4,7 +4,7 @@ import { getContactsWithId } from './externalConnections/rdStation.js';
 import { CardCreationOnTrello } from './externalConnections/trello.js';
 import { SendSimpleWpp, SendtoWpp } from './externalConnections/wpp.js';
 
-const comebackDays = 5
+const comebackDays = 15
 const options = { method: 'GET', headers: { accept: 'application/json' } };
 
 export function addUsefullDays(data, diasUteis) {
@@ -53,6 +53,42 @@ async function UpdateTheCustomFields() {
         })
 }
 
+const templates = {
+    "Golfinho azul/Novo aluno": process.env.PTB_TEMPLATE,
+    'PTB/Novo aluno': process.env.PTB_TEMPLATE,
+    'Centro/Novo aluno': process.env.CENTRO_TEMPLATE,
+
+    "Golfinho azul/Ex-aluno": process.env.PTB_TEMPLATE,
+    'PTB/Ex-aluno': process.env.PTB_TEMPLATE,
+    'Centro/Ex-aluno': process.env.CENTRO_TEMPLATE,
+
+    "Golfinho azul/Aluno vigente": process.env.PTB_TEMPLATE,
+    'PTB/Aluno vigente': process.env.PTB_TEMPLATE,
+    'Centro/Aluno vigente': process.env.CENTRO_TEMPLATE,
+
+    "Golfinho azul/Rematrícula": process.env.PTB_TEMPLATE_REM,
+    'PTB/Rematrícula': process.env.PTB_TEMPLATE_REM,
+    'Centro/Rematrícula': process.env.CENTRO_TEMPLATE_REM
+}
+
+const idList = {
+    "Golfinho Azul/Novo aluno": process.env.PTB_LIST,
+    'PTB/Novo aluno': process.env.PTB_LIST,
+    'Centro/Novo aluno': process.env.CENTRO_LIST,
+
+    "Golfinho Azul/Ex-aluno": process.env.PTB_LIST,
+    'PTB/Ex-aluno': process.env.PTB_LIST,
+    'Centro/Ex-aluno': process.env.CENTRO_LIST,
+
+    "Golfinho Azul/Aluno vigente": process.env.PTB_LIST,
+    'PTB/Aluno vigente': process.env.PTB_LIST,
+    'Centro/Aluno vigente': process.env.CENTRO_LIST,
+
+    "Golfinho Azul/Rematrícula": process.env.PTB_LIST_REM,
+    'PTB/Rematrícula': process.env.PTB_LIST_REM,
+    'Centro/Rematrícula': process.env.CENTRO_LIST_REM
+
+}
 async function trelloCreateCard(object) {
 
 
@@ -61,42 +97,6 @@ async function trelloCreateCard(object) {
 
     const { name, customFields } = object
 
-    const templates = {
-        "Golfinho azul/Novo aluno": process.env.PTB_TEMPLATE,
-        'PTB/Novo aluno': process.env.PTB_TEMPLATE,
-        'Centro/Novo aluno': process.env.CENTRO_TEMPLATE,
-
-        "Golfinho azul/Ex-aluno": process.env.PTB_TEMPLATE,
-        'PTB/Ex-aluno': process.env.PTB_TEMPLATE,
-        'Centro/Ex-aluno': process.env.CENTRO_TEMPLATE,
-
-        "Golfinho azul/Aluno vigente": process.env.PTB_TEMPLATE,
-        'PTB/Aluno vigente': process.env.PTB_TEMPLATE,
-        'Centro/Aluno vigente': process.env.CENTRO_TEMPLATE,
-
-        "Golfinho azul/Rematrícula": process.env.PTB_TEMPLATE_REM,
-        'PTB/Rematrícula': process.env.PTB_TEMPLATE_REM,
-        'Centro/Rematrícula': process.env.CENTRO_TEMPLATE_REM
-    }
-
-    const idList = {
-        "Golfinho Azul/Novo aluno": process.env.PTB_LIST,
-        'PTB/Novo aluno': process.env.PTB_LIST,
-        'Centro/Novo aluno': process.env.CENTRO_LIST,
-
-        "Golfinho Azul/Ex-aluno": process.env.PTB_LIST,
-        'PTB/Ex-aluno': process.env.PTB_LIST,
-        'Centro/Ex-aluno': process.env.CENTRO_LIST,
-
-        "Golfinho Azul/Aluno vigente": process.env.PTB_LIST,
-        'PTB/Aluno vigente': process.env.PTB_LIST,
-        'Centro/Aluno vigente': process.env.CENTRO_LIST,
-
-        "Golfinho Azul/Rematrícula": process.env.PTB_LIST_REM,
-        'PTB/Rematrícula': process.env.PTB_LIST_REM,
-        'Centro/Rematrícula': process.env.CENTRO_LIST_REM
-
-    }
 
     const { phone, email } = await getContactsWithId(object.id)
 
@@ -133,18 +133,19 @@ async function trelloCreateCard(object) {
         pos: 'bottom',
         due: futureDate,
         start: today,
-        idList: idList[unidade.concat("/").concat(background)],
-        idCardSource: templates[unidade.concat("/").concat(background)]
+        idList: idList[customFields["Unidade"].concat("/").concat(customFields["Background do Aluno"])],
+        idCardSource: templates[customFields["Unidade"].concat("/").concat(customFields["Background do Aluno"])]
     }
 
 
     await CardCreationOnTrello(body)
+
         .then(async url => {
             let message = `> *${body.name}*
 
 Foi cadastrado no sistema de comissão, voce pode encontra-lo também no trello por esse link: ${url}`
 
-            await SendtoWpp(message, unidade)
+            1 > 2 && await SendtoWpp(message, unidade)
 
 
             let conference = `> *${body.name}* 
@@ -152,12 +153,12 @@ Foi cadastrado no sistema de comissão, voce pode encontra-lo também no trello 
 Foi cadastrado no sistema de comissão.
                 `
 
-            await SendSimpleWpp("Carolina", process.env.CAROLINA, conference)
+            1 > 2 && await SendSimpleWpp("Carolina", process.env.CAROLINA, conference)
 
         })
 }
 async function NewSearchSync() {
-
+    console.log("[new search]")
     await UpdateTheCustomFields()
 
     const backDay = new Date()
@@ -196,8 +197,8 @@ async function NewSearchSync() {
                         }
 
                         return await {
-                            Phone,
-                            Email,
+                            Phone: phone,
+                            Email: email,
                             ...result
                         }
 
@@ -236,91 +237,37 @@ async function NewSearchSync() {
 export default NewSearchSync
 
 
-// const a = [
-//     { color: "#d1d1d1", name: "Kit do aluno personalizado", sku: "KDA1KITKT", price: 145.00 },
-//     { color: "#dde87f", name: "Stars and Heroes Starter Combo", sku: "9788543029047", price: 221.00 },
-//     { color: "#dde87f", name: "Stars and Heroes Starter - SB - 1 st Ed - BK", sku: "9781292441597", price: 204.00 },
-//     { color: "#dde87f", name: "Stars and Heroes Starter - WB - 1 st Ed - BK", sku: "9781292441696", price: 111.00 },
-//     { color: "#dde87f", name: "Stars and Heroes 1 ", sku: "9788543029818", price: 221.00 },
-//     { color: "#dde87f", name: "Stars and Heroes 1 - SB - 1 st Ed - BK", sku: "9781292441580", price: 204.00 },
-//     { color: "#dde87f", name: "Stars and Heroes 1 - WB - 1 st Ed - BK", sku: "9781292441672", price: 111.00 },
-//     { color: "#dde87f", name: "Stars and Heroes 2 ", sku: "9788543029825", price: 205.00 },
-//     { color: "#dde87f", name: "Stars and Heroes 2 - SB - 1 st Ed - BK", sku: "9781292441573", price: 204.00 },
-//     { color: "#dde87f", name: "Stars and Heroes 2 - WB - 1 st Ed - BK", sku: "9781292441641", price: 111.00 },
-//     { color: "#dde87f", name: "Stars and Heroes 3 ", sku: "9788543029832", price: 205.00 },
-//     { color: "#dde87f", name: "Stars and Heroes 3 - SB - 1 st Ed - BK", sku: "9781292441702", price: 204.00 },
-//     { color: "#dde87f", name: "Stars and Heroes 3 - WB - 1 st Ed - BK", sku: "9781292441658", price: 111.00 },
-//     { color: "#dde87f", name: "Stars and Heroes 4 ", sku: "9788543029849", price: 205.00 },
-//     { color: "#dde87f", name: "Stars and Heroes 4 - SB - 1 st Ed - BK", sku: "9781292441719", price: 204.00 },
-//     { color: "#dde87f", name: "Stars and Heroes 4 - WB - 1 st Ed - BK", sku: "9781292441665", price: 111.00 },
-//     { color: "#dde87f", name: "Stars and Heroes 5 ", sku: "9788543029856", price: 205.00 },
-//     { color: "#dde87f", name: "Stars and Heroes 5 - SB - 1 st Ed - BK", sku: "9781292441726", price: 204.00 },
-//     { color: "#dde87f", name: "Stars and Heroes 5 - WB - 1 st Ed - BK", sku: "9781292441764", price: 111.00 },
+// const t = [
 
-//     { color: "#e8be7f", name: "World Link Intro - SB - 4TH ED - BK", sku: "9780357502105", price: 226.90 },
-//     { color: "#e8be7f", name: "World Link Intro - WB - 3TH ED - BK", sku: "9781305647848", price: 119.90 },
-//     { color: "#e8be7f", name: "World Link Intro - WB - 3TH ED - AP", sku: "WLIWB3AP", price: 21.20 },
-//     { color: "#e8be7f", name: "World Link 1 - SB - 4TH ED - BK", sku: "9780357502143", price: 226.90 },
-//     { color: "#e8be7f", name: "World Link 1 - WB - 4TH ED - BK", sku: "9780357503768", price: 119.90 },
-//     { color: "#e8be7f", name: "World Link 1 - WB - 4TH ED - AP", sku: "WL1WB4AP", price: 21.20 },
-//     { color: "#e8be7f", name: "World Link 2 - SB - 4TH ED - BK", sku: "9780357503867", price: 226.90 },
-//     { color: "#e8be7f", name: "World Link 2 - WB - 4TH ED - BK", sku: "9780357503867", price: 119.90 },
-//     { color: "#e8be7f", name: "World Link 2 - WB - 4TH ED - AP", sku: "WL2WB4AP", price: 21.20 },
-//     { color: "#e8be7f", name: "World Link 3- SB - 4TH ED - BK", sku: "", price: 226.90 },
-//     { color: "#e8be7f", name: "World Link 3 - WB - 4TH ED - BK", sku: "9780357503966", price: 119.90 },
-//     { color: "#e8be7f", name: "World Link 3 - WB - 4TH ED - AP", sku: "", price: 21.20 },
-//     { color: "#e8be7f", name: "World Link 4- SB - 4TH ED - BK", sku: "", price: 226.90 },
-//     { color: "#e8be7f", name: "World Link 4 - WB - 4TH ED - BK", sku: "9780357504062", price: 119.90 },
-//     { color: "#e8be7f", name: "World Link 4 - WB - 4TH ED - AP", sku: "WL4WB4AP", price: 21.20 },
-
-//     { color: "#7fa7e8", name: "Short Course Adults - PK - 1st Ed- AP", sku: "SCA1PK1AP", price: 15.80 },
-//     { color: "#7fa7e8", name: "Interchange Intro W/ EBOOK - SB - 5th Ed - BK", sku: "9781009040419", price: 327.00 },
-//     { color: "#7fa7e8", name: "Interchange Intro w/ PACK - SB+WB - 5th Ed - BK", sku: "9781009040556", price: 409.00 },
-//     { color: "#7fa7e8", name: "Interchange Intro - WB - 5th Ed - AP", sku: "INIWB5AP", price: 24.70 },
-//     { color: "#7fa7e8", name: "Interchange Intro - WB - 5th Ed - BK", sku: "9781316622377", price: 210.00 },
-//     { color: "#7fa7e8", name: "Interchange Intro B - W/EBOOK - SB - 5th Ed - BK", sku: "9781009040433", price: 214.00 },
-//     { color: "#7fa7e8", name: "Beginner Way Intro - WB - 1st Ed- AP", sku: "BWIWB1AP", price: 15.10 },
-//     { color: "#7fa7e8", name: "Interchange 2 - W/ EBOOK - SB - 5th Ed - BK", sku: "9781009040495", price: 327.00 },
-//     { color: "#7fa7e8", name: "Interchange 1 - W/ EBOOK - SB - 5th Ed - BK", sku: "9781009040440", price: 327.00 },
-//     { color: "#7fa7e8", name: "Interchange 1 - WB - 5th Ed - BK", sku: "9781316622476", price: 210.00 },
-//     { color: "#7fa7e8", name: "Interchange 1 - WB - 5th Ed - AP", sku: "IN1WB5AP", price: 24.70 },
-//     { color: "#7fa7e8", name: "Interchange 1B - W/EBOOK - SB - 5th Ed - BK", sku: "9781009040488", price: 214.00 },
-//     { color: "#7fa7e8", name: "Interchange 1B - WB - 5th Ed - BK", sku: "9781316622667", price: 162.00 },
-//     { color: "#7fa7e8", name: "Interchange 2 - WB - 5th Ed - BK", sku: "9781316622698", price: 210.00 },
-//     { color: "#7fa7e8", name: "Interchange 2 - WB - 5th Ed - AP", sku: "IN2WB5AP", price: 24.70 },
-//     { color: "#7fa7e8", name: "Interchange 3 - W/ EBOOK - SB - 5th Ed - BK", sku: "9781009040525", price: 327.00 },
-//     { color: "#7fa7e8", name: "Interchange 3 - WB - 5th Ed - BK", sku: "9781316622766", price: 210.00 },
-//     { color: "#7fa7e8", name: "Interchange 3 - WB - 5th Ed - AP", sku: "IN3WB5AP", price: 26.10 },
-//     { color: "#7fa7e8", name: "Evolve 5 - SB - 1st Ed - BK", sku: "9781009230858", price: 325.00 },
-//     { color: "#7fa7e8", name: "Evolve 5 - WB - 1st Ed - BK", sku: "9781108409070", price: 221.00 },
-//     { color: "#7fa7e8", name: "Evolve 5 - WB - 1st Ed - AP", sku: "EV5WB1AP", price: 26.50 },
-//     { color: "#7fa7e8", name: "Evolve 6 - SB - 1st Ed - BK", sku: "9781009230889", price: 325.00 },
-//     { color: "#7fa7e8", name: "Evolve 6 - WB - 1st Ed - BK", sku: "9781108409094", price: 221.00 },
-//     { color: "#7fa7e8", name: "Evolve 6 - WB - 1st Ed - AP", sku: "EV6WB1AP", price: 26.50 },
-
-//     { color: "#81e87f", name: "Short Course Espanhol - PK - 1st Ed - AP", sku: "SCEPK1AP", price: 11.10 },
-//     { color: "#81e87f", name: "Vitamina B1 -  SB - 1st Ed - BK", sku: "9788416782932", price: 284.55 },
-//     { color: "#81e87f", name: "Vitamina B1 - WB - 1st Ed - BK", sku: "9788416782949", price: 178.43 },
-//     { color: "#81e87f", name: "Vitamina B1 - WB - 1st Ed - AP", sku: "VB1WB1AP", price: 32.90 },
-//     { color: "#81e87f", name: "Vitamina B2 - SB - 1st Ed - BK", sku: "9788416782963", price: 284.55 },
-//     { color: "#81e87f", name: "Vitamina B2 -  WB - 1st Ed - BK", sku: "9788416782970", price: 178.43 },
-//     { color: "#81e87f", name: "Vitamina B2 -  WB - 1st Ed - AP", sku: "VB2WB1AP", price: 32.90 },
-//     { color: "#81e87f", name: "Vitamina Básico (A1-A2) - SB - 1st Ed - BK", sku: "9788419065230", price: 320.16 },
-//     { color: "#81e87f", name: "Vitamina Básico (A1-A2) - WB - 1st Ed - BK", sku: "9788419065247", price: 203.51 },
-//     { color: "#81e87f", name: "Vitamina Básico (A1-A2) - WB - 1st Ed - AP", sku: "VBAWB1AP", price: 37.30 },
+//     "Lizandra Fernandes Rodrigues",
 // ]
 
 
-// t(a)
+// async function achadorEMandadorParaOTrello(params) {
+//     t.map(async res => {
 
-
-// await await prisma.customFields.findFirst({
-//     where: {
-//         name: {
-//             contains: "Material d"
-//         }
-//     }
-// }).then(res => console.log(res))
-
-
-
+//         await prisma.registers.findFirst({
+//             where: {
+//                 OR: [
+//                     {
+//                         name: {
+//                             contains: res,
+//                             mode: "insensitive"
+//                         }
+//                     },
+//                     {
+//                         customFields: {
+//                             path: ["Nome do aluno"],
+//                             string_contains: res
+//                         }
+//                     }
+//                 ]
+//             }
+//         })
+//             .then(resp => {
+//                 resp ? trelloCreateCard(resp) : console.log(`${res} não encontrado ✖️`)
+//             })
+//             .catch(err => console.log(err))
+//     })
+// }
+// achadorEMandadorParaOTrello()

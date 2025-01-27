@@ -87,13 +87,6 @@ class OrderController {
             const { orders, unity } = req.body
 
 
-            console.log({
-                orders,
-                unity
-            })
-
-            return
-
             const date = new Date()
             const code = await getLastMondayCode(date);
 
@@ -148,12 +141,24 @@ class OrderController {
 
             for (let index = 0; index < orders.length; index++) {
                 const order = orders[index]
-
-                const searchOnDb = await prisma.books.findUnique({
+                const searchOnDb = await prisma.books.findFirst({
                     where: {
-                        id: order.idBook
+                        OR: [
+                            {
+                                id: {
+                                    contains: order.idBook
+                                }
+                            },
+                            {
+                                aluno: order.aluno,
+                                materialDidatico: order.materialDidatico,
+                            }
+                        ]
+
                     }
                 })
+
+
 
                 if (!searchOnDb) {
 

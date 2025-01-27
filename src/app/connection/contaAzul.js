@@ -74,16 +74,16 @@ realizou o pagamento do material didático
     }
 
     let checkup = {
-        "ppStatus": "AUTOMÁTICO - Confirmação de pagamento da primeira mensalidade.",
-        "tmStatus": "AUTOMÁTICO - Confirmação pagamento da taxa de matrícula (se houver)",
-        "mdStatus": "AUTOMÁTICO - Confirmação de pagamento do material didático."
+        "pagamentoPrimeiraParcelaStatus": "AUTOMÁTICO - Confirmação de pagamento da primeira mensalidade.",
+        "taxaMatriculaStatus": "AUTOMÁTICO - Confirmação pagamento da taxa de matrícula (se houver)",
+        "materialDidaticoStatus": "AUTOMÁTICO - Confirmação de pagamento do material didático."
     }
 
 
     let type = {
-        "ppStatus": response.ppFormaPg,
-        "tmStatus": response.tmFormaPg,
-        "mdStatus": response.mdFormaPg
+        "pagamentoPrimeiraParcelaStatus": response.customFields["Forma de pagamento da parcela"],
+        "taxaMatriculaStatus": response.customFields["Forma de pagamento TM"],
+        "materialDidaticoStatus": response.customFields["Forma de pagamento do MD"],
     }
 
     let trelloMessage = `${response.name} -- realizou o pagamento da(o) ${routesRegister[where]} via ${type[where]} no dia ${new Date().toLocaleDateString('pt-BR')}`
@@ -92,8 +92,6 @@ realizou o pagamento do material didático
         CompleteCheckPointOnTrello([{ nome: response.name }], response.customFields["Unidade"], `ADM - Checkup inicial/${checkup[where]}`),
         CreateCommentOnTrello(response.name, response.customFields["Unidade"], trelloMessage)
     ])
-
-
 
 
 }
@@ -162,8 +160,37 @@ const orderRegisterForContaAzulSales = async (sale, products, unity) => {
     // }))
 
     // if (body.some(res => res === null || res === undefined)) await SendSimpleWpp("marcos", process.env.MARCOS, `um desses materiais não foi encontrado :${material}`)
+    const data = []
 
-    console.log("foi")
+    if (!products) return
+
+    for (let index = 0; index < products.length; index++) {
+        const element = products[index];
+
+        const { id, customer } = sale
+        console.log(element)
+
+        if (element.itemType !== 'PRODUCT') continue
+
+        const body = {
+            idBook: id.concat(`-${index}`),
+            sku: element.code,
+            materialDidatico: element.name,
+            nome: customer.name,
+            valor: element.value,
+            data: new Date().toLocaleDateString("pt-BR"),
+            type: "manual",
+            assinado: false,
+            retiradoPor: "",
+            dataRetirada: "",
+            link: "",
+        }
+
+        data.push(body)
+
+    }
+
+    // console.log(data)
 }
 ////provenientes do banco de dados
 const orderRegisterForDatabaseSales = async (id, name, material, unity, tel, aluno) => {
@@ -212,7 +239,6 @@ async function gatheringSaleAndProducts(unity) {
         "Authorization": `Bearer ${await getToken(unity, 'refresh')}`
     }
     const allSales = await getAllSales(header)
-
     const data = [];
 
     for (let index = 0; index < allSales.length; index++) {
@@ -221,7 +247,10 @@ async function gatheringSaleAndProducts(unity) {
 
         const products = await getSaleProducts(header, id)
 
-        if (notes === "") {
+        if (notes === "" &&
+            payment.installments[0] &&
+            payment.installments[0]?.status === "ACQUITTED"
+        ) {
             orderRegisterForContaAzulSales(eachSale, products, unity)
             continue
         }
@@ -239,11 +268,13 @@ async function gatheringSaleAndProducts(unity) {
                 return service
             } catch (error) {
                 // console.log(customer.name)
-                return "error"
+
+                return "error aqui"
             }
         }
 
         let service = await parsed()
+
         if (payment.installments[0] &&
             payment.installments[0]?.status === "ACQUITTED") data.push({
                 id,
@@ -295,7 +326,7 @@ async function reorganizingDatabaseData(params) {
 
 
         const pendentes = Object.keys(register)
-            .filter(key => register[key] === 'pendente');
+            .filter(key => register[key] === 'pendente' || register[key] === "Pendente");
 
         return {
             id,
@@ -348,8 +379,8 @@ async function SearchPendentsRegister(unity) {
     })
 
         .then(async response => {
-            console.log(response.length + " [PENDINGS]")
 
+            console.log(`[${response.length} PENDINGS]`)
 
             const databaseSynchronizedWithContaAzul = await associationDatabaseAndCa({
                 database: await reorganizingDatabaseData(response),
@@ -370,9 +401,6 @@ const syncContaAzulRegister = async () => {
     console.log("Payments ca updates")
 
     for (const realToken of ["Centro", "PTB"]) {
-        // const header = {
-        //     "Authorization": `Bearer ${await getToken(realToken, 'refresh')}`
-        // }
 
         await Promise.all([
             SearchPendentsRegister(realToken),
@@ -384,7 +412,6 @@ const syncContaAzulRegister = async () => {
 
 
 export default syncContaAzulRegister
-// syncContaAzul()
 
 
 

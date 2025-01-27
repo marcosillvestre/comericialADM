@@ -182,7 +182,6 @@ Te esperamos na aula 👩‍💻`,
 
                     SendSimpleWpp(nome, tel, curseMessages[curso]),
                     winADeal(id)
-
                 ])
 
             }

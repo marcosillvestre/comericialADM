@@ -43,6 +43,7 @@ const functionsArray = [
 // firstClassSearch()
 // NewSearchSync()
 // syncContaAzulRegister()
+
 functionsArray.forEach(res => {
     return new CronJob(res.time,
         function () {

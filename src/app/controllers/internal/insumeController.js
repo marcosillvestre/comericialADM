@@ -34,6 +34,28 @@ class InsumeController {
         }
     }
 
+    async getAll(req, res) {
+        try {
+            const [Insumes, count] = await prisma.$transaction([
+                prisma.insume.findMany({
+                    orderBy: {
+                        name: 'asc'
+                    }
+                }),
+                prisma.insume.count(),
+            ])
+
+
+            res.status(200).json({
+                insumes: Insumes,
+                total: count
+            });
+        } catch (error) {
+            console.log(error)
+            res.status(500).json({ error: 'Failed to fetch Insumes' });
+        }
+    }
+
     async store(req, res) {
         const { name, sku, price_selling, color, category } = req.body;
 

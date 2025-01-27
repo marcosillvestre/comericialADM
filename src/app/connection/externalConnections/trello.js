@@ -56,15 +56,22 @@ async function filteredData(name, array) {
             .includes(spacesAndLowerCase(name)))
 
     if (filtered.length > 0) {
-        filtered.map(res => {
-            const md = res.desc.replace(/^\s*-\s*\*\*.*(\n|\r\n|\r)?/gm, '');
-            console.log(md)
-            const material = JSON.parse("{" + md + "}")
+        try {
 
-            if (!material.Material
-                .every(res => res === "Outros" || res === "Office")) return res
+            filtered.map(res => {
+                const md = res.desc.replace(/^\s*-\s*\*\*.*(\n|\r\n|\r)?/gm, '');
+                // console.log(md)
 
-        })
+                const material = JSON.parse("{" + md + "}")
+
+                if (!material.Material
+                    .every(res => res === "Outros" || res === "Office")) return res
+
+            })
+        } catch (error) {
+            console.log(error)
+            console.log(name)
+        }
 
     }
     return filtered
@@ -131,11 +138,11 @@ export async function CompleteCheckPointOnTrello(array, unity, where) {
 
         const { id: checkItem, state } = checkList
 
-        const newState = state === "incomplete" ? "complete" : "incomplete"
+
         try {
             let { data } = await axios
                 .put(`https://api.trello.com/1/cards/${id}/checkItem/${checkItem}?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`,
-                    { state: newState })
+                    { state: "complete" })
             return data.state
         } catch (error) {
             return error.response.data
@@ -217,3 +224,74 @@ export async function SendRematriculaToTrello(data, unity) {
         })
 
 }
+
+
+
+
+// {
+//   id: '4023cba6-b6e9-4c8d-ae12-dd00a262fa47',
+//   ca_id: 579577091,
+//   number: 2610,
+//   emission: '2025-01-25T00:00:00.000-03',
+//   status: 'COMMITTED',
+//   scheduled: true,
+//   customer_id: 'd66b05fc-32d4-4854-bfad-a5de69bdba8c',
+//   customer: {
+//     id: 'd66b05fc-32d4-4854-bfad-a5de69bdba8c',
+//     name: 'Viviane Rodrigues Resende',
+//     company_name: null,
+//     email: 'vivi_resende02@hotmail.com',
+//     person_type: 'NATURAL'
+//   },
+//   discount: null,
+//   product_discount: null,
+//   service_discount: null,
+//   payment: {
+//     type: 'CASH',
+//     method: 'CASH',
+//     installments: [ [Object] ],
+//     financial_account_id: null,
+//     financial_account: null
+//   },
+//   payment_terms: '',
+//   notes: '',
+//   shipping_cost: 0,
+//   total: 236,
+//   seller: { id: '88888bcd-f552-46e8-8ff0-3abac4597e45', name: 'Kailany' },
+//   proposal_date: null,
+//   expiration: null,
+//   introduction: null,
+//   shipping_forecast: null,
+//   category_id: null
+// }
+
+// [
+//   {
+//     description: 'GLOBALCHANGERST/SAB/15h-17h/MARIA - Izabelly Vitória Inácio Resende',
+//     quantity: 1,
+//     item: {
+//       id: '4d4d4185-da13-44d8-bf74-811546fb13fb',
+//       name: 'Fluency Way Class - Teens',
+//       value: 237,
+//       cost: 0
+//     },
+//     itemType: 'SERVICE',
+//     value: 236
+//   }
+// ]
+
+
+
+// idBook,
+// sku: data.code,
+// nome: customer.name,
+// materialDidatico: data.name,
+// valor: data.value,
+// data: new Date().toLocaleDateString("pt-BR"),
+// type: "manual",
+// assinado: false,
+// retiradoPor: "",
+// dataRetirada: "",
+// link: "",
+// aluno,
+// tel

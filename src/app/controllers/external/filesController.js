@@ -33,6 +33,8 @@ class FilesController {
         const time = new Date().getTime()
 
         const fileName = spacesAndLowerCase(time + "-" + name).replace("+", "")
+
+
         try {
             const signedUrl = await getSignedUrl(
                 r2,
@@ -57,13 +59,23 @@ class FilesController {
                             contract: id
                         }
                     }),
-
                     _storeLog(responsible, "Anexos", "Um novo arquivo foi adicionado", id)
                 ])
 
 
 
                 return res.status(200).json(signedUrl)
+            }
+
+            if (contentType.includes("pdf")) {
+                await prisma.registers.update({
+                    where: {
+                        id
+                    },
+                    data: {
+                        assinaturaContratoStatus: "Ok"
+                    }
+                })
             }
 
         } catch (error) {
