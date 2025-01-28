@@ -4,7 +4,7 @@ import { getContactsWithId } from './externalConnections/rdStation.js';
 import { CardCreationOnTrello } from './externalConnections/trello.js';
 import { SendSimpleWpp, SendtoWpp } from './externalConnections/wpp.js';
 
-const comebackDays = 15
+const comebackDays = 3
 const options = { method: 'GET', headers: { accept: 'application/json' } };
 
 export function addUsefullDays(data, diasUteis) {
@@ -209,7 +209,7 @@ async function NewSearchSync() {
                     await prisma.registers.create({
                         data: {
                             id,
-                            name: json['Nome  do responsável'],
+                            name: json['Nome do responsável'],
                             owner: json['Vendedor'] || user.name,
                             customFields: json
                         }
@@ -238,8 +238,7 @@ export default NewSearchSync
 
 
 // const t = [
-
-//     "Lizandra Fernandes Rodrigues",
+//     "Flavia Soares Gomes",
 // ]
 
 

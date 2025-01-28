@@ -46,8 +46,9 @@ routes.post('/redefinir-senha', SessionController.forgetPassword)
 
 routes.post('/nova-senha', SessionController.redefinePassword)
 
-
 routes.use(auth) // autenticated routes
+
+routes.get('/contrato/:unity', PostConttroller.getRecent)
 
 ////////////////////////////
 routes.post("/campanha", CampaignController.store)
@@ -122,7 +123,6 @@ routes.get('/query', RegistersController.query)
 // routes.get('/query', PostConttroller.query)
 
 
-routes.get('/contrato/:unity', PostConttroller.getRecent)
 
 routes.get('/users', UserController.index)
 

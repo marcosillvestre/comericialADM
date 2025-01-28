@@ -19,13 +19,12 @@ async function searchSync() {
 
     await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=${limit}&token=${process.env.RD_TOKEN}&win=true&closed_at_period=true&start_date=${startDate}&end_date=${endDate}`, options)
         .then(async response => {
-            console.log(response.data.total)
             if (response.data.total > 0) {
                 const array = []
                 for (const index of response?.data?.deals) {
 
                     const body = {
-                        name: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome  do responsável')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome  do responsável')).map(res => res.value)[0] : "Sem este dado no rd",
+                        name: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome do responsável')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome do responsável')).map(res => res.value)[0] : "Sem este dado no rd",
                         owner: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Vendedor')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Vendedor')).map(res => res.value)[0] : "Sem este dado no rd",
 
                         unidade: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Unidade')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Unidade')).map(res => res.value)[0] : "Sem este dado no rd",
@@ -364,79 +363,6 @@ Foi cadastrado no sistema de comissão.
 export default searchSync
 
 
-
-async function deletadorDeLivrosDuplicados(params) {
-
-    await prisma.books.findMany()
-        .then(res => {
-            res.map(async r => {
-                await prisma.books.findFirst({
-                    where: {
-                        id: {
-                            not: r.id
-                        },
-                        aluno: r.aluno,
-                        materialDidatico: r.materialDidatico,
-                        nome: r.nome
-                    }
-                })
-                    .then(async find => {
-                        // console.log(find)
-                        if (find) {
-
-                            await prisma.books.delete({
-                                where: {
-                                    id: find.id
-                                }
-                            })
-                                .then(() => console.log("deletado"))
-                                .then((err) => console.log(err))
-
-                        }
-                    })
-
-
-
-            })
-        })
-}
-// deletadorDeLivrosDuplicados()
-
-async function deletadorDeInsumosDuplicados(params) {
-
-    await prisma.insume.findMany()
-        .then(res => {
-            res.map(async r => {
-                await prisma.insume.findFirst({
-                    where: {
-                        id: {
-                            not: r.id
-                        },
-                        name: r.name,
-                        sku: r.sku,
-                        color: r.color
-                    }
-                })
-                    .then(async find => {
-                        // console.log(find)
-                        if (find) {
-
-                            await prisma.insume.delete({
-                                where: {
-                                    id: find.id
-                                }
-                            })
-                                .then(() => console.log("deletado"))
-                                .catch((err) => console.log(err))
-
-                        }
-                    })
-
-
-
-            })
-        })
-}
 
 // deletadorDeInsumosDuplicados()
 
