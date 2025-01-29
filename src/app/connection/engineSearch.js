@@ -25,7 +25,7 @@ async function searchSync() {
                 for (const index of response?.data?.deals) {
 
                     const body = {
-                        name: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome  do responsável')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome  do responsável')).map(res => res.value)[0] : "Sem este dado no rd",
+                        name: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome do responsável')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome do responsável')).map(res => res.value)[0] : "Sem este dado no rd",
                         owner: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Vendedor')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Vendedor')).map(res => res.value)[0] : "Sem este dado no rd",
 
                         unidade: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Unidade')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Unidade')).map(res => res.value)[0] : "Sem este dado no rd",
