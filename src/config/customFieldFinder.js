@@ -26,8 +26,9 @@ export const bodyMakerForCustomFields = async (deal) => {
         )
     })
 
-    const promocao = findYourValueForCustomFields("Tipo de Campanha / Convênio", deal.deal_custom_fields) !== undefined
-        || findYourValueForCustomFields("Tipo de Campanha / Convênio", deal.deal_custom_fields) !== "" ?
+    const convenio = await findYourValueForCustomFields("Tipo de Campanha / Convênio", deal.deal_custom_fields)
+
+    const promocao = convenio !== undefined && convenio.length > 0 ?
         "Sim" : "Não"
 
 

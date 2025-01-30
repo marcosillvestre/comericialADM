@@ -56,7 +56,7 @@ class InsumeController {
         }
     }
 
-    async store(req, res) {
+    async storeProduct(req, res) {
         const { name, sku, price_selling, color, category } = req.body;
 
         try {

@@ -56,7 +56,7 @@ routes.get("/campanha", CampaignController.index)
 routes.put("/campanha/:id", CampaignController.update)
 routes.delete("/campanha/:id", CampaignController.delete)
 
-routes.post("/insumo", InsumeController.store)
+routes.post("/insumo", InsumeController.storeProduct)
 routes.get("/insumo", InsumeController.index)
 routes.get("/insumos", InsumeController.getAll)
 routes.put("/insumo/:id", InsumeController.update)
