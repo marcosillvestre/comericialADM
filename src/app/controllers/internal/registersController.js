@@ -221,11 +221,19 @@ class RegistersController {
         const { responsible } = req.query
 
         const deleteData = async () => {
-            return new Promise(resolve => {
-                resolve(
-                    prisma.contracts.delete({ where: { id: id } })
-                )
+            await prisma.logHistoric.deleteMany({
+                where: {
+                    registerId: id
+                }
             })
+                .then(async res => {
+
+                    await prisma.registers.delete({ where: { id: id } })
+                })
+
+
+
+
         }
 
         const historic = async () => {
@@ -234,7 +242,7 @@ class RegistersController {
                     data: {
                         responsible: responsible,
                         information: {
-                            field: "Campo personalizado",
+                            field: "Registro",
                             to: "Deletado",
                             from: id,
                         }

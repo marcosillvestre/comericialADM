@@ -21,7 +21,6 @@ const routesRegister = {
     "pagamentoPrimeiraParcelaStatus": "parcela",
     "taxaMatriculaStatus": "taxa de matricula",
     "materialDidaticoStatus": "material didatico",
-
 }
 const idList = {
     "Golfinho Azul": "PTB",
@@ -46,8 +45,7 @@ realizou o pagamento do material didático
 
 > ${response.customFields["Material didático"]}`
 
-        1 > 2 && await SendtoWpp(message, response.customFields["Unidade"])
-
+        await SendtoWpp(message, response.customFields["Unidade"])
 
 
         const rdPhoneData = await getContactsWithId(response.id)
@@ -107,22 +105,28 @@ async function updateOnDatabaseRegister(params) {
     for (let index = 0; index < params.length; index++) {
         const element = params[index];
 
-        const where = routesRegister[element.sale.service]
+        const keys = Object.keys(element.sales)
 
-        await prisma.registers.update({
-            where: {
-                id: element.userData.id
-            },
-            data: {
-                [where]: "Ok",
-                [registerDates[where]]: date,
-            }
-        })
+        keys.map(async (res) => {
 
-            .then(async (response) => {
-                console.log(`${response.name} success updated / ${where} / ${response.customFields["Unidade"]}`)
-                await EchoRegister(response, where, element.sale.id)
+            const where = routesRegister[res]
+
+            await prisma.registers.update({
+                where: {
+                    id: element.userData.id
+                },
+                data: {
+                    [where]: "Ok",
+                    [registerDates[where]]: date,
+                }
             })
+
+                .then(async (response) => {
+                    console.log(`${response.name} success updated / ${where} / ${response.customFields["Unidade"]}`)
+                    await EchoRegister(response, where, element.sales[res].id)
+                })
+
+        })
     }
 
 }
@@ -135,16 +139,44 @@ const orderRegisterForContaAzulSales = async (sale, products, unity) => {
 
     if (!products) return
 
+    const found = await prisma.registers.findFirst({
+        where: {
+            name: {
+                contains: sale.customer.name,
+                mode: "insensitive"
+            },
+            materialDidaticoStatus: {
+                contains: "pendente",
+                mode: "insensitive"
+            },
+            customFields: {
+                path: ["Material didático"],
+                array_contains: products.name.concat(" / ").concat(products.code)
+            }
+        }
+    })
+
+    if (found) {
+        console.log("found: " + found.name)
+        await prisma.registers.update({
+            where: {
+                id: found.id
+            },
+            data: {
+                materialDidaticoStatus: "Ok"
+            }
+        })
+    }
+
     for (let index = 0; index < products.length; index++) {
         const element = products[index];
 
-        const { id, customer } = sale
-        console.log(element)
+        const { id: idSale, customer } = sale
 
         if (element.itemType !== 'PRODUCT') continue
 
         const body = {
-            idBook: id.concat(`-${index}`),
+            id: idSale.concat(`-${index}`),
             sku: element.code,
             materialDidatico: element.name,
             nome: customer.name,
@@ -161,10 +193,18 @@ const orderRegisterForContaAzulSales = async (sale, products, unity) => {
 
     }
 
-    console.log(data)
+    let bodyOrder = {
+        body: {
+            orders: data,
+            unity: idList[unity]
+        }
+    }
+
+    await ordersController.store(bodyOrder)
+
 }
 ////provenientes do banco de dados
-const orderRegisterForDatabaseSales = async (id, name, material, unity, tel, aluno) => {
+const orderRegisterForDatabaseSales = async (idSale, name, material, unity, tel, aluno) => {
 
     const header = {
         "Authorization": `Bearer ${await getToken(unity)}`
@@ -179,10 +219,10 @@ const orderRegisterForDatabaseSales = async (id, name, material, unity, tel, alu
 
 
         const pdFiltered = data.filter(res => res.code.includes(splited[1]))
-        const idBook = id.concat(`-${index}`)
+        const id = idSale.concat(`-${index}`)
 
         if (pdFiltered.length > 0) return {
-            idBook,
+            id,
             sku: splited[1],
             nome: name,
             materialDidatico: splited[0],
@@ -198,7 +238,7 @@ const orderRegisterForDatabaseSales = async (id, name, material, unity, tel, alu
         }
 
     })
-
+    /////analisar essa validação daqui 
     if (body.some(res => res === null || res === undefined)) await SendSimpleWpp("marcos", process.env.MARCOS, `um desses materiais não foi encontrado :${material}`)
     return body.filter(res => res)
 
@@ -210,13 +250,18 @@ async function gatheringSaleAndProducts(unity) {
         "Authorization": `Bearer ${await getToken(unity, 'refresh')}`
     }
     const allSales = await getAllSales(header)
+
+    console.log(allSales.length + " allSales")
+
     const data = [];
 
     for (let index = 0; index < allSales.length; index++) {
         const eachSale = allSales[index];
+
         const { notes, payment, customer, id } = eachSale;
 
         const products = await getSaleProducts(header, id)
+
 
         if (notes === "" &&
             payment.installments[0] &&
@@ -225,8 +270,6 @@ async function gatheringSaleAndProducts(unity) {
             orderRegisterForContaAzulSales(eachSale, products, unity)
             continue
         }
-        // arrumar um jeito de adicionar mesmo os que nao vieram do sistema
-        // mexer na função order
 
 
         let parsed = () => {
@@ -235,20 +278,23 @@ async function gatheringSaleAndProducts(unity) {
                 let cleanData = notes.replace(/\\n/g, "")
                 cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
 
-                const service = JSON.parse(cleanData)["serviço"]
-                return service
+                const json = JSON.parse(cleanData)
+                return {
+                    service: json["serviço"],
+                    rdId: json["id"]
+                }
             } catch (error) {
-                // console.log(customer.name)
 
                 return "error aqui"
             }
         }
 
-        let service = await parsed()
+        let { service, rdId } = await parsed()
 
         if (payment.installments[0] &&
-            payment.installments[0]?.status === "ACQUITTED") data.push({
+            payment.installments[0].status === "ACQUITTED") data.push({
                 id,
+                // rdId,
                 customer,
                 service,
                 payment: payment.installments[0],
@@ -257,37 +303,47 @@ async function gatheringSaleAndProducts(unity) {
 
     }
 
-    return data.filter(res => res !== undefined)
+
+
+    return await data
 
 }
+
+
 
 async function associationDatabaseAndCa(params) {
     const { database, sales } = params
-
     const data = [];
 
-    for (let index = 0; index < sales.length; index++) {
-        const element = sales[index];
-
-        const userData = database.find(sale =>
-            spacesAndLowerCase(sale.name) === spacesAndLowerCase(element.customer.name))
+    for (const user of database) {
+        const salesUsers = await sales.filter(res => res.customer.name === user.name)
+        if (salesUsers.length === 0) continue
 
 
-        if (!userData ||
-            !userData.pendents.some(r => r === routesRegister[element.service])) continue
+        const foundedSales = {}
+
+        for (const sale of salesUsers) {
+            if (user.pendents.find(pd => pd === routesRegister[sale.service])) {
+                foundedSales[sale.service] = sale
+            }
+        }
 
         data.push({
-            userData,
-            sale: element
+            userData: user,
+            sales: foundedSales
         })
-
     }
 
-    return data.filter(res => res !== !res)
 
+
+    return await data
 }
 
+
+
+
 async function reorganizingDatabaseData(params) {
+
 
     const responses = params.map(register => {
         const {
@@ -359,6 +415,8 @@ async function SearchPendentsRegister(unity) {
             })
 
 
+            console.log(databaseSynchronizedWithContaAzul.length + " sales sinc")
+
             await updateOnDatabaseRegister(databaseSynchronizedWithContaAzul)
             console.log("Atualizado")
 
@@ -371,7 +429,7 @@ async function SearchPendentsRegister(unity) {
 const syncContaAzulRegister = async () => {
     console.log("Payments ca updates")
 
-    for (const realToken of ["Centro", "PTB"]) {
+    for (const realToken of ["PTB", "Centro"]) {
 
         await Promise.all([
             SearchPendentsRegister(realToken),
@@ -384,8 +442,7 @@ const syncContaAzulRegister = async () => {
 
 export default syncContaAzulRegister
 
-// syncContaAzulRegister()
-
+/*
 // async function deletadorDeLivrosDuplicados(params) {
 
 //     await prisma.books.findMany()
@@ -421,8 +478,6 @@ export default syncContaAzulRegister
 //             })
 //         })
 // }
-
-
 // async function deletadorDeInsumosDuplicados(params) {
 
 //     await prisma.insume.findMany()
@@ -458,6 +513,10 @@ export default syncContaAzulRegister
 //             })
 //         })
 // }
+*/
+
+
+/*
 
 // const t = [
 //     {
@@ -3725,3 +3784,206 @@ export default syncContaAzulRegister
 //         "orderId": "3aec70c5-cba2-43f3-bbb0-bb2487b4c0bc"
 //     }
 // ]
+*/
+
+// const t = {
+//     "id": "Mzh8ZWM1MjUzNTItMWU0YS00YTVkLTg3MmEtNmZlZmUzODgwMWI4",
+//     "object": "webhook",
+//     "name": "StageTests",
+//     "format": "json",
+//     "url": "https://hook.us1.make.com/r76itv1j78x8qdis4w1ou3bbuggil55e",
+//     "event": {
+//         "id": "ec525352-1e4a-4a5d-872a-6fefe38801b8",
+//         "object": "event",
+//         "organization": 3219431,
+//         "type": "signature.accepted",
+//         "data": {
+//             "public_id": "33be7c3a-e24c-11ef-9465-42010a2b610e",
+//             "object": "signature",
+//             "user": {
+//                 "name": "marcos vinicius silvestre de oliveira",
+//                 "company": null,
+//                 "email": "marcos.vinicius7170@gmail.com",
+//                 "phone": null,
+//                 "cpf": "02180933657",
+//                 "birthday": "2002-06-27"
+//             },
+//             "document": "33b11f55a12c2e1a93ffa76fc78eeb5b158126e253ca2c97c",
+//             "action": "Sign",
+//             "viewed": "2025-02-03T16:43:56.000000Z",
+//             "signed": "2025-02-03T16:43:56.000000Z",
+//             "rejected": null,
+//             "reason": null,
+//             "biometric_unapproved": null,
+//             "biometric_approved": null,
+//             "biometric_rejected": null,
+//             "created_at": "2025-02-03T16:30:38.000000Z"
+//         },
+//         "previous_attributes": [],
+//         "created_at": "2025-02-03T16:43:56.553675Z"
+//     }
+// }
+
+// async function sender(req) {
+
+//     const { event: { data } } = req
+
+//     // console.log(data)
+//     const { name, signatures, files } = await GetDocument(data.document)
+
+
+//     const [type, id] = name.split("+")
+
+//     if (type.includes("reciboMd")) {
+//         const [nameTruncked, code] = documento.nome.split("+")
+
+//         const [_, name] = nameTruncked.split("-")
+
+//         const ordersSigned = await prisma.books.findFirst({
+//             where: {
+//                 nome: {
+//                     contains: name,
+//                     mode: "insensitive"
+//                 }
+//             }
+//         })
+
+
+//         if (!ordersSigned) {
+//             console.log("Contrato de recibo não encontrado")
+//             return res.status(400).json({ message: "not found" })
+//         }
+
+//         const { id } = ordersSigned
+
+//         await prisma.books.update({
+//             where: {
+//                 id
+//             },
+//             data: {
+//                 assinado: true
+//             }
+//         })
+
+//         return res.status(201).json({ message: "link atribuido com sucesso" })
+//     }
+
+
+//     const dealWin = await winADeal(id)
+
+//     const [deal] = await gatheringDataForDatabase([dealWin])
+
+
+//     const create = async (responsible, data) => {
+//         await prisma.registers.create({
+//             data: {
+//                 ...data,
+//                 assinaturaContratoStatus: "Ok",
+//                 historic: {
+//                     create: {
+//                         responsible: responsible,
+//                         information: {
+//                             field: "assinaturaContratoStatus",
+//                             text: `O status do contrato foi alterado para assinado`,
+//                             from: data.id,
+//                         }
+//                     }
+//                 }
+//             }
+//         })
+//         .then(async (response)=> {
+//            await StartCicleWhenNewRegisterIsCreated(response)
+//         })
+//     }
+
+//     const update = async (responsible, data) => {
+//         await prisma.registers.update({
+//             where: {
+//                 id: data.id
+//             },
+//             data: {
+//                 ...data,
+//                 assinaturaContratoStatus: "Ok",
+//                 historic: {
+//                     create: {
+//                         responsible: responsible,
+//                         information: {
+//                             field: "assinaturaContratoStatus",
+//                             text: `O status do contrato foi alterado para assinado`,
+//                             from: data.id,
+//                         }
+//                     }
+//                 }
+//             }
+//         })
+//     }
+
+//     await prisma.registers.findUnique({
+//         where: {
+//             id: deal.id
+//         }
+//     }).then(async register => {
+//         register ? update(data.user.name, deal) : create(data.user.name, deal)
+
+//         const unityNumber = {
+//             "Golfinho Azul": "31 8713-7018",
+//             'PTB': "31 8713-7018",
+//             'Centro': "31 8284-0590"
+//         }
+
+//         const curseMessages = {
+//             "Inglês": `Hello, ${register.name}. Tudo bem com você? 😊
+// Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar
+// boas-vindas ao nosso curso de Inglês.
+// Está pronto para deixar o verbo to be para trás? 🏃💨
+
+// Sua jornada rumo à fluência está prestes a começar, e eu vou estar aqui para te ajudar em cada passo do caminho.
+// Se tiver alguma dúvida ou precisar de qualquer coisa,
+// envie uma mensagem para o número pedagógico ${unityNumber[register.customFields["Unidade"]]} .
+// I’ll see you in class`,
+
+//             "Espanhol": `Hola, ${register.name}. Tudo bem com você? 😊
+// Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar boas-vindas ao nosso curso de Espanhol. Está pronto para deixar o portunhol para trás? 🏃💨
+// Sua jornada rumo à fluência está prestes a começar, e eu vou estar aqui para te ajudar em cada passo do caminho.
+
+// Se tiver alguma dúvida ou precisar de qualquer coisa,
+// envie uma mensagem para o número pedagógico ${unityNumber[register.customFields["Unidade"]]}.
+// Te veo en la clase 🇪🇸`,
+
+//             "Tecnologia": `Hello, ${register.name}. Tudo bem com você? 😊
+// Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar boas-vindas ao nosso curso de informática. Está pronto para aprender a montar documentos e planilhas completas? 😎
+// Em poucos meses você vai estar dominando o Pacote Office, e eu vou estar aqui para te ajudar em cada passo do caminho.
+
+// Se tiver alguma dúvida ou precisar de qualquer coisa,
+// envie uma mensagem para o número pedagógico ${unityNumber[register.customFields["Unidade"]]}.
+// Te esperamos na aula 👩‍💻`,
+//         }
+
+
+//         if (register.customFields['Background do Aluno'] !== "Rematrícula") {
+
+//             await Promise.all([
+//                 ScheduleBotMessages(
+//                     register.name, register.customFields["Phone"],
+//                     register.customFields["Data da primeira aula"],
+//                     "Lembrete da primeira aula"),
+//                 SendSimpleWpp(register.name, register.customFields["Phone"], curseMessages[register.customFields["Curso"]]),
+//             ])
+
+//             await CreateCommentOnTrello(
+//                 register.name,
+//                 register.customFields["Unidade"],
+//                 `${data.user.name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`)
+
+//         }
+
+
+//         return res.status(200).json({ message: "Success" })
+//     })
+
+
+
+// }
+
+// sender(t)
+

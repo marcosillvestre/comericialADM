@@ -1,6 +1,6 @@
 import { PastCodes } from "../../config/getLastMonday.js";
 import prisma from "../../database/database.js";
-import { SendtoWpp } from "./externalConnections/wpp.js";
+import { SendNewClasses } from "./externalConnections/wpp.js";
 
 
 const { getLastMondayCode } = new PastCodes()
@@ -42,12 +42,14 @@ const databaseSearch = async (unity) => {
     return search.map((res) => {
         return {
             "Data da aula": res.customFields["Data da primeira aula"],
-            "Horário": `${res.customFields["Horário de Inicio"]} às ${res.customFields["Horário de fim"]}`,
-            "Responsável": res.name,
             "Aluno": res.customFields["Nome do aluno"],
-            "Professor": res.customFields["Professor"],
-            "Telefone": res.customFields["Phone"] || "Sem esse dado",
+            "Responsável": res.name,
             "Classe": res.customFields["Classe"],
+            "Horário": `${res.customFields[`Horário de Inicio`]} às ${res.customFields["Horário de fim"]}`,
+            "Professor": res.customFields["Professor"],
+            "Material didático": res.customFields["Material didático"],
+            "Telefone": res.customFields["Phone"] || "Sem esse dado",
+            "Responsável pela venda": res.customFields["Vendedor"],
         }
     })
 
@@ -67,11 +69,11 @@ const firstClassSearch = async () => {
     for (const unity of ["Centro", "PTB"]) {
 
         const list = await SearchFirstClassWeek(unity)
-        await SendtoWpp(`Lista de novas matrículas na unidade: *${unity}*`, unity)
+        await SendNewClasses(`Lista de novas matrículas na unidade: *${unity}*`, unity)
         let lists = [list[0]]
         for (const element of lists) {
 
-            await SendtoWpp(
+            await SendNewClasses(
                 JSON.stringify(element, null, 2).replace(/[{}]/g, ''),
                 unity
             )

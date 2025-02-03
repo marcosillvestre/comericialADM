@@ -15,7 +15,6 @@ const stages = {
 let page = 1
 
 async function updateRdData(unity, page) {
-    console.log(unity)
 
     await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=200&page=${page}&token=${process.env.RD_TOKEN}&deal_pipeline_id=${funis[unity]}&deal_stage_id=${stages[unity]}`)
         .then(async response => {
@@ -59,7 +58,7 @@ async function updateRdData(unity, page) {
 
 
 const renewContracts = async () => {
-    console.log("renew")
+    console.log("[RENEW]")
     for (const unity of ["Centro", "PTB"]) {
         await updateRdData(unity, page)
     }

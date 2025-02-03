@@ -74,6 +74,7 @@ routes.delete("/file", FilesController.deleteFiles)
 
 
 routes.post('/uploads', upload.single('file'), AutentiqueController.store)
+routes.post('/uploads-recibos', upload.single('file'), AutentiqueController.storeRecipe)
 ///////////////////
 
 routes.get('/campos-personalizados', CustomFieldsController.index)
@@ -132,7 +133,7 @@ routes.delete('/users/:id', UserController.delete)
 
 // routes.put('/controle/:id', PostConttroller.update) //
 
-routes.delete('/controle/:id', PostConttroller.delete)//
+routes.delete('/controle/:id', RegistersController.delete)//
 
 
 

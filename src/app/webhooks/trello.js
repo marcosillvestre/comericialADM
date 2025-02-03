@@ -105,7 +105,6 @@ class TrelloWebhook {
                     }
                 })
 
-                console.log(nameSearch)
                 if (data) {
                     const update = async () => {
 

@@ -4,7 +4,7 @@ import axios from "axios"
 export const getAllSales = async (headers) => {
 
     const start = new Date()
-    start.setDate(start.getDate() - 70)
+    start.setDate(start.getDate() - 90)
 
     const end = new Date()
 

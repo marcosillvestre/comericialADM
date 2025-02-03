@@ -141,12 +141,13 @@ class OrderController {
 
             for (let index = 0; index < orders.length; index++) {
                 const order = orders[index]
+
                 const searchOnDb = await prisma.books.findFirst({
                     where: {
                         OR: [
                             {
                                 id: {
-                                    contains: order.idBook
+                                    contains: order.id
                                 }
                             },
                             {

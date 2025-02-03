@@ -111,8 +111,6 @@ async function SyncOrdersToContaAzul(sale, headers, unity) {
 
     const { id, customer, payment } = sale
     if (payment.installments[0]?.status === "ACQUITTED") {
-        // console.log(`[ORDER] => ${customer.name} ` + unity)
-
 
         const { data } = await axios.get(
             `https://api.contaazul.com/v1/sales/${id}/items?Type=Product`,
@@ -192,7 +190,6 @@ const getSalesByCustomerId = async (databaseFilteredList, headers, unity) => {
                 const service = JSON.parse(cleanData)["serviço"]
                 return service
             } catch (error) {
-                // console.log(customer.name)
                 return "error"
             }
         }
@@ -244,7 +241,6 @@ realizou o pagamento do material didático
                     unity: idList[response.unidade]
                 }
             }
-            // console.log(JSON.stringify(bodyOrder, null, 2))
             await ordersController.store(bodyOrder)
 
         }

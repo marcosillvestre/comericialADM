@@ -1,7 +1,7 @@
 import axios from "axios";
 import 'dotenv';
 import { StringsMethods } from "../../../config/serializerStrings.js";
-import { updateStageRd } from "./rdStation.js";
+import { getContactsWithId, updateStageRd } from "./rdStation.js";
 import { SendSimpleWpp, SendtoWpp } from "./wpp.js";
 
 const { spacesAndLowerCase } = new StringsMethods()
@@ -29,6 +29,7 @@ export async function CardCreationOnTrello(body) {
         return response.data.shortUrl;
 
     } catch (error) {
+        console.log(error)
         throw new Error(error)
     }
 
@@ -131,7 +132,11 @@ export async function CompleteCheckPointOnTrello(array, unity, where) {
 
         if (!checkList) {
 
-            await SendSimpleWpp("Marcos", process.env.MARCOS, `${JSON.stringify(element)}, checklist não encontrado no trello // ${where}`)
+            await SendSimpleWpp("Marcos",
+                process.env.MARCOS, `${JSON.stringify(element.nome)},
+            checklist não encontrado no trello // ${where}`
+            )
+
             console.log("checkList não encontrado")
             return
         }
@@ -226,72 +231,128 @@ export async function SendRematriculaToTrello(data, unity) {
 }
 
 
+const templates = {
+    "Golfinho azul/Novo aluno": process.env.PTB_TEMPLATE,
+    'PTB/Novo aluno': process.env.PTB_TEMPLATE,
+    'Centro/Novo aluno': process.env.CENTRO_TEMPLATE,
+
+    "Golfinho azul/Ex-aluno": process.env.PTB_TEMPLATE,
+    'PTB/Ex-aluno': process.env.PTB_TEMPLATE,
+    'Centro/Ex-aluno': process.env.CENTRO_TEMPLATE,
+
+    "Golfinho azul/Aluno vigente": process.env.PTB_TEMPLATE,
+    'PTB/Aluno vigente': process.env.PTB_TEMPLATE,
+    'Centro/Aluno vigente': process.env.CENTRO_TEMPLATE,
+
+    "Golfinho azul/Rematrícula": process.env.PTB_TEMPLATE_REM,
+    'PTB/Rematrícula': process.env.PTB_TEMPLATE_REM,
+    'Centro/Rematrícula': process.env.CENTRO_TEMPLATE_REM
+}
+
+const idList = {
+    "Golfinho Azul/Novo aluno": process.env.PTB_LIST,
+    'PTB/Novo aluno': process.env.PTB_LIST,
+    'Centro/Novo aluno': process.env.CENTRO_LIST,
+
+    "Golfinho Azul/Ex-aluno": process.env.PTB_LIST,
+    'PTB/Ex-aluno': process.env.PTB_LIST,
+    'Centro/Ex-aluno': process.env.CENTRO_LIST,
+
+    "Golfinho Azul/Aluno vigente": process.env.PTB_LIST,
+    'PTB/Aluno vigente': process.env.PTB_LIST,
+    'Centro/Aluno vigente': process.env.CENTRO_LIST,
+
+    "Golfinho Azul/Rematrícula": process.env.PTB_LIST_REM,
+    'PTB/Rematrícula': process.env.PTB_LIST_REM,
+    'Centro/Rematrícula': process.env.CENTRO_LIST_REM
+
+}
+
+export function addUsefullDays(data, diasUteis) {
+    var dataAtual = new Date(data);
+    var diasAdicionados = 0;
+
+    while (diasAdicionados < diasUteis) {
+        dataAtual.setDate(dataAtual.getDate() + 1);
+
+        if (dataAtual.getDay() !== 0 && dataAtual.getDay() !== 6) {
+            diasAdicionados++;
+        }
+    }
+
+    return dataAtual;
+}
+
+export async function StartCicleWhenNewRegisterIsCreated(object) {
+
+    let today = new Date();
+    let futureDate = addUsefullDays(today, 7);
+
+    const { name, customFields } = object
+
+    try {
+
+        const { phone, email } = await getContactsWithId(object.id)
+
+        const description = {
+            "background": customFields["Background do Aluno"],
+            "nome do aluno": customFields["Nome do aluno"],
+            "idade ": customFields["Idade do Aluno"],
+            "vendedor": customFields["Vendedor"],
+            "responsável": name,
+            "whatsapp": phone,
+            "email": email,
+            "Precisa de nivelamento": customFields["Precisa de nivelamento?"],
+            "Professor": customFields["Professor"].professor,
+            "Dia de aula": customFields["Dia de aula"],
+            "Dia da Primeira aula": customFields["Data da primeira aula"],
+            "Horario": `${customFields["Horário de Inicio"]}  às  ${customFields["Horário de fim"]}`,
+            "Caga Horaria do curso": customFields["Carga horário do curso"],
+            "Curso": customFields["Curso"],
+            "Classe": customFields["Classe"],
+            "Sub Classe": customFields["Subclasse"],
+            "Material": customFields["Material didático"],
+            "modalidade": customFields["Tipo/ modalidade"],
+            "Formato das aulas": customFields["Formato de Aula"],
+            "anotações": customFields["Observações importantes para o pedagógico:"],
+            "Valor do material": customFields["Valor total do material didático"],
+            "Vaor da taxa de matricula": customFields["Valor de taxa de matrícula"],
+            "Valor da mensalidade": customFields["Valor total da parcela"],
+        }
 
 
-// {
-//   id: '4023cba6-b6e9-4c8d-ae12-dd00a262fa47',
-//   ca_id: 579577091,
-//   number: 2610,
-//   emission: '2025-01-25T00:00:00.000-03',
-//   status: 'COMMITTED',
-//   scheduled: true,
-//   customer_id: 'd66b05fc-32d4-4854-bfad-a5de69bdba8c',
-//   customer: {
-//     id: 'd66b05fc-32d4-4854-bfad-a5de69bdba8c',
-//     name: 'Viviane Rodrigues Resende',
-//     company_name: null,
-//     email: 'vivi_resende02@hotmail.com',
-//     person_type: 'NATURAL'
-//   },
-//   discount: null,
-//   product_discount: null,
-//   service_discount: null,
-//   payment: {
-//     type: 'CASH',
-//     method: 'CASH',
-//     installments: [ [Object] ],
-//     financial_account_id: null,
-//     financial_account: null
-//   },
-//   payment_terms: '',
-//   notes: '',
-//   shipping_cost: 0,
-//   total: 236,
-//   seller: { id: '88888bcd-f552-46e8-8ff0-3abac4597e45', name: 'Kailany' },
-//   proposal_date: null,
-//   expiration: null,
-//   introduction: null,
-//   shipping_forecast: null,
-//   category_id: null
-// }
-
-// [
-//   {
-//     description: 'GLOBALCHANGERST/SAB/15h-17h/MARIA - Izabelly Vitória Inácio Resende',
-//     quantity: 1,
-//     item: {
-//       id: '4d4d4185-da13-44d8-bf74-811546fb13fb',
-//       name: 'Fluency Way Class - Teens',
-//       value: 237,
-//       cost: 0
-//     },
-//     itemType: 'SERVICE',
-//     value: 236
-//   }
-// ]
+        const body = {
+            name: name,
+            desc: JSON.stringify(description, null, 2).replace("{", "").replace("}", ""),
+            pos: 'bottom',
+            due: futureDate,
+            start: today,
+            idList: idList[customFields["Unidade"].concat("/").concat(customFields["Background do Aluno"])],
+            idCardSource: templates[customFields["Unidade"].concat("/").concat(customFields["Background do Aluno"])]
+        }
 
 
+        await CardCreationOnTrello(body)
+            .then(async url => {
+                let message = `> *${body.name}*
 
-// idBook,
-// sku: data.code,
-// nome: customer.name,
-// materialDidatico: data.name,
-// valor: data.value,
-// data: new Date().toLocaleDateString("pt-BR"),
-// type: "manual",
-// assinado: false,
-// retiradoPor: "",
-// dataRetirada: "",
-// link: "",
-// aluno,
-// tel
+Foi cadastrado no sistema de comissão, voce pode encontra-lo também no trello por esse link: ${url}`
+
+
+                let conference = `> *${body.name}* 
+
+Foi cadastrado no sistema de comissão.
+`
+                await Promise.all([
+                    SendtoWpp(message, customFields["Unidade"]),
+                    SendSimpleWpp("Carolina", process.env.CAROLINA, conference),
+                ])
+
+            })
+
+        return true
+    } catch (error) {
+        console.log(error)
+        throw new Error(error)
+    }
+}

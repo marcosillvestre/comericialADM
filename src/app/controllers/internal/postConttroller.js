@@ -3,13 +3,15 @@ import "dotenv/config";
 import { funis } from "../../../utils/funnels.js";
 import { stages } from "../../../utils/stage.js";
 
-import { bodyMakerForCustomFields, findYourValueForCustomFields } from '../../../config/customFieldFinder.js';
+import { bodyMakerForCustomFields } from '../../../config/customFieldFinder.js';
 import { DateTransformer } from '../../../config/DateTransformer.js';
 import prisma from '../../../database/database.js';
 import { Historic } from "../../../database/historic/properties.js";
-import { getContactsWithId } from '../../connection/externalConnections/rdStation.js';
-import { CreateCommentOnTrello } from '../../connection/externalConnections/trello.js';
+import { GetDocument } from '../../connection/externalConnections/autentique.js';
+import { winADeal } from '../../connection/externalConnections/rdStation.js';
+import { CreateCommentOnTrello, StartCicleWhenNewRegisterIsCreated } from '../../connection/externalConnections/trello.js';
 import { ScheduleBotMessages, SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
+import { gatheringDataForDatabase } from '../../connection/rdSearchSync.js';
 const historic = new Historic()
 class PostController {
 
@@ -39,130 +41,14 @@ class PostController {
     }
 
     async sender(req, res) {
-        const str = req.body
+        const { event: { data } } = req.body
 
-        const { partes, documento } = str
-
-        if (documento.nome.includes("adesao")) {
-
-            const [_, contract] = documento.nome.split("+")
+        const { name, signatures, files } = await GetDocument(data.document)
 
 
-            const f = partes.map(async res => {
+        const [type, id] = name.split("+")
 
-                if (res.nome && contract) await historic._store(res.nome, "Contrato", "Assinado", contract)
-
-                return {
-                    nome: res.nome,
-                    email: res.email,
-                    cpf: res.cpf,
-                    celular: res.celular,
-                    assinado: res.assinado.created
-
-                }
-            })
-
-
-            let founded = await f.find(res => res.nome !== "American Way")
-
-            if (!founded) return res.status(200).json({ message: "Cliente não assinou ainda" })
-
-            const { nome, cpf } = founded
-
-            // const { key, value, tel, pAula, unidade, curso, background } = await getDealIdWithCPf(nome, cpf, contract)
-
-            const { deal, phone } = getContactsWithId(contract)
-
-            if (!deal) return res.status(200).json({ message: "Não encontrado" })
-
-            const unityNumber = {
-                "Golfinho Azul": "31 8713-7018",
-                'PTB': "31 8713-7018",
-                'Centro': "31 8284-0590"
-            }
-
-            const curseMessages = {
-                "Inglês": `Hello, ${nome}. Tudo bem com você? 😊
-Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar 
-boas-vindas ao nosso curso de Inglês. 
-Está pronto para deixar o verbo to be para trás? 🏃💨
-
-Sua jornada rumo à fluência está prestes a começar, 
-e eu vou estar aqui para te ajudar em cada passo do caminho.
-Se tiver alguma dúvida ou precisar de qualquer coisa,
-envie uma mensagem para o número pedagógico ${unityNumber[unidade]} . 
-I’ll see you in class`,
-                "Espanhol": `Hola, ${nome}. Tudo bem com você? 😊
-Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar boas-vindas ao nosso curso de Espanhol. Está pronto para deixar o portunhol para trás? 🏃💨
-Sua jornada rumo à fluência está prestes a começar, e eu vou estar aqui para te ajudar em cada passo do caminho. Se tiver alguma dúvida ou precisar de qualquer coisa, 
-envie uma mensagem para o número pedagógico ${unityNumber[unidade]}.
-Te veo en la clase 🇪🇸`,
-                "Tecnologia": `Hello, ${nome}. Tudo bem com você? 😊
-Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar boas-vindas ao nosso curso de informática. Está pronto para aprender a montar documentos e planilhas completas? 😎
-Em poucos meses você vai estar dominando o Pacote Office, e eu vou estar aqui para te ajudar em cada passo do caminho. Se tiver alguma dúvida ou precisar de qualquer coisa,
-envie uma mensagem para o número pedagógico ${unityNumber[unidade]}.
-Te esperamos na aula 👩‍💻`,
-            }
-
-
-
-            const { id, deal_custom_fields, name } = deal
-
-
-            if (await findYourValueForCustomFields('Background do Aluno', deal_custom_fields) !== "Rematrícula") {
-
-
-                await Promise.all([
-                    ScheduleBotMessages(
-                        name,
-                        phone,
-                        await findYourValueForCustomFields("Data da primeira aula"),
-                        "Lembrete da primeira aula"),
-
-                    SendSimpleWpp(nome, tel, curseMessages[curso]),
-                    winADeal(id)
-                ])
-
-            }
-
-
-            try {
-
-                const update = async () => {
-                    await prisma.registers.update({
-                        where: {
-                            id: id,
-                            assinaturaContratoStatus: {
-                                contains: "pendente",
-                                mode: "insensitive"
-                            }
-                        },
-                        data: {
-                            assinaturaContratoStatus: "Ok",
-
-                        }
-                    })
-                }
-
-
-                await Promise.all([
-                    update(),
-                    CreateCommentOnTrello(
-                        name,
-                        await findYourValueForCustomFields("Unidade"),
-                        `${name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`),
-                ])
-
-
-            } catch (error) {
-                console.log(error)
-                console.log("Contrato não encontrado")
-            }
-
-            return res.status(200).json({ message: "deu certo" })
-        }
-
-        if (documento.nome.includes("reciboMd")) {
+        if (type.includes("reciboMd")) {
             const [nameTruncked, code] = documento.nome.split("+")
 
             const [_, name] = nameTruncked.split("-")
@@ -195,6 +81,120 @@ Te esperamos na aula 👩‍💻`,
 
             return res.status(201).json({ message: "link atribuido com sucesso" })
         }
+
+
+        const dealWin = await winADeal(id)
+
+        const [deal] = await gatheringDataForDatabase([dealWin])
+
+
+        const create = async (responsible, data) => {
+            await prisma.registers.create({
+                data: {
+                    ...data,
+                    assinaturaContratoStatus: "Ok",
+                    historic: {
+                        create: {
+                            responsible: responsible,
+                            information: {
+                                field: "assinaturaContratoStatus",
+                                text: `O status do contrato foi alterado para assinado`,
+                                from: data.id,
+                            }
+                        }
+                    }
+                }
+            })
+                .then(async (response) => {
+                    await StartCicleWhenNewRegisterIsCreated(response)
+                })
+        }
+
+        const update = async (responsible, data) => {
+            await prisma.registers.update({
+                where: {
+                    id: data.id
+                },
+                data: {
+                    ...data,
+                    assinaturaContratoStatus: "Ok",
+                    historic: {
+                        create: {
+                            responsible: responsible,
+                            information: {
+                                field: "assinaturaContratoStatus",
+                                text: `O status do contrato foi alterado para assinado`,
+                                from: data.id,
+                            }
+                        }
+                    }
+                }
+            })
+        }
+
+        await prisma.registers.findUnique({
+            where: {
+                id: deal.id
+            }
+        }).then(async register => {
+            register ? update(data.user.name, deal) : create(data.user.name, deal)
+
+            await StartCicleWhenNewRegisterIsCreated(register)
+
+            const unityNumber = {
+                "Golfinho Azul": "31 8713-7018",
+                'PTB': "31 8713-7018",
+                'Centro': "31 8284-0590"
+            }
+
+            const curseMessages = {
+                "Inglês": `Hello, ${register.name}. Tudo bem com você? 😊
+Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar 
+boas-vindas ao nosso curso de Inglês. 
+Está pronto para deixar o verbo to be para trás? 🏃💨
+
+Sua jornada rumo à fluência está prestes a começar, e eu vou estar aqui para te ajudar em cada passo do caminho.
+Se tiver alguma dúvida ou precisar de qualquer coisa, 
+envie uma mensagem para o número pedagógico ${unityNumber[register.customFields["Unidade"]]} . 
+I’ll see you in class`,
+
+                "Espanhol": `Hola, ${register.name}. Tudo bem com você? 😊
+Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar boas-vindas ao nosso curso de Espanhol. Está pronto para deixar o portunhol para trás? 🏃💨
+Sua jornada rumo à fluência está prestes a começar, e eu vou estar aqui para te ajudar em cada passo do caminho. 
+
+Se tiver alguma dúvida ou precisar de qualquer coisa, 
+envie uma mensagem para o número pedagógico ${unityNumber[register.customFields["Unidade"]]}.
+Te veo en la clase 🇪🇸`,
+
+                "Tecnologia": `Hello, ${register.name}. Tudo bem com você? 😊
+Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar boas-vindas ao nosso curso de informática. Está pronto para aprender a montar documentos e planilhas completas? 😎
+Em poucos meses você vai estar dominando o Pacote Office, e eu vou estar aqui para te ajudar em cada passo do caminho.
+
+Se tiver alguma dúvida ou precisar de qualquer coisa,
+envie uma mensagem para o número pedagógico ${unityNumber[register.customFields["Unidade"]]}.
+Te esperamos na aula 👩‍💻`,
+            }
+
+
+            if (register.customFields['Background do Aluno'] !== "Rematrícula") {
+
+                await Promise.all([
+                    ScheduleBotMessages(
+                        register.name, register.customFields["Phone"],
+                        register.customFields["Data da primeira aula"],
+                        "Lembrete da primeira aula"),
+                    SendSimpleWpp(register.name, register.customFields["Phone"], curseMessages[register.customFields["Curso"]]),
+                ])
+
+                await CreateCommentOnTrello(
+                    register.name,
+                    register.customFields["Unidade"],
+                    `${data.user.name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`)
+
+            }
+
+            return res.status(200).json({ message: "Success" })
+        })
 
     }
 
@@ -361,47 +361,7 @@ Te esperamos na aula 👩‍💻`,
 
     //     }
 
-    async delete(req, res) {
-        const { id } = req.params
-        const { responsible } = req.query
 
-
-        const deleteData = async () => {
-            return new Promise(resolve => {
-                resolve(
-                    prisma.person.delete({ where: { contrato: id } })
-                )
-            })
-        }
-
-        const historic = async () => {
-            return new Promise(resolve => {
-                resolve(prisma.historic.create({
-                    data: {
-                        responsible: responsible,
-                        information: {
-                            field: "Contratos",
-                            to: "Deletado",
-                            from: id,
-                        }
-                    }
-                })
-                )
-            })
-        }
-
-        await Promise.all([
-            deleteData(),
-            historic()
-        ])
-            .then(() => {
-                return res.status(201).json({ message: "Deleted" })
-
-            })
-            .catch(() => {
-                return res.status(400).json({ message: "Something went wrong" })
-            })
-    }
 
     async indexPeriod(req, res) {
         const { range, role, name, unity, dates, skip, take } = req.query

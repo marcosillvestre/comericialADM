@@ -82,66 +82,6 @@ export async function createTasks(name, aluno, classe) {
 }
 
 
-export async function getDealIdWithCPf(name, cpf, contract) {
-
-    // console.log(name, cpf, contract)
-
-    try {
-        const { data } = await axios.get(`https://crm.rdstation.com/api/v1/deals?token=${process.env.RD_TOKEN}&name=${name}`)
-        const { total, deals } = data
-        let result;
-
-        for (const element of deals) {
-
-            const cField = element.deal_custom_fields
-
-            let realatedCPF = cField.filter(res =>
-                res.custom_field.label.includes('CPF'))
-                .map(res => res.value)[0]
-
-            let contrato = cField.filter(res =>
-                res.custom_field.label.includes('Nº do contrato'))
-                .map(res => res.value)[0]
-
-            let pAula = cField.filter(res =>
-                res.custom_field.label.includes('Data da primeira aula'))
-                .map(res => res.value)[0]
-
-            let unidade = cField.filter(res =>
-                res.custom_field.label.includes('Unidade'))
-                .map(res => res.value)[0]
-
-            let tel = element.contacts.map(res => res.phones).map(res => res[0]?.phone)[0]
-
-            let curso = cField.filter(res =>
-                res.custom_field.label.includes('Curso'))
-                .map(res => res.value)[0]
-
-            let background = cField.filter(res =>
-                res.custom_field.label.includes('Background'))
-                .map(res => res.value)[0]
-
-            if (contract) {
-                if (realatedCPF === cpf && contrato === contract) return result = {
-                    key: "contrato", value: contrato, tel, pAula, unidade, curso, background
-                }
-            } else {
-                if (realatedCPF === cpf) return result = {
-                    key: "name", value: element.name, tel, pAula, unidade, curso, background
-                }
-            }
-        }
-        return result
-
-    } catch (error) {
-        console.log(error)
-        return error
-    }
-
-}
-
-
-
 export async function getContactsWithId(id) {
 
     const [{ data: contacts }, { data: deal }] = await Promise.all([
@@ -160,13 +100,19 @@ export async function getContactsWithId(id) {
 
 
 export async function winADeal(id) {
-    await axios.put(`https://crm.rdstation.com/api/v1/deals/${id}?token=${process.env.RD_TOKEN}`, {
-        deal: {
-            win: "true"
-        }
-    })
-        .then(res => console.log(res))
-        .catch(err => console.log(err))
+    try {
+
+        const response = await axios.put(`https://crm.rdstation.com/api/v1/deals/${id}?token=${process.env.RD_TOKEN}`, {
+            deal: {
+                win: "true"
+            }
+        })
+
+        return response.data
+    } catch (error) {
+        throw new Error(error)
+    }
+
 
 }
 

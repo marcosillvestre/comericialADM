@@ -1,26 +1,12 @@
 import "dotenv/config";
 import prisma from '../../database/database.js';
 import { getContactsWithId } from './externalConnections/rdStation.js';
-import { CardCreationOnTrello } from './externalConnections/trello.js';
-import { SendSimpleWpp, SendtoWpp } from './externalConnections/wpp.js';
+import { StartCicleWhenNewRegisterIsCreated } from "./externalConnections/trello.js";
 
 const comebackDays = 3
 const options = { method: 'GET', headers: { accept: 'application/json' } };
 
-export function addUsefullDays(data, diasUteis) {
-    var dataAtual = new Date(data);
-    var diasAdicionados = 0;
 
-    while (diasAdicionados < diasUteis) {
-        dataAtual.setDate(dataAtual.getDate() + 1);
-
-        if (dataAtual.getDay() !== 0 && dataAtual.getDay() !== 6) {
-            diasAdicionados++;
-        }
-    }
-
-    return dataAtual;
-}
 
 async function UpdateTheCustomFields() {
     fetch(`https://crm.rdstation.com/api/v1/custom_fields?token=${process.env.RD_TOKEN}&for=deal`, options)
@@ -53,112 +39,75 @@ async function UpdateTheCustomFields() {
         })
 }
 
-const templates = {
-    "Golfinho azul/Novo aluno": process.env.PTB_TEMPLATE,
-    'PTB/Novo aluno': process.env.PTB_TEMPLATE,
-    'Centro/Novo aluno': process.env.CENTRO_TEMPLATE,
+export const gatheringDataForDatabase = async (deals) => {
+    const data = []
+    for (const deal of deals) {
 
-    "Golfinho azul/Ex-aluno": process.env.PTB_TEMPLATE,
-    'PTB/Ex-aluno': process.env.PTB_TEMPLATE,
-    'Centro/Ex-aluno': process.env.CENTRO_TEMPLATE,
+        const { id, deal_custom_fields, user, name } = deal
 
-    "Golfinho azul/Aluno vigente": process.env.PTB_TEMPLATE,
-    'PTB/Aluno vigente': process.env.PTB_TEMPLATE,
-    'Centro/Aluno vigente': process.env.CENTRO_TEMPLATE,
+        const { phone, email } = await getContactsWithId(id)
 
-    "Golfinho azul/Rematrícula": process.env.PTB_TEMPLATE_REM,
-    'PTB/Rematrícula': process.env.PTB_TEMPLATE_REM,
-    'Centro/Rematrícula': process.env.CENTRO_TEMPLATE_REM
-}
+        const customFields = async () => {
+            const cf = await prisma.customFields.findMany()
+            const result = {}
 
-const idList = {
-    "Golfinho Azul/Novo aluno": process.env.PTB_LIST,
-    'PTB/Novo aluno': process.env.PTB_LIST,
-    'Centro/Novo aluno': process.env.CENTRO_LIST,
+            for (let index = 0; index < cf.length; index++) {
+                const element = cf[index];
+                const { name } = element;
 
-    "Golfinho Azul/Ex-aluno": process.env.PTB_LIST,
-    'PTB/Ex-aluno': process.env.PTB_LIST,
-    'Centro/Ex-aluno': process.env.CENTRO_LIST,
+                result[name] = deal_custom_fields
+                    .filter(res => res.custom_field.label.includes(name))
+                    .map(res => res.value)[0] || ""
+            }
 
-    "Golfinho Azul/Aluno vigente": process.env.PTB_LIST,
-    'PTB/Aluno vigente': process.env.PTB_LIST,
-    'Centro/Aluno vigente': process.env.CENTRO_LIST,
+            return await {
+                Phone: phone,
+                Email: email,
+                ...result
+            }
 
-    "Golfinho Azul/Rematrícula": process.env.PTB_LIST_REM,
-    'PTB/Rematrícula': process.env.PTB_LIST_REM,
-    'Centro/Rematrícula': process.env.CENTRO_LIST_REM
+        }
 
-}
-async function trelloCreateCard(object) {
+        const json = await customFields()
 
-
-    let today = new Date();
-    let futureDate = addUsefullDays(today, 7);
-
-    const { name, customFields } = object
-
-
-    const { phone, email } = await getContactsWithId(object.id)
-
-    const description = {
-        "background": customFields["Background do Aluno"],
-        "nome do aluno": customFields["Nome do aluno"],
-        "idade ": customFields["Idade do Aluno"],
-        "vendedor": customFields["Vendedor"],
-        "responsável": name,
-        "whatsapp": phone,
-        "email": email,
-        "Precisa de nivelamento": customFields["Precisa de nivelamento?"],
-        "Professor": customFields["Professor"].professor,
-        "Dia de aula": customFields["Dia de aula"],
-        "Dia da Primeira aula": customFields["Data da primeira aula"],
-        "Horario": `${customFields["Horário de Inicio"]}  às  ${customFields["Horário de fim"]}`,
-        "Caga Horaria do curso": customFields["Carga horário do curso"],
-        "Curso": customFields["Curso"],
-        "Classe": customFields["Classe"],
-        "Sub Classe": customFields["Subclasse"],
-        "Material": customFields["Material didático"],
-        "modalidade": customFields["Tipo/ modalidade"],
-        "Formato das aulas": customFields["Formato de Aula"],
-        "anotações": customFields["Observações importantes para o pedagógico:"],
-        "Valor do material": customFields["Valor total do material didático"],
-        "Vaor da taxa de matricula": customFields["Valor de taxa de matrícula"],
-        "Valor da mensalidade": customFields["Valor total da parcela"],
-    }
-
-
-    const body = {
-        name: name,
-        desc: JSON.stringify(description, null, 2).replace("{", "").replace("}", ""),
-        pos: 'bottom',
-        due: futureDate,
-        start: today,
-        idList: idList[customFields["Unidade"].concat("/").concat(customFields["Background do Aluno"])],
-        idCardSource: templates[customFields["Unidade"].concat("/").concat(customFields["Background do Aluno"])]
-    }
-
-
-    await CardCreationOnTrello(body)
-
-        .then(async url => {
-            let message = `> *${body.name}*
-
-Foi cadastrado no sistema de comissão, voce pode encontra-lo também no trello por esse link: ${url}`
-
-            1 > 2 && await SendtoWpp(message, unidade)
-
-
-            let conference = `> *${body.name}* 
-                
-Foi cadastrado no sistema de comissão.
-                `
-
-            1 > 2 && await SendSimpleWpp("Carolina", process.env.CAROLINA, conference)
-
+        data.push({
+            id,
+            name: json['Nome do responsável'],
+            owner: json['Vendedor'] || user.name,
+            customFields: json
         })
+
+    }
+    return data
 }
+
+async function LoopForStoreNewRegisters(deals) {
+    let sucesso = false;
+
+    const data = await gatheringDataForDatabase(deals)
+
+    try {
+        const results = await Promise.all(
+            data.map(async (res) => {
+                const saved = await prisma.registers.create({ data: res });
+                if (!saved) return false;
+
+                await StartCicleWhenNewRegisterIsCreated(saved)
+                return true
+            })
+        );
+
+        // Se pelo menos um registro foi salvo, retorna true
+        sucesso = results.some((r) => r === true);
+    } catch (error) {
+        if (error.meta.target[0] === 'id') sucesso = null
+        console.error("Erro ao armazenar registros");
+    }
+    return sucesso;
+}
+
 async function NewSearchSync() {
-    console.log("[new search]")
+    console.log("[NEW SEARCH]")
     await UpdateTheCustomFields()
 
     const backDay = new Date()
@@ -174,71 +123,16 @@ async function NewSearchSync() {
         .then(async response => {
             const { total, deals } = response
             console.log(total)
-            if (total > 0) {
-
-                // const dealsssss = [deals[0]]
-                for (const deal of deals) {
-
-                    const { id, deal_custom_fields, user, name } = deal
-
-                    const { phone, email } = await getContactsWithId(id)
-
-                    const customFields = async () => {
-                        const cf = await prisma.customFields.findMany()
-                        const result = {}
-
-                        for (let index = 0; index < cf.length; index++) {
-                            const element = cf[index];
-                            const { name } = element;
-
-                            result[name] = deal_custom_fields
-                                .filter(res => res.custom_field.label.includes(name))
-                                .map(res => res.value)[0] || ""
-                        }
-
-                        return await {
-                            Phone: phone,
-                            Email: email,
-                            ...result
-                        }
-
-                    }
-
-                    const json = await customFields()
-
-                    await prisma.registers.create({
-                        data: {
-                            id,
-                            name: json['Nome do responsável'],
-                            owner: json['Vendedor'] || user.name,
-                            customFields: json
-                        }
-                    })
-                        .then(async response => {
-                            await trelloCreateCard(response)
-                                .then(trello => {
-
-                                })
-                        })
-                        .catch((err) => {
-                            if (err.meta) {
-                                console.log(`${name} já está cadastrado no sistema : ${json['Unidade']} / ${user.name} `)
-                            }
-                            if (!err.meta) {
-                                console.log("Error : " + err)
-                            }
-                        })
-                }
-            }
+            if (total > 0) await LoopForStoreNewRegisters(deals)
         })
-    // .catch(err => console.log(err))
 }
 
 export default NewSearchSync
 
 
 // const t = [
-//     "Flavia Soares Gomes",
+
+//     "Lauren Pimenta Mota",
 // ]
 
 
@@ -264,9 +158,11 @@ export default NewSearchSync
 //             }
 //         })
 //             .then(resp => {
-//                 resp ? trelloCreateCard(resp) : console.log(`${res} não encontrado ✖️`)
+//                 resp ? StartCicleWhenNewRegisterIsCreated(resp) : console.log(`${res} não encontrado ✖️`)
 //             })
 //             .catch(err => console.log(err))
 //     })
 // }
 // achadorEMandadorParaOTrello()
+
+// 01JJYP6XW329EBG6JNXDCYAHB5
