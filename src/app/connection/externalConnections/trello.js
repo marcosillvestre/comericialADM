@@ -309,7 +309,7 @@ export async function StartCicleWhenNewRegisterIsCreated(object) {
             "whatsapp": phone,
             "email": email,
             "Precisa de nivelamento": customFields["Precisa de nivelamento?"],
-            "Professor": customFields["Professor"].professor,
+            "Professor": customFields["Professor"],
             "Dia de aula": customFields["Dia de aula"],
             "Dia da Primeira aula": customFields["Data da primeira aula"],
             "Horario": `${customFields["Horário de Inicio"]}  às  ${customFields["Horário de fim"]}`,
@@ -342,14 +342,21 @@ export async function StartCicleWhenNewRegisterIsCreated(object) {
             .then(async url => {
                 let message = `> *${body.name}*
 
-Foi cadastrado no sistema de comissão, voce pode encontra-lo também no trello por esse link: ${url}`
+Nome do aluno: ${customFields["Nome do aluno"]}
+Turma: ${customFields["Horário de Inicio"]}  às  ${customFields["Horário de fim"]}
+Professor: ${customFields["Professor"]}
+Material didático: ${customFields["Material didático"]}
+Responsável pela venda: ${customFields["Vendedor"]}
+
+Comece o processo de conferência dele no trello através desse link : 
+${url}`
 
 
                 let conference = `> *${body.name}* 
 
 Foi cadastrado no sistema de comissão.
 `
-                let chat = response.customFields["Unidade"] === "Centro" ?
+                let chat = customFields["Unidade"] === "Centro" ?
                     process.env.UMBLER_CHAT_REM_ID_CENTRO : process.env.UMBLER_CHAT_REM_ID_PTB
                 await Promise.all([
                     SendGroupAlerts(message, chat),

@@ -50,8 +50,7 @@ class PostController {
             const [type, id] = name.split("+")
 
             if (type.includes("reciboMd")) {
-                const [nameTruncked, code] = documento.nome.split("+")
-
+                const [nameTruncked, code] = name.split("+")
                 const [_, name] = nameTruncked.split("-")
 
                 const ordersSigned = await prisma.books.findFirst({
@@ -138,9 +137,12 @@ class PostController {
                     id: deal.id
                 }
             }).then(async register => {
-                register ? update(data.user.name, deal) : create(data.user.name, deal)
+                if (!register) return await create(data.user.name, deal)
 
-                await StartCicleWhenNewRegisterIsCreated(register)
+                await Promise.all([
+                    update(data.user.name, deal),
+                    StartCicleWhenNewRegisterIsCreated(register)
+                ])
 
                 const unityNumber = {
                     "Golfinho Azul": "31 8713-7018",
