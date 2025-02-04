@@ -2,7 +2,7 @@ import axios from "axios";
 import 'dotenv';
 import { StringsMethods } from "../../../config/serializerStrings.js";
 import { getContactsWithId, updateStageRd } from "./rdStation.js";
-import { SendSimpleWpp, SendtoWpp } from "./wpp.js";
+import { SendGroupAlerts, SendSimpleWpp } from "./wpp.js";
 
 const { spacesAndLowerCase } = new StringsMethods()
 
@@ -218,10 +218,16 @@ export async function SendRematriculaToTrello(data, unity) {
     }
 
     await CardCreationOnTrello(body)
-        .then(url => {
+        .then(async url => {
             let message = `${body.name} -- está a dois meses de vencer seu contrato, acesse o link do trello para começar o processo de rematrícula : ${url}`;
 
-            if (url) SendtoWpp(message, unity);
+            let chat = response.customFields["Unidade"] === "Centro" ? process.env.UMBLER_CHAT_REM_ID_CENTRO : process.env.UMBLER_CHAT_REM_ID_PTB
+
+            if (url) await SendGroupAlerts(
+                message,
+                chat
+            )
+                ;
         })
         .catch(async err => {
             console.log(err)
@@ -343,8 +349,10 @@ Foi cadastrado no sistema de comissão, voce pode encontra-lo também no trello 
 
 Foi cadastrado no sistema de comissão.
 `
+                let chat = response.customFields["Unidade"] === "Centro" ?
+                    process.env.UMBLER_CHAT_REM_ID_CENTRO : process.env.UMBLER_CHAT_REM_ID_PTB
                 await Promise.all([
-                    SendtoWpp(message, customFields["Unidade"]),
+                    SendGroupAlerts(message, chat),
                     SendSimpleWpp("Carolina", process.env.CAROLINA, conference),
                 ])
 

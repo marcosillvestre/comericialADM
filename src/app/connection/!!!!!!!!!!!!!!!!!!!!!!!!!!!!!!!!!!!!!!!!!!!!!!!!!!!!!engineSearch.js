@@ -2,7 +2,7 @@ import axios from 'axios';
 import "dotenv/config";
 import prisma from '../../database/database.js';
 import { CardCreationOnTrello } from './externalConnections/trello.js';
-import { SendSimpleWpp, SendtoWpp } from './externalConnections/wpp.js';
+import { SendNewStudents, SendSimpleWpp } from './externalConnections/wpp.js';
 
 const comebackDays = 5
 const options = { method: 'GET', headers: { accept: 'application/json' } };
@@ -347,7 +347,7 @@ async function trelloCreateCard(object) {
 
 Foi cadastrado no sistema de comissão, voce pode encontra-lo também no trello por esse link: ${url}`
 
-            await SendtoWpp(message, unidade)
+            await SendNewStudents(message, unidade)
 
 
             let conference = `> *${body.name}* 

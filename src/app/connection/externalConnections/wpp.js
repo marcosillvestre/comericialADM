@@ -8,11 +8,11 @@ const headers = {
 }
 
 
-export async function SendNewClasses(message, unity) {
+export async function SendGroupAlerts(message, chat) {
 
     const messageBody = {
         message: message,
-        chatId: unity === "Centro" ? process.env.UMBLER_TEACHER_CENTRO : process.env.UMBLER_TEACHER_PTB,
+        chatId: chat,
         organizationId: process.env.UMBLER_ORG_ID,
 
         "tempId": null,
@@ -23,37 +23,18 @@ export async function SendNewClasses(message, unity) {
         "automated": false,
     }
 
-    await axios.post("https://app-utalk.umbler.com/api/v1/messages", messageBody, { headers })
-        .then((data) => console.log(`enviado para o grupo ${unity} com sucesso`))
-        .catch((err) => console.log(err.response.data))
-}
-
-export async function SendtoWpp(message, unity) {
-
-    const messageBody = {
-        message: message,
-        chatId: unity === "Centro" ? process.env.UMBLER_CHAT_REM_ID_CENTRO : process.env.UMBLER_CHAT_REM_ID_PTB,
-        organizationId: process.env.UMBLER_ORG_ID,
-
-        "tempId": null,
-        "file": null,
-        "prefix": null,
-        "isPrivate": false,
-        "skipReassign": false,
-        "automated": false,
-    }
 
     await axios.post("https://app-utalk.umbler.com/api/v1/messages", messageBody, { headers })
-        .then((data) => console.log(`enviado para o grupo ${unity} com sucesso`))
-        .catch((err) => console.log(err.response.data))
+        .then((data) => console.log(`Enviado com sucesso`))
+        .catch((err) => console.log(err.response))
 }
 
 
 
 
-let resend = ""
 
 export async function SendSimpleWpp(name, phone, message) {
+    let resend = ""
     const messageBody = {
         "toPhone": phone,
         "fromPhone": process.env.FROM,

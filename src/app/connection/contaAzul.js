@@ -7,7 +7,7 @@ import { getToken } from "../core/getToken.js"
 import { getAllSales, getSaleProducts } from "./externalConnections/contaAzulStrategy.js"
 import { getContactsWithId } from "./externalConnections/rdStation.js"
 import { CompleteCheckPointOnTrello, CreateCommentOnTrello } from "./externalConnections/trello.js"
-import { SendSimpleWpp, SendtoWpp } from "./externalConnections/wpp.js"
+import { SendGroupAlerts, SendSimpleWpp } from "./externalConnections/wpp.js"
 const historic = new Historic()
 const { spacesAndLowerCase } = new StringsMethods()
 
@@ -37,16 +37,35 @@ async function EchoRegister(response, where, saleId) {
 
     await historic._storeLog("Automatização", where, "Ok", response.id)
 
+    let messages = {
+        "materialDidaticoStatus": `> *${response.name}*
+    
+Realizou o pagamento do material didático
+    
+> ${response.customFields["Material didático"]}`,
+
+
+        "pagamentoPrimeiraParcelaStatus": `> *${response.name}*
+            
+Realizou o pagamento da primeira parcela do curso`,
+
+
+        "taxaMatriculaStatus": `> *${response.name}*
+            
+Realizou o pagamento da taxa de matrícula
+            `,
+    }
+
+    let chat = response.customFields["Unidade"] === "Centro" ?
+        process.env.UMBLER_CHAT_PAYS_CENTRO :
+        process.env.UMBLER_CHAT_PAYS_PTB
+
+    await SendGroupAlerts(
+        messages[where],
+        chat
+    )
+
     if (where === "materialDidaticoStatus") {
-
-        let message = `> *${response.name}*
-
-realizou o pagamento do material didático
-
-> ${response.customFields["Material didático"]}`
-
-        await SendtoWpp(message, response.customFields["Unidade"])
-
 
         const rdPhoneData = await getContactsWithId(response.id)
 
@@ -133,8 +152,6 @@ async function updateOnDatabaseRegister(params) {
 
 ////provenientes do conta azul
 const orderRegisterForContaAzulSales = async (sale, products, unity) => {
-
-
     const data = []
 
     if (!products) return
@@ -210,8 +227,6 @@ const orderRegisterForDatabaseSales = async (idSale, name, material, unity, tel,
         "Authorization": `Bearer ${await getToken(unity)}`
     }
 
-
-
     const { data } = await axios.get("https://api.contaazul.com/v1/products?size=10000", { headers: header })
 
     const body = material.map((res, index) => {
@@ -246,66 +261,74 @@ const orderRegisterForDatabaseSales = async (idSale, name, material, unity, tel,
 
 //esse cara vai substituir o getSalesByCustomerId
 async function gatheringSaleAndProducts(unity) {
-    const header = {
-        "Authorization": `Bearer ${await getToken(unity, 'refresh')}`
-    }
-    const allSales = await getAllSales(header)
+    try {
 
-    console.log(allSales.length + " allSales")
-
-    const data = [];
-
-    for (let index = 0; index < allSales.length; index++) {
-        const eachSale = allSales[index];
-
-        const { notes, payment, customer, id } = eachSale;
-
-        const products = await getSaleProducts(header, id)
-
-
-        if (notes === "" &&
-            payment.installments[0] &&
-            payment.installments[0]?.status === "ACQUITTED"
-        ) {
-            orderRegisterForContaAzulSales(eachSale, products, unity)
-            continue
+        const header = {
+            "Authorization": `Bearer ${await getToken(unity, 'refresh')}`
         }
 
+        let allSales = await getAllSales(header)
 
-        let parsed = () => {
-            try {
+        console.log(allSales.length + " allSales")
 
-                let cleanData = notes.replace(/\\n/g, "")
-                cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
+        const data = [];
 
-                const json = JSON.parse(cleanData)
-                return {
-                    service: json["serviço"],
-                    rdId: json["id"]
-                }
-            } catch (error) {
+        for (let index = 0; index < allSales.length; index++) {
+            const eachSale = allSales[index];
 
-                return "error aqui"
+            const { notes, payment, customer, id } = eachSale;
+
+            const products = await getSaleProducts(header, id)
+
+
+            if (notes === "" &&
+                payment.installments[0] &&
+                payment.installments[0]?.status === "ACQUITTED"
+            ) {
+                orderRegisterForContaAzulSales(eachSale, products, unity)
+                continue
             }
+
+
+            let parsed = () => {
+                try {
+
+                    let cleanData = notes.replace(/\\n/g, "")
+                    cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
+
+                    const json = JSON.parse(cleanData)
+                    return {
+                        service: json["serviço"],
+                        rdId: json["id"]
+                    }
+                } catch (error) {
+
+                    return "error aqui"
+                }
+            }
+
+            let { service, rdId } = await parsed()
+
+            if (payment.installments[0] &&
+                payment.installments[0].status === "ACQUITTED") data.push({
+                    id,
+                    // rdId,
+                    customer,
+                    service,
+                    payment: payment.installments[0],
+                    products
+                })
+
         }
 
-        let { service, rdId } = await parsed()
+        return await data
 
-        if (payment.installments[0] &&
-            payment.installments[0].status === "ACQUITTED") data.push({
-                id,
-                // rdId,
-                customer,
-                service,
-                payment: payment.installments[0],
-                products
-            })
 
+    } catch (error) {
+        console.log(error)
+
+        return []
     }
-
-
-
-    return await data
 
 }
 
@@ -343,8 +366,6 @@ async function associationDatabaseAndCa(params) {
 
 
 async function reorganizingDatabaseData(params) {
-
-
     const responses = params.map(register => {
         const {
             id, name, customFields, materialDidaticoStatus,
@@ -441,7 +462,6 @@ const syncContaAzulRegister = async () => {
 
 
 export default syncContaAzulRegister
-
 /*
 // async function deletadorDeLivrosDuplicados(params) {
 
@@ -517,6 +537,7 @@ export default syncContaAzulRegister
 
 
 /*
+
 
 // const t = [
 //     {

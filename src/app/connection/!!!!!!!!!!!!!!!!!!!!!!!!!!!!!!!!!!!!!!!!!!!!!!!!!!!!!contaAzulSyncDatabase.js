@@ -10,7 +10,7 @@ import {
     CompleteCheckPointOnTrello,
     CreateCommentOnTrello
 } from "./externalConnections/trello.js"
-import { SendSimpleWpp, SendtoWpp } from "./externalConnections/wpp.js"
+import { SendNewStudents, SendSimpleWpp } from "./externalConnections/wpp.js"
 const historic = new Historic()
 const { spacesAndLowerCase } = new StringsMethods()
 
@@ -225,7 +225,7 @@ realizou o pagamento do material didático
 
 > ${response.materialDidatico}`
 
-        await SendtoWpp(message, response.unidade)
+        await SendNewStudents(message, response.unidade)
 
         if (!(response.materialDidatico.find(r => r === "Outros" || r === "Office"))) {
 

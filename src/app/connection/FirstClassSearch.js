@@ -1,6 +1,6 @@
 import { PastCodes } from "../../config/getLastMonday.js";
 import prisma from "../../database/database.js";
-import { SendNewClasses } from "./externalConnections/wpp.js";
+import { SendGroupAlerts } from "./externalConnections/wpp.js";
 
 
 const { getLastMondayCode } = new PastCodes()
@@ -68,14 +68,19 @@ const firstClassSearch = async () => {
     console.log("Searching first classes")
     for (const unity of ["Centro", "PTB"]) {
 
-        const list = await SearchFirstClassWeek(unity)
-        await SendNewClasses(`Lista de novas matrículas na unidade: *${unity}*`, unity)
-        let lists = [list[0]]
-        for (const element of lists) {
 
-            await SendNewClasses(
+        let chat = unity === "Centro" ? process.env.UMBLER_TEACHER_CENTRO : process.env.UMBLER_TEACHER_PTB
+
+        const list = await SearchFirstClassWeek(unity)
+        await SendGroupAlerts(`Lista de novas matrículas na unidade: *${unity}*`,
+            chat
+        )
+
+        for (const element of list) {
+
+            await SendGroupAlerts(
                 JSON.stringify(element, null, 2).replace(/[{}]/g, ''),
-                unity
+                chat
             )
         }
     }

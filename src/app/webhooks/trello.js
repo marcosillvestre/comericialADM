@@ -3,7 +3,7 @@ import "dotenv/config";
 import prisma from "../../database/database.js";
 import { Historic } from '../../database/historic/properties.js';
 import { createTasks, updateStageRd } from "../connection/externalConnections/rdStation.js";
-import { SendtoWpp, StartChatbot } from '../connection/externalConnections/wpp.js';
+import { SendGroupAlerts, StartChatbot } from '../connection/externalConnections/wpp.js';
 const historic = new Historic()
 class TrelloWebhook {
 
@@ -54,10 +54,14 @@ class TrelloWebhook {
                             `${process.env.CALENDAR_WEBHOOK}`;
 
                         await axios.post(hook, body)
-                            .then(() => {
+                            .then(async () => {
                                 let message = `**${body.nameEvent}** --> a reunião de rematrícula foi marcada para o dia ${body["Data de fim"]}`
-                                body["descrição"].includes("Centro") ?
-                                    SendtoWpp(message, "Centro") : SendtoWpp(message, "PTB")
+                                let chat = body["descrição"].includes("Centro") ? process.env.UMBLER_CHAT_REM_ID_CENTRO : process.env.UMBLER_CHAT_REM_ID_PTB
+
+                                await SendGroupAlerts(
+                                    message,
+                                    chat
+                                )
                             })
                     })
                     .catch(err => {

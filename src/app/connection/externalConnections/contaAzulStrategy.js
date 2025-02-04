@@ -15,7 +15,7 @@ export const getAllSales = async (headers) => {
 
         return data
     } catch (error) {
-        console.log(error)
+        console.log(error.data)
         return null
     }
 }
