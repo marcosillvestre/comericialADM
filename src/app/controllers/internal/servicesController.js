@@ -1,10 +1,14 @@
 import prisma from '../../../database/database.js';
 
-class InsumeController {
+class ServicesController {
 
     async index(req, res) {
+        const { take, skip } = req.query
+
         try {
-            const Insumes = await prisma.insume.findMany();
+            const Insumes = await prisma.services.findMany({
+                take, skip
+            });
             res.status(200).json(Insumes);
         } catch (error) {
             res.status(500).json({ error: 'Failed to fetch Insumes' });
@@ -20,9 +24,10 @@ class InsumeController {
             const increseTax = Math.ceil(price_selling * 0.25 + price_selling)
             const descreaseTw = Math.floor(increseTax - increseTax * 0.2)
             const descreaseThird = Math.floor(increseTax - increseTax * 0.3)
+            const decreaseFifteen = Math.floor(increseTax - increseTax * 0.15)
 
 
-            const newInsume = await prisma.insume.create({
+            const newInsume = await prisma.services.create({
                 data: {
                     name,
                     sku,
@@ -31,6 +36,8 @@ class InsumeController {
                     price_ticket: increseTax,
                     price_card: descreaseTw,
                     price_cash: descreaseThird,
+                    price_link: decreaseFifteen,
+                    category: "Service"
                 },
             });
             res.status(201).json(newInsume);
@@ -44,7 +51,7 @@ class InsumeController {
         const { name, sku, price_selling, price_ticket, price_card, price_cash, color } = req.body;
 
         try {
-            const updatedInsume = await prisma.insume.update({
+            const updatedInsume = await prisma.services.update({
                 where: { id: id },
                 data: {
                     name,
@@ -66,7 +73,7 @@ class InsumeController {
         const { id } = req.params;
 
         try {
-            await prisma.insume.delete({
+            await prisma.services.delete({
                 where: { id: Number(id) },
             });
             res.status(204).send();
@@ -76,4 +83,4 @@ class InsumeController {
     }
 }
 
-export default new InsumeController();
+export default new ServicesController();

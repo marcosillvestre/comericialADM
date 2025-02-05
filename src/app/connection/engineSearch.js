@@ -304,7 +304,7 @@ async function trelloCreateCard(object) {
         'Centro/Rematrícula': process.env.CENTRO_LIST_REM
 
     }
-    const data = object
+
     const description = {
         "background": object.background,
         "nome do aluno": object.aluno,
