@@ -110,10 +110,10 @@ export async function winADeal(id) {
 
         return response.data
     } catch (error) {
-        throw new Error(error)
+
+        console.log(error)
+        return null
     }
-
-
 }
 
 

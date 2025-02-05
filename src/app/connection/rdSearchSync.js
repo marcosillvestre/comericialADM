@@ -6,8 +6,6 @@ import { StartCicleWhenNewRegisterIsCreated } from "./externalConnections/trello
 const comebackDays = 3
 const options = { method: 'GET', headers: { accept: 'application/json' } };
 
-
-
 async function UpdateTheCustomFields() {
     fetch(`https://crm.rdstation.com/api/v1/custom_fields?token=${process.env.RD_TOKEN}&for=deal`, options)
         .then(response => response.json())
@@ -101,7 +99,7 @@ async function LoopForStoreNewRegisters(deals) {
         sucesso = results.some((r) => r === true);
     } catch (error) {
         if (error.meta.target[0] === 'id') sucesso = null
-        console.error("Erro ao armazenar registros");
+        console.error("Sem registros para armazenar");
     }
     return sucesso;
 }

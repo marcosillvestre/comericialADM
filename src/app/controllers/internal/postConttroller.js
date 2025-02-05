@@ -89,7 +89,7 @@ class PostController {
 
 
             const create = async (responsible, data) => {
-                await prisma.registers.create({
+                const register = await prisma.registers.create({
                     data: {
                         ...data,
                         assinaturaContratoStatus: "Ok",
@@ -108,10 +108,12 @@ class PostController {
                     .then(async (response) => {
                         await StartCicleWhenNewRegisterIsCreated(response)
                     })
+
+                return register
             }
 
             const update = async (responsible, data) => {
-                await prisma.registers.update({
+                const register = await prisma.registers.update({
                     where: {
                         id: data.id
                     },
@@ -130,6 +132,8 @@ class PostController {
                         }
                     }
                 })
+
+                return register
             }
 
             await prisma.registers.findUnique({
@@ -137,12 +141,9 @@ class PostController {
                     id: deal.id
                 }
             }).then(async register => {
-                if (!register) return await create(data.user.name, deal)
-
-                await Promise.all([
-                    update(data.user.name, deal),
-                    StartCicleWhenNewRegisterIsCreated(register)
-                ])
+                const newUser = register ?
+                    await update(data.user.name, deal) :
+                    await create(data.user.name, deal)
 
                 const unityNumber = {
                     "Golfinho Azul": "31 8713-7018",
@@ -179,22 +180,27 @@ Te esperamos na aula 👩‍💻`,
                 }
 
 
-                if (register.customFields['Background do Aluno'] !== "Rematrícula") {
+                if (newUser.customFields['Background do Aluno'] !== "Rematrícula") {
 
                     await Promise.all([
+
                         ScheduleBotMessages(
-                            register.name, register.customFields["Phone"],
-                            register.customFields["Data da primeira aula"],
+                            newUser.name, newUser.customFields["Phone"],
+                            newUser.customFields["Data da primeira aula"],
                             "Lembrete da primeira aula"),
-                        SendSimpleWpp(register.name, register.customFields["Phone"], curseMessages[register.customFields["Curso"]]),
+
+                        SendSimpleWpp(
+                            newUser.name,
+                            newUser.customFields["Phone"],
+                            curseMessages[newUser.customFields["Curso"]]),
                     ])
 
-                    await CreateCommentOnTrello(
-                        register.name,
-                        register.customFields["Unidade"],
-                        `${data.user.name} assinou contrato via autentique no dia ${new Date().toLocaleDateString()}`)
-
                 }
+
+                await CreateCommentOnTrello(
+                    newUser.name,
+                    newUser.customFields["Unidade"],
+                    `${data.user.name} assinou contrato de ${newUser.customFields['Background do Aluno']} via autentique no dia ${new Date().toLocaleDateString()}`)
 
                 return res.status(200).json({ message: "Success" })
             })

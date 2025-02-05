@@ -33,6 +33,7 @@ const functionsArray = [
 
 ]
 
+
 functionsArray.forEach(res => {
     return new CronJob(res.time,
         function () {

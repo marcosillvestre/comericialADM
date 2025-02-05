@@ -436,7 +436,7 @@ async function SearchPendentsRegister(unity) {
             })
 
 
-            console.log(databaseSynchronizedWithContaAzul.length + " sales sinc")
+            console.log(await databaseSynchronizedWithContaAzul.length + " sales sinc")
 
             await updateOnDatabaseRegister(databaseSynchronizedWithContaAzul)
             console.log("Atualizado")
