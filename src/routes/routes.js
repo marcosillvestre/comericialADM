@@ -13,9 +13,10 @@ import AutentiqueController from '../app/controllers/external/autentiqueControll
 import FilesController from '../app/controllers/external/filesController.js';
 import CampaignController from '../app/controllers/internal/campaignController.js';
 import CustomFieldsController from '../app/controllers/internal/customFieldsController.js';
-import InsumeController from '../app/controllers/internal/insumeController.js';
 import OrdersController from '../app/controllers/internal/ordersController.js';
+import ProductsController from '../app/controllers/internal/productsController.js';
 import RegistersController from '../app/controllers/internal/registersController.js';
+import ServicesController from '../app/controllers/internal/servicesController.js';
 import UmblerWebhook from '../app/webhooks/umbler.js';
 import { storage } from '../config/multer.js';
 import auth from "../middleware/auth.js";
@@ -56,11 +57,16 @@ routes.get("/campanha", CampaignController.index)
 routes.put("/campanha/:id", CampaignController.update)
 routes.delete("/campanha/:id", CampaignController.delete)
 
-routes.post("/insumo", InsumeController.storeProduct)
-routes.get("/insumo", InsumeController.index)
-routes.get("/insumos", InsumeController.getAll)
-routes.put("/insumo/:id", InsumeController.update)
-routes.delete("/insumo/:id", InsumeController.delete)
+
+routes.post("/servicos", ProductsController.store)
+routes.get("/servicos", ProductsController.index)
+routes.put("/servicos/:id", ProductsController.update)
+routes.delete("/servicos/:id", ProductsController.delete)
+
+routes.post("/produtos", ServicesController.store)
+routes.get("/produtos", ServicesController.index)
+routes.put("/produtos/:id", ServicesController.update)
+routes.delete("/produtos/:id", ServicesController.delete)
 
 ///////////////////////////
 

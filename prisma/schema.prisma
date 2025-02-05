@@ -289,3 +289,36 @@ model contract {
   created_at        DateTime      @default(now())
   updated_at        DateTime      @updatedAt
 }
+
+
+
+model products {
+  id                String   @id  @default(cuid())
+  name              String
+  sku               String
+  color             String
+  status            Boolean       @default(true)
+  price_selling     Float
+  price_ticket      Float
+  price_card        Float
+  price_cash        Float
+  price_link        Float
+  category          typeInsume 
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+}
+model services {
+  id                String   @id  @default(cuid())
+  name              String
+  sku               String
+  color             String
+  status            Boolean       @default(true)
+  price_selling     Float
+  price_ticket      Float
+  price_card        Float
+  price_cash        Float
+  price_link        Float
+  category          typeInsume 
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+}

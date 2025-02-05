@@ -15,6 +15,7 @@ import { gatheringDataForDatabase } from '../../connection/rdSearchSync.js';
 const historic = new Historic()
 class PostController {
 
+
     async getRecent(req, res) {
         const { unity } = req.params
         const { take, skip } = req.query
