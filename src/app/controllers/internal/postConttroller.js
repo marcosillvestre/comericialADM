@@ -35,7 +35,7 @@ class PostController {
                     for (const index of response?.data?.deals) {
 
                         const body = {
-                            name: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome  do responsável')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome  do responsável')).map(res => res.value)[0] : "Sem este dado no rd",
+                            name: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome do responsável')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Nome do responsável')).map(res => res.value)[0] : "Sem este dado no rd",
                             owner: index.user.name ? index.user.name : "Sem este dado no rd",
                             unidade: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Unidade')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Unidade')).map(res => res.value)[0] : "Sem este dado no rd",
                             background: index.deal_custom_fields.filter(res => res.custom_field.label.includes('Background')).map(res => res.value)[0] ? index.deal_custom_fields.filter(res => res.custom_field.label.includes('Background')).map(res => res.value)[0] : "Sem este dado no rd",
@@ -233,7 +233,7 @@ class PostController {
                         const deal = index.deal_custom_fields
                         const desPrimeirasParcelas = deal.filter(res => res.custom_field.label.includes('Valor do desconto primeiras parcelas')).map(res => res.value)[0]
                         const body = {
-                            name: deal.filter(res => res.custom_field.label.includes('Nome  do responsável')).map(res => res.value)[0],
+                            name: deal.filter(res => res.custom_field.label.includes('Nome do responsável')).map(res => res.value)[0],
                             contrato: deal.filter(res => res.custom_field.label.includes('Nº do contrato')).map(res => res.value)[0],
                             unidade: deal.filter(res => res.custom_field.label.includes('Unidade')).map(res => res.value)[0],
                             rg: deal.filter(res => res.custom_field.label.includes('RG responsável')).map(res => res.value)[0],
