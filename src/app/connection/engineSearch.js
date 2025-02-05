@@ -221,7 +221,7 @@ async function searchSync() {
                             })
                                 .then(async () => {
                                     console.log(`${res.name} foi cadastrado no sistema com sucesso`)
-                                    await trelloCreateCard(res)
+                                    // await trelloCreateCard(res)
                                 })
                                 .catch((err) => {
                                     if (err.meta) {
