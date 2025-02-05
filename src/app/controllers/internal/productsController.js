@@ -6,21 +6,24 @@ class ProductsController {
         const { take, skip } = req.query
 
         try {
-            const Insumes = await prisma.products.findMany({
+            const Products = await prisma.products.findMany({
                 take,
                 skip
             });
-            res.status(200).json(Insumes);
+            res.status(200).json(Products);
         } catch (error) {
-            res.status(500).json({ error: 'Failed to fetch Insumes' });
+            res.status(500).json({ error: 'Failed to fetch Products' });
         }
     }
-    async index(req, res) {
+
+    async getEspecificData(req, res) {
+        const { skus } = req.body
+
         try {
-            const Insumes = await prisma.products.findMany();
-            res.status(200).json(Insumes);
+            const Products = await prisma.products.findMany();
+            res.status(200).json(Products);
         } catch (error) {
-            res.status(500).json({ error: 'Failed to fetch Insumes' });
+            res.status(500).json({ error: 'Failed to fetch Products' });
         }
     }
 
