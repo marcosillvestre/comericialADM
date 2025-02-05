@@ -152,30 +152,30 @@ class PostController {
                 }
 
                 const curseMessages = {
-                    "Inglês": `Hello, ${register.name}. Tudo bem com você? 😊
+                    "Inglês": `Hello, ${newUser.name}. Tudo bem com você? 😊
 Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar 
 boas-vindas ao nosso curso de Inglês. 
 Está pronto para deixar o verbo to be para trás? 🏃💨
 
 Sua jornada rumo à fluência está prestes a começar, e eu vou estar aqui para te ajudar em cada passo do caminho.
 Se tiver alguma dúvida ou precisar de qualquer coisa, 
-envie uma mensagem para o número pedagógico ${unityNumber[register.customFields["Unidade"]]} . 
+envie uma mensagem para o número pedagógico ${unityNumber[newUser.customFields["Unidade"]]} . 
 I’ll see you in class`,
 
-                    "Espanhol": `Hola, ${register.name}. Tudo bem com você? 😊
+                    "Espanhol": `Hola, ${newUser.name}. Tudo bem com você? 😊
 Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar boas-vindas ao nosso curso de Espanhol. Está pronto para deixar o portunhol para trás? 🏃💨
 Sua jornada rumo à fluência está prestes a começar, e eu vou estar aqui para te ajudar em cada passo do caminho. 
 
 Se tiver alguma dúvida ou precisar de qualquer coisa, 
-envie uma mensagem para o número pedagógico ${unityNumber[register.customFields["Unidade"]]}.
+envie uma mensagem para o número pedagógico ${unityNumber[newUser.customFields["Unidade"]]}.
 Te veo en la clase 🇪🇸`,
 
-                    "Tecnologia": `Hello, ${register.name}. Tudo bem com você? 😊
+                    "Tecnologia": `Hello, ${newUser.name}. Tudo bem com você? 😊
 Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar boas-vindas ao nosso curso de informática. Está pronto para aprender a montar documentos e planilhas completas? 😎
 Em poucos meses você vai estar dominando o Pacote Office, e eu vou estar aqui para te ajudar em cada passo do caminho.
 
 Se tiver alguma dúvida ou precisar de qualquer coisa,
-envie uma mensagem para o número pedagógico ${unityNumber[register.customFields["Unidade"]]}.
+envie uma mensagem para o número pedagógico ${unityNumber[newUser.customFields["Unidade"]]}.
 Te esperamos na aula 👩‍💻`,
                 }
 
