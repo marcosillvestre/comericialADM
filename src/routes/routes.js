@@ -29,9 +29,6 @@ const upload = multer({ storage: storage })
 
 
 
-
-
-
 routes.post('/contrato', parser, PostConttroller.sender)
 
 
@@ -121,7 +118,6 @@ routes.post('/unidades', UnityController.storeUnities)
 routes.delete('/unidades/:id', UnityController.deleteUnities)
 
 
-routes.get('/periodo', PostConttroller.indexPeriod)
 routes.get('/registro', RegistersController.index)
 
 routes.put('/registro/:id', RegistersController.update)
@@ -140,11 +136,6 @@ routes.delete('/users/:id', UserController.delete)
 // routes.put('/controle/:id', PostConttroller.update) //
 
 routes.delete('/controle/:id', RegistersController.delete)//
-
-
-
-
-routes.put('/multi-update', PostConttroller.updateMany) //
 
 
 

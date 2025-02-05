@@ -4,7 +4,6 @@ import { funis } from "../../../utils/funnels.js";
 import { stages } from "../../../utils/stage.js";
 
 import { bodyMakerForCustomFields } from '../../../config/customFieldFinder.js';
-import { DateTransformer } from '../../../config/DateTransformer.js';
 import prisma from '../../../database/database.js';
 import { Historic } from "../../../database/historic/properties.js";
 import { GetDocument } from '../../connection/externalConnections/autentique.js';
@@ -207,99 +206,13 @@ Te esperamos na aula 👩‍💻`,
             })
 
         } catch (error) {
-            console.log(error)
-            await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`erro : ${error}`, null, 2))
+            await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`erro stageTest: ${error}`, null, 2))
         }
 
     }
 
 
 
-
-    async indexPeriod(req, res) {
-        const { range, role, name, unity, dates, skip, take } = req.query
-
-        const skipParsed = parseInt(skip)
-
-        const [initial, final] = dates.split("~")
-
-        try {
-            const dbData = await prisma.person.findMany()
-            const endData = take !== 'all' ? parseInt(take) : dbData.length
-
-
-            const filtered = role === 'comercial' ?
-                dbData.filter(res => res.owner.toLowerCase().includes(name.toLowerCase())) :
-                dbData
-
-            const initialDate = new Date(initial).setUTCHours(0, 0, 0, 0)
-            const finalDate = new Date(final).setUTCHours(0, 0, 0, 0)
-
-
-            const DateFilter = await Promise.all(filtered.map(async r => {
-                let date = await DateTransformer(r.dataMatricula)
-
-                return (date >= initialDate && date <= finalDate) ? r : null;
-
-            }))
-
-            let generalMonthsBefore = DateFilter.filter(res => res !== null)
-
-
-            const slicedData = generalMonthsBefore.slice(skipParsed, endData + skipParsed)
-
-            return res.status(200).json({
-                period: range,
-                total: generalMonthsBefore.length,
-                deals: slicedData
-            })
-
-
-
-        } catch (error) {
-            console.log(error)
-            return res.status(400).json({ message: "Erro" })
-
-        }
-
-    }
-
-    async updateMany(req, res) {
-        const { contracts, where, value, responsible } = req.body
-
-        new Promise(resolve => {
-            contracts.map(data => {
-                resolve(
-                    prisma.person.update(
-                        {
-                            where: {
-                                contrato: data
-                            },
-                            data: {
-                                [where]: value
-                            }
-
-                        }).then(async () => {
-                            await prisma.historic.create({
-                                data: {
-                                    responsible: responsible.name,
-                                    information: {
-                                        field: where,
-                                        to: value,
-                                        from: data,
-                                    }
-                                }
-                            })
-                        }
-                        )
-                )
-            })
-        })
-
-
-        return res.status(200).json({ message: "Success" })
-
-    }
 
     async comissionData(req, res) {
         const { range, unity, dates } = req.query
