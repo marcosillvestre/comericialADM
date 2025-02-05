@@ -1,8 +1,8 @@
 import { CronJob } from "cron";
 
 
+import syncContaAzul from '../connection/contaAzulSyncDatabase.js';
 import searchSync from '../connection/engineSearch.js';
-
 const functionsArray = [
     {
         time: "0 */60 * * * *",
@@ -20,10 +20,10 @@ const functionsArray = [
     //     time: "0 0 5 * * mon",
     //     fn: firstClassSearch
     // },
-    // {
-    //     time: "0 */3 * * *",
-    //     fn: syncContaAzul
-    // },
+    {
+        time: "0 */3 * * *",
+        fn: syncContaAzul
+    },
 
 ]
 

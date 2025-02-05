@@ -289,7 +289,7 @@ async function updateOnDatabase(contrato, whereIs) {
     }).then(async (response) => {
         console.log(`${response.name} success updated / ${where} / ${response.unidade}`)
 
-        await Echo(response, where)
+        // await Echo(response, where)
     })
 
     return response ? "Done" : "Error"
