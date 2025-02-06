@@ -342,13 +342,17 @@ export async function StartCicleWhenNewRegisterIsCreated(object) {
             .then(async url => {
                 let message = `> *${body.name}*
 
-Nome do aluno: ${customFields["Nome do aluno"]}
-Turma: ${customFields["Horário de Inicio"]}  às  ${customFields["Horário de fim"]}
-Professor: ${customFields["Professor"]}
-Material didático: ${customFields["Material didático"]}
-Responsável pela venda: ${customFields["Vendedor"]}
+Nome do aluno: *${customFields["Nome do aluno"]}*
 
-Comece o processo de conferência dele no trello através desse link : 
+Turma: *${customFields["Horário de Inicio"]}* às *${customFields["Horário de fim"]}* no dia *${customFields["Data da primeira aula"]}*
+
+Professor: *${customFields["Professor"]}*
+
+Material didático: *${customFields["Material didático"]}*
+
+Responsável pela venda: *${customFields["Vendedor"]}*
+
+> Comece o processo de conferência dele no trello através desse link : 
 ${url}`
 
 
