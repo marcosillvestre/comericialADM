@@ -55,15 +55,15 @@ routes.put("/campanha/:id", CampaignController.update)
 routes.delete("/campanha/:id", CampaignController.delete)
 
 
-routes.post("/servicos", ProductsController.store)
-routes.get("/servicos", ProductsController.index)
-routes.put("/servicos/:id", ProductsController.update)
-routes.delete("/servicos/:id", ProductsController.delete)
+routes.post("/servicos", ServicesController.store)
+routes.get("/servicos", ServicesController.index)
+routes.put("/servicos/:id", ServicesController.update)
+routes.delete("/servicos/:id", ServicesController.delete)
 
-routes.post("/produtos", ServicesController.store)
-routes.get("/produtos", ServicesController.index)
-routes.put("/produtos/:id", ServicesController.update)
-routes.delete("/produtos/:id", ServicesController.delete)
+routes.post("/produtos", ProductsController.store)
+routes.get("/produtos", ProductsController.index)
+routes.put("/produtos/:id", ProductsController.update)
+routes.delete("/produtos/:id", ProductsController.delete)
 
 ///////////////////////////
 

@@ -341,7 +341,7 @@ export async function StartCicleWhenNewRegisterIsCreated(object) {
         await CardCreationOnTrello(body)
             .then(async url => {
                 let message = `> *${body.name}*
-
+ 
 Nome do aluno: *${customFields["Nome do aluno"]}*
 
 Turma: *${customFields["Horário de Inicio"]}* às *${customFields["Horário de fim"]}* no dia *${customFields["Data da primeira aula"]}*

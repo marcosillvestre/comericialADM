@@ -120,7 +120,6 @@ async function NewSearchSync() {
         .then(response => response.json())
         .then(async response => {
             const { total, deals } = response
-            console.log(total)
             if (total > 0) await LoopForStoreNewRegisters(deals)
         })
 }

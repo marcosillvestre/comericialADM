@@ -3,13 +3,81 @@ import prisma from '../../../database/database.js';
 class ServicesController {
 
     async index(req, res) {
-        const { take, skip } = req.query
+        const { take, skip, orderBy, query } = req.query
 
         try {
-            const Insumes = await prisma.services.findMany({
-                take, skip
+            const withQuery = async () => {
+                const [services, count] = await prisma.$transaction([
+                    prisma.services.findMany({
+                        where: {
+                            OR: [
+                                {
+                                    name: {
+                                        contains: query,
+                                        mode: "insensitive"
+                                    }
+                                },
+                                {
+                                    sku: {
+                                        contains: query,
+                                        mode: "insensitive"
+                                    }
+                                }
+                            ]
+                        },
+                        take: parseInt(take),
+                        skip: parseInt(skip),
+                        orderBy: {
+                            [orderBy]: "asc"
+                        }
+                    }),
+                    prisma.services.count({
+                        where: {
+                            OR: [
+                                {
+                                    name: {
+                                        contains: query,
+                                        mode: "insensitive"
+                                    }
+                                },
+                                {
+                                    sku: {
+                                        contains: query,
+                                        mode: "insensitive"
+                                    }
+                                }
+                            ]
+                        },
+                    })
+
+                ])
+                return { services, count }
+            }
+            const withoutQuery = async () => {
+                const [services, count] = await prisma.$transaction([
+                    prisma.services.findMany({
+                        take: parseInt(take),
+                        skip: parseInt(skip),
+                        orderBy: {
+                            [orderBy]: "asc"
+                        }
+                    }),
+                    prisma.services.count()
+
+                ])
+                return { services, count }
+            }
+
+
+
+            const { services, count } = query ? await withQuery() :
+                await withoutQuery()
+
+            res.status(200).json({
+                services,
+                total: count
             });
-            res.status(200).json(Insumes);
+
         } catch (error) {
             res.status(500).json({ error: 'Failed to fetch Insumes' });
         }
@@ -48,7 +116,12 @@ class ServicesController {
 
     async update(req, res) {
         const { id } = req.params;
-        const { name, sku, price_selling, price_ticket, price_card, price_cash, color } = req.body;
+        const { name, sku, price_selling, color } = req.body;
+
+        const increseTax = Math.ceil(price_selling * 0.25 + price_selling)
+        const descreaseTw = Math.floor(increseTax - increseTax * 0.2)
+        const descreaseThird = Math.floor(increseTax - increseTax * 0.3)
+        const decreaseFifteen = Math.floor(increseTax - increseTax * 0.15)
 
         try {
             const updatedInsume = await prisma.services.update({
@@ -57,9 +130,10 @@ class ServicesController {
                     name,
                     sku,
                     price_selling,
-                    price_ticket,
-                    price_card,
-                    price_cash,
+                    price_ticket: increseTax,
+                    price_card: descreaseTw,
+                    price_cash: descreaseThird,
+                    price_link: decreaseFifteen,
                     color,
                 },
             });
@@ -74,7 +148,7 @@ class ServicesController {
 
         try {
             await prisma.services.delete({
-                where: { id: Number(id) },
+                where: { id },
             });
             res.status(204).send();
         } catch (error) {

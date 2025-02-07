@@ -3,26 +3,82 @@ import prisma from '../../../database/database.js';
 class ProductsController {
 
     async index(req, res) {
-        const { take, skip } = req.query
-
+        const { take, skip, orderBy, query } = req.query
         try {
-            const Products = await prisma.products.findMany({
-                take,
-                skip
+            const withQuery = async () => {
+                const [products, count] = await prisma.$transaction([
+                    prisma.products.findMany({
+                        where: {
+                            OR: [
+                                {
+                                    name: {
+                                        contains: query,
+                                        mode: "insensitive"
+                                    }
+                                },
+                                {
+                                    sku: {
+                                        contains: query,
+                                        mode: "insensitive"
+                                    }
+                                }
+                            ]
+                        },
+                        take: parseInt(take),
+                        skip: parseInt(skip),
+                        orderBy: {
+                            [orderBy]: "asc"
+                        }
+                    }),
+                    prisma.products.count({
+                        where: {
+                            OR: [
+                                {
+                                    name: {
+                                        contains: query,
+                                        mode: "insensitive"
+                                    }
+                                },
+                                {
+                                    sku: {
+                                        contains: query,
+                                        mode: "insensitive"
+                                    }
+                                }
+                            ]
+                        },
+                    })
+
+                ])
+                return { products, count }
+            }
+            const withoutQuery = async () => {
+                const [products, count] = await prisma.$transaction([
+                    prisma.products.findMany({
+                        take: parseInt(take),
+                        skip: parseInt(skip),
+                        orderBy: {
+                            [orderBy]: "asc"
+                        }
+                    }),
+                    prisma.products.count()
+
+                ])
+                return { products, count }
+            }
+
+
+
+            const { products, count } = query ? await withQuery() :
+                await withoutQuery()
+
+            res.status(200).json({
+                products,
+                total: count
             });
-            res.status(200).json(Products);
-        } catch (error) {
-            res.status(500).json({ error: 'Failed to fetch Products' });
-        }
-    }
 
-    async getEspecificData(req, res) {
-        const { skus } = req.body
-
-        try {
-            const Products = await prisma.products.findMany();
-            res.status(200).json(Products);
         } catch (error) {
+            console.log(error)
             res.status(500).json({ error: 'Failed to fetch Products' });
         }
     }
@@ -102,34 +158,4 @@ class ProductsController {
 }
 
 export default new ProductsController();
-
-
-
-// await prisma.insume.findMany()
-//     .then(res => {
-
-// res.map(async t => {
-//     const { name, sku, price_selling, color, category } = t
-
-//     const increseTax = Math.ceil(price_selling * 0.25 + price_selling)
-//     const descreaseTw = Math.floor(increseTax - increseTax * 0.2)
-//     const descreaseThird = Math.floor(increseTax - increseTax * 0.3)
-//     const decreaseFifteen = Math.floor(increseTax - increseTax * 0.15)
-
-
-//     await prisma.products.create({
-//         data: {
-//             name,
-//             sku,
-//             price_selling,
-//             color,
-//             price_ticket: increseTax,
-//             price_card: descreaseTw,
-//             price_cash: descreaseThird,
-//             price_link: decreaseFifteen,
-//             category
-//         }
-//     }).then(() => console.log("foi"))
-// })
-// })
 

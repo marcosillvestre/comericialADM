@@ -10,12 +10,27 @@ export const findYourValueForCustomFields = (customFieldLabel, deal_custom_field
 
 
 export const bodyMakerForCustomFields = async (deal) => {
+    const material = findYourValueForCustomFields("Material didático", deal.deal_custom_fields)
 
-    const cf = await prisma.customFields.findMany({
-        orderBy: {
-            order: 'asc'
-        }
-    })
+    const materilFiltered = material[0] === "Outros" || material[0] === "Office" ?
+        [] : material.map(res => { return res.split(" / ")[1] })
+
+
+    const [cf, products] = await prisma.$transaction([
+
+        prisma.customFields.findMany({
+            orderBy: {
+                order: 'asc'
+            }
+        }),
+        prisma.products.findMany({
+            where: {
+                sku: {
+                    in: materilFiltered
+                }
+            }
+        })
+    ])
 
     const data = {}
 
@@ -35,8 +50,10 @@ export const bodyMakerForCustomFields = async (deal) => {
     const vendedor = findYourValueForCustomFields("Vendedor", deal.deal_custom_fields) ?
         findYourValueForCustomFields("Vendedor", deal.deal_custom_fields) : deal.user.name
 
+
     return {
         id: deal.id,
+        products,
         promocao,
         vendedor,
         CelularResponsavel: deal.contacts[0]?.phones[0]?.phone,

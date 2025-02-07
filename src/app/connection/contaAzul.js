@@ -141,7 +141,7 @@ async function updateOnDatabaseRegister(params) {
             })
 
                 .then(async (response) => {
-                    console.log(`${response.name} success updated / ${where} / ${response.customFields["Unidade"]}`)
+                    console.log(`${response.name} success / ${where} / ${response.customFields["Unidade"]}`)
                     await EchoRegister(response, where, element.sales[res].id)
                 })
 
@@ -460,85 +460,85 @@ const syncContaAzulRegister = async () => {
     }
 }
 
-
 export default syncContaAzulRegister
 /*
-// async function deletadorDeLivrosDuplicados(params) {
+async function deletadorDeLivrosDuplicados(params) {
 
-//     await prisma.books.findMany()
-//         .then(res => {
-//             res.map(async r => {
-//                 await prisma.books.findFirst({
-//                     where: {
-//                         id: {
-//                             not: r.id
-//                         },
-//                         aluno: r.aluno,
-//                         materialDidatico: r.materialDidatico,
-//                         nome: r.nome
-//                     }
-//                 })
-//                     .then(async find => {
-//                         // console.log(find)
-//                         if (find) {
+    await prisma.books.findMany()
+        .then(res => {
+            res.map(async r => {
+                await prisma.books.findFirst({
+                    where: {
+                        id: {
+                            not: r.id
+                        },
+                        aluno: r.aluno,
+                        materialDidatico: r.materialDidatico,
+                        nome: r.nome
+                    }
+                })
+                    .then(async find => {
+                        // console.log(find)
+                        if (find) {
 
-//                             await prisma.books.delete({
-//                                 where: {
-//                                     id: find.id
-//                                 }
-//                             })
-//                                 .then((r) => console.log(r))
-//                                 .then((err) => console.log(err))
+                            await prisma.books.delete({
+                                where: {
+                                    id: find.id
+                                }
+                            })
+                                .then((r) => console.log(r))
+                                .then((err) => console.log(err))
 
-//                         }
-//                     })
-
-
-
-//             })
-//         })
-// }
-// async function deletadorDeInsumosDuplicados(params) {
-
-//     await prisma.insume.findMany()
-//         .then(res => {
-//             res.map(async r => {
-//                 await prisma.insume.findFirst({
-//                     where: {
-//                         id: {
-//                             not: r.id
-//                         },
-//                         name: r.name,
-//                         sku: r.sku,
-//                         color: r.color
-//                     }
-//                 })
-//                     .then(async find => {
-//                         // console.log(find)
-//                         if (find) {
-
-//                             await prisma.insume.delete({
-//                                 where: {
-//                                     id: find.id
-//                                 }
-//                             })
-//                                 .then(() => console.log("deletado"))
-//                                 .catch((err) => console.log(err))
-
-//                         }
-//                     })
+                        }
+                    })
 
 
 
-//             })
-//         })
-// }
+            })
+        })
+}
+deletadorDeLivrosDuplicados()
 */
+/*
+    // async function deletadorDeInsumosDuplicados(params) {
+
+    //     await prisma.insume.findMany()
+    //         .then(res => {
+    //             res.map(async r => {
+    //                 await prisma.insume.findFirst({
+    //                     where: {
+    //                         id: {
+    //                             not: r.id
+    //                         },
+    //                         name: r.name,
+    //                         sku: r.sku,
+    //                         color: r.color
+    //                     }
+    //                 })
+    //                     .then(async find => {
+    //                         // console.log(find)
+    //                         if (find) {
+
+    //                             await prisma.insume.delete({
+    //                                 where: {
+    //                                     id: find.id
+    //                                 }
+    //                             })
+    //                                 .then(() => console.log("deletado"))
+    //                                 .catch((err) => console.log(err))
+
+    //                         }
+    //                     })
+
+
+
+    //             })
+    //         })
+    // }
+    */
 
 
 /*
-
-
 // const t = [
 //     {
 //         "id": "f8f2871c-d08c-404f-ae6d-277b5ad258bd",

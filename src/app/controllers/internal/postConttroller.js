@@ -19,6 +19,7 @@ class PostController {
         const { unity } = req.params
         const { take, skip } = req.query
 
+
         try {
             await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=1000&token=${process.env.RD_TOKEN}&deal_pipeline_id=${funis[unity]}&deal_stage_id=${stages[unity]}&page=${skip}&limit=${take}`)
                 .then(async (response) => {
@@ -30,13 +31,13 @@ class PostController {
 
 
                     return res.status(200).json({
+                        contracts: array,
                         total: response.data.total,
-                        contracts: array
                     })
                 })
 
         } catch (error) {
-            console.log(error)
+            console.log("error " + error)
         }
     }
 
