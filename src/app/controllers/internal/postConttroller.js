@@ -317,13 +317,12 @@ class PostController {
             const [type, id] = name.split("+")
 
             if (type.includes("reciboMd")) {
-                const [nameTruncked, code] = name.split("+")
-                const [_, name] = nameTruncked.split("-")
+                const [_, nameTruncked] = type.split("-")
 
                 const ordersSigned = await prisma.books.findFirst({
                     where: {
                         nome: {
-                            contains: name,
+                            contains: nameTruncked,
                             mode: "insensitive"
                         }
                     }
