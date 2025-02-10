@@ -208,6 +208,7 @@ Te esperamos na aula 👩‍💻`,
                     process.env.UMBLER_CHAT_REM_ID_PTB
 
                 const message = `> *${data.user.name}*
+
 acabou de assinar o contrato de ${newUser.customFields['Background do Aluno']}`
 
                 await Promise.all([
@@ -225,6 +226,8 @@ acabou de assinar o contrato de ${newUser.customFields['Background do Aluno']}`
 
         } catch (error) {
             await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`erro stageTest: ${error}`, null, 2))
+            return res.status(200).json({ message: "Success" })
+
         }
 
     }
