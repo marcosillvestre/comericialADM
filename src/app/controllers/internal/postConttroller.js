@@ -6,6 +6,7 @@ import { stages } from "../../../utils/stage.js";
 import { DateTransformer } from '../../../config/DateTransformer.js';
 import prisma from '../../../database/database.js';
 import { Historic } from "../../../database/historic/properties.js";
+import { GetDocument } from '../../connection/externalConnections/autentique.js';
 import { SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
 
 const historic = new Historic()
@@ -365,6 +366,8 @@ class PostController {
         } catch (error) {
             // console.log(error)
             await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`erro canon : ${error}`, null, 2))
+            return res.status(200).json({ message: "Error" })
+
         }
 
     }
