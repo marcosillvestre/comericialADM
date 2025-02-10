@@ -448,9 +448,9 @@ async function SearchPendentsRegister(unity) {
 
 
 const syncContaAzulRegister = async () => {
-    console.log("Payments ca updates")
 
     for (const realToken of ["PTB", "Centro"]) {
+        console.log(`[PAYMENTS CA UPDATES: ${realToken}]`)
 
         await Promise.all([
             SearchPendentsRegister(realToken),

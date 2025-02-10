@@ -2,11 +2,10 @@ import { CronJob } from "cron";
 
 
 import syncContaAzulRegister from "../connection/contaAzul.js";
-import firstClassSearch from "../connection/FirstClassSearch.js";
+import { firstClassDaily, firstClassSearch } from '../connection/FirstClassSearch.js';
 import orderBooks from "../connection/orderingBooks.js";
 import NewSearchSync from "../connection/rdSearchSync.js";
 import renewContracts from '../connection/searchEndContractsRd.js';
-
 const functionsArray = [
 
     {
@@ -22,17 +21,19 @@ const functionsArray = [
         fn: orderBooks
     },
     {
-        time: "0 0 5 * * mon",
-        fn: firstClassSearch
-    },
-
-    {
         time: "0 */3 * * *",
         fn: syncContaAzulRegister
     },
+    {
+        time: "0 0 5 * * mon",
+        fn: firstClassSearch
+    },
+    {
+        time: "0 12 * * *",
+        fn: firstClassDaily
+    },
 
 ]
-
 
 functionsArray.forEach(res => {
     return new CronJob(res.time,

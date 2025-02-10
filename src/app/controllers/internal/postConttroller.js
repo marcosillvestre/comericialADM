@@ -9,7 +9,7 @@ import { Historic } from "../../../database/historic/properties.js";
 import { GetDocument } from '../../connection/externalConnections/autentique.js';
 import { winADeal } from '../../connection/externalConnections/rdStation.js';
 import { CreateCommentOnTrello, StartCicleWhenNewRegisterIsCreated } from '../../connection/externalConnections/trello.js';
-import { ScheduleBotMessages, SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
+import { ScheduleBotMessages, SendGroupAlerts, SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
 import { gatheringDataForDatabase } from '../../connection/rdSearchSync.js';
 const historic = new Historic()
 class PostController {
@@ -196,13 +196,30 @@ Te esperamos na aula 👩‍💻`,
                             curseMessages[newUser.customFields["Curso"]]),
                     ])
 
+
                 }
 
-                await CreateCommentOnTrello(
-                    newUser.name,
-                    newUser.customFields["Unidade"],
-                    `${data.user.name} assinou contrato de ${newUser.customFields['Background do Aluno']} via autentique no dia ${new Date().toLocaleDateString()}`)
+                let chatAdm = newUser.customFields["Unidade"] === "Centro" ?
+                    process.env.UMBLER_CHAT_PAYS_CENTRO :
+                    process.env.UMBLER_CHAT_PAYS_PTB
 
+                let chatProf = newUser.customFields["Unidade"] === "Centro" ?
+                    process.env.UMBLER_CHAT_REM_ID_CENTRO :
+                    process.env.UMBLER_CHAT_REM_ID_PTB
+
+                const message = `> *${data.user.name}*
+acabou de assinar o contrato de ${newUser.customFields['Background do Aluno']}`
+
+                await Promise.all([
+                    CreateCommentOnTrello(
+                        newUser.name,
+                        newUser.customFields["Unidade"],
+                        `${data.user.name} assinou contrato de ${newUser.
+                            customFields['Background do Aluno']} via autentique no dia ${new Date().toLocaleDateString()}`),
+
+                    SendGroupAlerts(message, chatAdm),
+                    SendGroupAlerts(message, chatProf)
+                ])
                 return res.status(200).json({ message: "Success" })
             })
 

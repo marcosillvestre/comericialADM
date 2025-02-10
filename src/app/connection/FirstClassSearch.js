@@ -1,23 +1,37 @@
+import { DateTransformer } from "../../config/DateTransformer.js";
 import { PastCodes } from "../../config/getLastMonday.js";
 import prisma from "../../database/database.js";
+import { CreateCommentOnTrello } from "./externalConnections/trello.js";
 import { SendGroupAlerts } from "./externalConnections/wpp.js";
 
 
 const { getLastMondayCode } = new PastCodes()
 
-const filter4Week = (array) => {
-    let filtered = Promise.resolve(array.filter(res => {
-        let initial = parseInt(res["Data da aula"].slice(0, 2))
-        const date = new Date()
-        let startDate = parseInt(getLastMondayCode(date).slice(0, 2))
-        let endDate = startDate + 6
+const filterForPeriod = async (array, period) => {
 
-        return initial >= startDate && initial <= endDate && res
-    }))
+    const dates = new Date().setUTCHours(0, 0, 0, 0)
+    let startDate = new Date(dates)
+    const periodAhead = new Date().setDate(startDate.getDate() + period)
+    let endDate = new Date(periodAhead).setUTCHours(0, 0, 0, 0)
 
 
-    return filtered
+    const data = [];
 
+    for (let index = 0; index < array.length; index++) {
+        const element = array[index];
+
+        if (!element["Data da aula"]) continue
+
+        const newDate = await DateTransformer(element["Data da aula"])
+
+        if (newDate >= startDate && newDate <= endDate) data.push(element)
+    }
+
+    console.log({
+        period,
+        length: data.length
+    })
+    return data
 }
 
 const databaseSearch = async (unity) => {
@@ -25,23 +39,34 @@ const databaseSearch = async (unity) => {
     const month = date.getMonth() + 1
     const period = "/0" + month + "/" + date.getFullYear()
 
+
     const search = await prisma.registers.findMany({
         where: {
-            customFields: {
-                path: ["Data da primeira aula"],
-                string_contains: period
-            },
-            customFields: {
-                path: ["Unidade"],
-                string_contains: unity
-            },
+            AND: [
+                {
+                    customFields: {
+                        path: ["Unidade"],
+                        equals: unity
+                    },
+                },
+                {
+                    customFields: {
+                        path: ["Data da primeira aula"],
+                        string_contains: period
+                    },
+                }
+            ]
 
         }
     })
 
+
+    console.log(`[MONTHLY REGISTERS: ${search.length}]`)
+
     return search.map((res) => {
         return {
             "Data da aula": res.customFields["Data da primeira aula"],
+            "Unidade": res.customFields["Unidade"],
             "Aluno": res.customFields["Nome do aluno"],
             "Responsável": res.name,
             "Classe": res.customFields["Classe"],
@@ -58,24 +83,35 @@ const databaseSearch = async (unity) => {
 async function SearchFirstClassWeek(unity) {
 
     const separated4Month = await databaseSearch(unity)
-    let listByWeek = await filter4Week(separated4Month)
+    let listByWeek = await filterForPeriod(separated4Month, 7)
 
     return listByWeek
 }
 
+async function SearchFirstClassForTomorrow(unity) {
 
-const firstClassSearch = async () => {
-    console.log("Searching first classes")
+    const separated4Month = await databaseSearch(unity)
+    let listByWeek = await filterForPeriod(separated4Month, 1)
+
+    return listByWeek
+}
+
+export const firstClassSearch = async () => {
+    console.log("[SEARCHING FIRST CLASSES: WEEKLY]")
+
     for (const unity of ["Centro", "PTB"]) {
-
-
         let chat = unity === "Centro" ? process.env.UMBLER_TEACHER_CENTRO : process.env.UMBLER_TEACHER_PTB
 
         const list = await SearchFirstClassWeek(unity)
-        await SendGroupAlerts(`Lista de novas matrículas na unidade: *${unity}*`,
+
+        if (list.length === 0) return await SendGroupAlerts(`*Sem registro de novos alunos até o momento*`,
             chat
         )
 
+
+        await SendGroupAlerts(`Lista de novos alunos na unidade: *${unity}*`,
+            chat
+        )
         for (const element of list) {
 
             await SendGroupAlerts(
@@ -86,6 +122,38 @@ const firstClassSearch = async () => {
     }
 }
 
+export const firstClassDaily = async () => {
+    console.log("[SEARCHING FIRST CLASSES: DAILY]")
+
+    for (const unity of ["Centro", "PTB"]) {
+        let chat = unity === "Centro" ? process.env.UMBLER_TEACHER_CENTRO : process.env.UMBLER_TEACHER_PTB
+
+        const list = await SearchFirstClassForTomorrow(unity)
 
 
-export default firstClassSearch
+
+
+        if (list.length === 0) return await SendGroupAlerts(`*Sem registro de novos alunos até o momento*`,
+            chat
+        )
+        await SendGroupAlerts(`Lista de alunos que terão sua primeira aula hoje na unidade: *${unity}*`,
+            chat
+        )
+
+        for (const element of list) {
+            await Promise.all([SendGroupAlerts(
+                JSON.stringify(element, null, 2).replace(/[{}]/g, ''),
+                chat
+            ),
+            CreateCommentOnTrello(
+                element["Responsável"],
+                unity,
+                `Este aluno terá sua primeria aula hoje.
+                
+                Verifique o horário, avise o professor e prepare o material didático, se houver.`
+            )])
+        }
+    }
+}
+
+
