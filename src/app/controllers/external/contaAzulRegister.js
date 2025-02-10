@@ -117,9 +117,9 @@ class RegisterContaAzulController {
             ['Carga horário do curso']: cargaHoraria,
             ['Observações importantes para o financeiro:']: observacaoFinanceiro,
             ['Observações importantes para o pedagógico:']: observacaoPedagogico,
-
-
         } = req.body
+
+
 
 
         try {
@@ -134,6 +134,8 @@ class RegisterContaAzulController {
                     { headers: header }))
             }).then(async data => {
                 if (data.data[0]) {
+
+
                     let promo = {
                         "parcelas afetadas": parcel?.campaign?.affectedParcels,
                         "tipo de desconto": parcel?.campaign?.descountType === "Value" ? "Valor Cheio" : "Porcentagem",
@@ -209,6 +211,8 @@ class RegisterContaAzulController {
                                 "notes": saleNotes,
                                 "shipping_cost": 0
                             }
+
+
 
 
                             return await new Promise(resolve => {
@@ -296,148 +300,165 @@ class RegisterContaAzulController {
             }).then(async data => {
                 if (data.data[0]) {
 
+                    const { data: sales } = await axios.get(`https://api.contaazul.com/v1/sales?customer_id=${data.data[0].id}`, { headers: header })
+
+                    const found = sales.map(async sale => {
+                        let cleanData = sale.notes.replace(/\\n/g, "")
+                        cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
+
+                        const json = JSON.parse(cleanData)
+
+                        if (json["Aluno"] === nomeAluno &&
+                            json["Responsável"] === nomeResponsavel &&
+                            JSON.stringify(json["MD"]) === JSON.stringify(materialDidatico)) {
+                            await axios.delete(`https://api.contaazul.com/v1/sales/${sale.id}`, { headers: header })
+                        }
+                    })
+
+
                     const sellers = await axios.get("https://api.contaazul.com/v1/sales/sellers", { headers: header })
 
                     let seller = vendedor.split(" ")
                     let related = sellers.data.filter(res => res.name.includes(seller[0]))
 
 
-                    if (material.total > 0) {
-                        let promo = {
-                            "parcelas afetadas": parcel?.campaign?.affectedParcels,
-                            "tipo de desconto": parcel?.campaign?.descountType === "Value" ? "Valor Cheio" : "Porcentagem",
-                            "desconto nas primeiras parcelas": parcel?.campaign?.value,
-                            "descrição da campanha": parcel?.campaign?.description
-                        }
-                        const salesNotesString = {
-                            "id": id,
-                            "Valor total": valorCurso,
-                            "Valor da Parcela": parseFloat(valorCurso) / parseInt(parcelas),
-                            "PP Forma PG": formaPagamentoParcelas,
-                            "Parcela dia de vencimento": vencimentoPrimeiraParcela.split("/")[0],
-                            "Data de vencimento da primeira parcela": vencimentoPrimeiraParcela,
-                            "Data de vencimento da última parcela": vencimentoUltimaParcela,
-                            "N° de Parcelas": parcelas,
-                            "Desconto total": descontoTotal,
-                            "MD": materialDidatico.map(res => res),
-                            "MD Valor": material.total,
-                            "MD vencimento": vencimentoMaterialDidatico,
-                            "MD forma pg": formaPagamentoMaterialDidatico,
-                            "TM Valor": 350 - descontoTaxaMatricula,
-                            "TM forma de pg": formaPagamentoTaxaMatricula,
-                            "TM Venc": dataPagamentoTaxaMatricula,
-                            "TM parcelas": parcelasTaxaMatricula,
-                            "Carga Horária do Curso": cargaHoraria,
-                            "Unidade": Unidade,
-                            "Curso": Curso,
-                            "Aluno": nomeAluno,
-                            "Responsável": nomeResponsavel,
-                            "contrato": contrato,
-                            "serviço": "parcela",
-                            "vendedor": vendedor,
-                            "observacao do rd": observacaoPedagogico,
-                            "observacao para o financeiro": observacaoFinanceiro,
+                    let promo = {
+                        "parcelas afetadas": parcel?.campaign?.affectedParcels,
+                        "tipo de desconto": parcel?.campaign?.descountType === "Value" ? "Valor Cheio" : "Porcentagem",
+                        "desconto nas primeiras parcelas": parcel?.campaign?.value,
+                        "descrição da campanha": parcel?.campaign?.description
+                    }
+                    const salesNotesString = {
+                        "id": id,
+                        "Valor total": valorCurso,
+                        "Valor da Parcela": parseFloat(valorCurso) / parseInt(parcelas),
+                        "PP Forma PG": formaPagamentoParcelas,
+                        "Parcela dia de vencimento": vencimentoPrimeiraParcela.split("/")[0],
+                        "Data de vencimento da primeira parcela": vencimentoPrimeiraParcela,
+                        "Data de vencimento da última parcela": vencimentoUltimaParcela,
+                        "N° de Parcelas": parcelas,
+                        "Desconto total": descontoTotal,
+                        "MD": materialDidatico.map(res => res),
+                        "MD Valor": material.total,
+                        "MD vencimento": vencimentoMaterialDidatico,
+                        "MD forma pg": formaPagamentoMaterialDidatico,
+                        "TM Valor": 350 - descontoTaxaMatricula,
+                        "TM forma de pg": formaPagamentoTaxaMatricula,
+                        "TM Venc": dataPagamentoTaxaMatricula,
+                        "TM parcelas": parcelasTaxaMatricula,
+                        "Carga Horária do Curso": cargaHoraria,
+                        "Unidade": Unidade,
+                        "Curso": Curso,
+                        "Aluno": nomeAluno,
+                        "Responsável": nomeResponsavel,
+                        "contrato": contrato,
+                        "serviço": "parcela",
+                        "vendedor": vendedor,
+                        "observacao do rd": observacaoPedagogico,
+                        "observacao para o financeiro": observacaoFinanceiro,
 
-                            "desconto no material didatico": valorDescontoMaterialDidatico,
-                            "promoção": promocao === "Sim" ? promo : "Sem promoção"
-                        }
-                        const saleNotes = JSON.stringify(salesNotesString, null, 2)
+                        "desconto no material didatico": valorDescontoMaterialDidatico,
+                        "promoção": promocao === "Sim" ? promo : "Sem promoção"
+                    }
 
 
-                        let productsSale = []
-
-                        const product = materialDidatico.map(async teachMaterial => {
-                            await axios.get("https://api.contaazul.com/v1/products?size=10000",
-                                { headers: header })
-                                .then(async products => {
-                                    let splited = teachMaterial.split(" / ")[1]
-                                    let product;
-                                    if (splited !== undefined) {
-                                        product = products.data.filter(data => data.code === splited)
-                                    }
-                                    if (splited === undefined) {
-                                        product = products.data.filter(data => data.name.includes(teachMaterial))
-                                    }
-                                    const pd = {
-                                        "description": product[0]?.name,
-                                        "quantity": 1,
-                                        "value": product[0]?.value === 0 ? product[0]?.value + 1 : product[0]?.value,
-                                        "product_id": product[0]?.id,
-                                    }
-
-                                    productsSale.push(pd)
-
-                                })
-
-                        })
-
-                        await Promise.all(product)
+                    const saleNotes = JSON.stringify(salesNotesString, null, 2)
 
 
-                        async function ContaAzulSender(cell) {
-                            return await new Promise(resolve => {
-                                resolve(
-                                    axios.post('https://api.contaazul.com/v1/sales', cell, { headers: header })
-                                        .then(data => {
-                                            if (data.status === 201 || data.status === 200) {
-                                                console.log("O md foi lançado")
-                                                return res.status(200).json({ message: "O md foi lançado" })
-                                            }
+                    let productsSale = []
 
-                                        }).catch((err) => {
+                    const product = materialDidatico.map(async teachMaterial => {
+                        await axios.get("https://api.contaazul.com/v1/products?size=10000",
+                            { headers: header })
+                            .then(async products => {
+                                let splited = teachMaterial.split(" / ")[1]
+                                let product;
+                                if (splited !== undefined) {
+                                    product = products.data.filter(data => data.code === splited)
+                                }
+                                if (splited === undefined) {
+                                    product = products.data.filter(data => data.name.includes(teachMaterial))
+                                }
+                                const pd = {
+                                    "description": product[0]?.name,
+                                    "quantity": 1,
+                                    "value": product[0]?.value === 0 ? product[0]?.value + 1 : product[0]?.value,
+                                    "product_id": product[0]?.id,
+                                }
 
-                                            if (err.response.data.message === "The sale product's value cannot be null") {
-                                                // console.log("produto nao encontrado")
-                                                return res.status(400).json({ message: "Material didático não cadastrado no conta azul!" })
-                                            }
-                                            if (err.response.data.message !== "The sale product's value cannot be null") {
-                                                return res.status(400).json({ message: err.response.data.message })
-                                            }
-                                        })
+                                productsSale.push(pd)
 
-                                )
                             })
 
+                    })
 
-                        }
+                    await Promise.all(product)
 
-                        if (productsSale.length === materialDidatico.length) {
 
-                            let descontoMd = valorDescontoMaterialDidatico.includes(",") ? parseFloat(valorDescontoMaterialDidatico.replace(",", ".")) : parseFloat(valorDescontoMaterialDidatico)
-                            let valorMd = material.total - descontoMd
+                    async function ContaAzulSender(cell) {
+                        return await new Promise(resolve => {
+                            resolve(
+                                axios.post('https://api.contaazul.com/v1/sales', cell, { headers: header })
+                                    .then(data => {
+                                        if (data.status === 201 || data.status === 200) {
+                                            console.log("O md foi lançado")
+                                            return res.status(200).json({ message: "O md foi lançado" })
+                                        }
 
-                            const installment = await installments(dataPagamentoTaxaMatricula, material.materials.length, valorMd)
-                            ////////////////
-                            const teachingmaterial = {
-                                "emission": new Date(),
-                                "status": "PENDING",
-                                "customer_id": data.data[0].id,
-                                "products": productsSale,
-                                "seller_id": related.length === 0 ? "" : related[0].id,
-                                "discount": {
-                                    "measure_unit": "VALUE",
-                                    "rate": descontoMd
-                                },
-                                "payment": {
-                                    "type": "TIMES",
-                                    "method": "BANKING_BILLET",
-                                    "financial_account_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
-                                        "4ad586ad-3743-4d69-b311-913a66e24abb" : "e7b60ea7-0ec0-48fe-a196-d2833fc70f61",//
-                                    "installments": installment
-                                },
-                                "notes": saleNotes,
-                                "category_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
-                                    "2f8a7a4e-c283-4a05-850a-c0de6a228b71" : "dcc730b4-89a6-4ccf-9dd7-7272345238d7" //
-                            }
+                                    }).catch((err) => {
 
-                            await ContaAzulSender(teachingmaterial)
-                        }
+                                        if (err.response.data.message === "The sale product's value cannot be null") {
+                                            // console.log("produto nao encontrado")
+                                            return res.status(400).json({ message: "Material didático não cadastrado no conta azul!" })
+                                        }
+                                        if (err.response.data.message !== "The sale product's value cannot be null") {
+                                            return res.status(400).json({ message: err.response.data.message })
+                                        }
+                                    })
 
-                        if (productsSale.length !== materialDidatico.length) {
-                            return res.status(400).json({ message: "Erro no material didático" })
-                        }
+                            )
+                        })
+
 
                     }
+
+                    if (productsSale.length === materialDidatico.length) {
+
+                        let descontoMd = valorDescontoMaterialDidatico.includes(",") ? parseFloat(valorDescontoMaterialDidatico.replace(",", ".")) : parseFloat(valorDescontoMaterialDidatico)
+                        let valorMd = material.total - descontoMd
+
+                        const installment = await installments(dataPagamentoTaxaMatricula, material.materials.length, valorMd)
+                        ////////////////
+                        const teachingmaterial = {
+                            "emission": new Date(),
+                            "status": "PENDING",
+                            "customer_id": data.data[0].id,
+                            "products": productsSale,
+                            "seller_id": related.length === 0 ? "" : related[0].id,
+                            "discount": {
+                                "measure_unit": "VALUE",
+                                "rate": descontoMd
+                            },
+                            "payment": {
+                                "type": "TIMES",
+                                "method": "BANKING_BILLET",
+                                "financial_account_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
+                                    "4ad586ad-3743-4d69-b311-913a66e24abb" : "e7b60ea7-0ec0-48fe-a196-d2833fc70f61",//
+                                "installments": installment
+                            },
+                            "notes": saleNotes,
+                            "category_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
+                                "2f8a7a4e-c283-4a05-850a-c0de6a228b71" : "dcc730b4-89a6-4ccf-9dd7-7272345238d7" //
+                        }
+
+                        await ContaAzulSender(teachingmaterial)
+                    }
+
+                    if (productsSale.length !== materialDidatico.length) {
+                        return res.status(400).json({ message: "Erro no material didático" })
+                    }
+
+
                 }
                 if (data.data.length === 0) {
                     return res.status(400).json({ message: `Erro no cpf digitado: ${CPF}` })
