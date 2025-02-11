@@ -195,7 +195,7 @@ const orderRegisterForContaAzulSales = async (sale, products, unity) => {
         const body = {
             id: idSale.concat(`-${index}`),
             sku: element.code,
-            materialDidatico: element.name,
+            materialDidatico: element.name.concat(" / ").concat(element.code),
             nome: customer.name,
             valor: element.value,
             data: new Date().toLocaleDateString("pt-BR"),
@@ -461,33 +461,47 @@ const syncContaAzulRegister = async () => {
 }
 
 export default syncContaAzulRegister
-/*
+
 async function deletadorDeLivrosDuplicados(params) {
 
     await prisma.books.findMany()
         .then(res => {
+
             res.map(async r => {
-                await prisma.books.findFirst({
+                await prisma.books.findMany({
                     where: {
-                        id: {
-                            not: r.id
-                        },
-                        aluno: r.aluno,
-                        materialDidatico: r.materialDidatico,
-                        nome: r.nome
+                        AND: [
+                            {
+                                id: {
+                                    not: r.id
+                                },
+                            },
+                            {
+                                sku: r.sku
+                            },
+                            {
+                                materialDidatico: r.materialDidatico,
+                            },
+                            {
+                                nome: r.nome
+                            }
+                        ]
                     }
                 })
                     .then(async find => {
                         // console.log(find)
-                        if (find) {
+                        if (find.length > 0) {
 
-                            await prisma.books.delete({
-                                where: {
-                                    id: find.id
-                                }
+                            find.map(async finded => {
+
+                                await prisma.books.delete({
+                                    where: {
+                                        id: finded.id
+                                    }
+                                })
+                                    .then((t) => console.log(t))
+                                    .then((err) => console.log(err))
                             })
-                                .then((r) => console.log(r))
-                                .then((err) => console.log(err))
 
                         }
                     })
@@ -498,7 +512,7 @@ async function deletadorDeLivrosDuplicados(params) {
         })
 }
 deletadorDeLivrosDuplicados()
-*/
+
 /*
     // async function deletadorDeInsumosDuplicados(params) {
 

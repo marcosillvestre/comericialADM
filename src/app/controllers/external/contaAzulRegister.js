@@ -2,6 +2,7 @@ import axios from 'axios';
 import 'dotenv/config';
 import { DateTransformer } from '../../../config/DateTransformer.js';
 import { installments } from '../../../config/installments.js';
+import { parseNumber } from '../../../config/serializeNumbers.js';
 import { getToken } from '../../core/getToken.js';
 
 
@@ -424,8 +425,14 @@ class RegisterContaAzulController {
 
                     if (productsSale.length === materialDidatico.length) {
 
-                        let descontoMd = valorDescontoMaterialDidatico.includes(",") ? parseFloat(valorDescontoMaterialDidatico.replace(",", ".")) : parseFloat(valorDescontoMaterialDidatico)
+
+                        let descontoMd = valorDescontoMaterialDidatico.includes(",") ?
+                            parseFloat(valorDescontoMaterialDidatico.replace(",", ".")) :
+                            parseNumber(valorDescontoMaterialDidatico)
+
+
                         let valorMd = material.total - descontoMd
+
 
                         const installment = await installments(dataPagamentoTaxaMatricula, material.materials.length, valorMd)
                         ////////////////
@@ -450,7 +457,7 @@ class RegisterContaAzulController {
                             "category_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
                                 "2f8a7a4e-c283-4a05-850a-c0de6a228b71" : "dcc730b4-89a6-4ccf-9dd7-7272345238d7" //
                         }
-
+                        // console.log(JSON.stringify(teachingmaterial, null, 2))
                         await ContaAzulSender(teachingmaterial)
                     }
 
@@ -466,6 +473,8 @@ class RegisterContaAzulController {
             })
 
         } catch (error) {
+            console.log(error)
+
             return res.status(400).json({ message: error })
         }
     }

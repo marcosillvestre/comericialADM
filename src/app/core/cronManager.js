@@ -6,6 +6,7 @@ import { firstClassDaily, firstClassSearch } from '../connection/FirstClassSearc
 import orderBooks from "../connection/orderingBooks.js";
 import NewSearchSync from "../connection/rdSearchSync.js";
 import renewContracts from '../connection/searchEndContractsRd.js';
+
 const functionsArray = [
 
     {
