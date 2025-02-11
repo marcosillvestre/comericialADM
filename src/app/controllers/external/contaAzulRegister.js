@@ -157,7 +157,7 @@ class RegisterContaAzulController {
                         "MD Valor": material.total,
                         "MD vencimento": vencimentoMaterialDidatico,
                         "MD forma pg": formaPagamentoMaterialDidatico,
-                        "TM Valor": 350 - descontoTaxaMatricula,
+                        "TM Valor": tax.total,
                         "TM forma de pg": formaPagamentoTaxaMatricula,
                         "TM Venc": dataPagamentoTaxaMatricula,
                         "TM parcelas": parcelasTaxaMatricula,
@@ -303,13 +303,14 @@ class RegisterContaAzulController {
 
                     const { data: sales } = await axios.get(`https://api.contaazul.com/v1/sales?customer_id=${data.data[0].id}`, { headers: header })
 
-                    const found = sales.map(async sale => {
+                    sales.map(async sale => {
                         let cleanData = sale.notes.replace(/\\n/g, "")
                         cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
 
                         const json = JSON.parse(cleanData)
 
-                        if (json["Aluno"] === nomeAluno &&
+                        if (json["serviço"] === "material didatico" &&
+                            json["Aluno"] === nomeAluno &&
                             json["Responsável"] === nomeResponsavel &&
                             JSON.stringify(json["MD"]) === JSON.stringify(materialDidatico)) {
                             await axios.delete(`https://api.contaazul.com/v1/sales/${sale.id}`, { headers: header })
@@ -343,7 +344,7 @@ class RegisterContaAzulController {
                         "MD Valor": material.total,
                         "MD vencimento": vencimentoMaterialDidatico,
                         "MD forma pg": formaPagamentoMaterialDidatico,
-                        "TM Valor": 350 - descontoTaxaMatricula,
+                        "TM Valor": tax.total,
                         "TM forma de pg": formaPagamentoTaxaMatricula,
                         "TM Venc": dataPagamentoTaxaMatricula,
                         "TM parcelas": parcelasTaxaMatricula,
@@ -353,7 +354,7 @@ class RegisterContaAzulController {
                         "Aluno": nomeAluno,
                         "Responsável": nomeResponsavel,
                         "contrato": contrato,
-                        "serviço": "parcela",
+                        "serviço": "material didatico",
                         "vendedor": vendedor,
                         "observacao do rd": observacaoPedagogico,
                         "observacao para o financeiro": observacaoFinanceiro,
@@ -549,12 +550,28 @@ class RegisterContaAzulController {
                                     })
                             )
                         })
-
-
                     }
 
-
                     if (tax.total > 0) {
+                        const { data: sales } = await axios.get(`https://api.contaazul.com/v1/sales?customer_id=${data.data[0].id}`, { headers: header })
+
+                        sales.map(async sale => {
+                            let cleanData = sale.notes.replace(/\\n/g, "")
+                            cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
+
+                            const json = JSON.parse(cleanData)
+
+
+                            if (json["serviço"] === "taxa de matricula" &&
+                                json["Aluno"] === nomeAluno &&
+                                json["Responsável"] === nomeResponsavel &&
+                                JSON.stringify(sale.total) === JSON.stringify(tax.total)) {
+                                await axios.delete(`https://api.contaazul.com/v1/sales/${sale.id}`, { headers: header })
+                                console.log("cópia deletada")
+                            }
+                        })
+
+
 
                         let promo = {
                             "parcelas afetadas": parcel?.campaign?.affectedParcels,
@@ -576,7 +593,7 @@ class RegisterContaAzulController {
                             "MD Valor": material.total,
                             "MD vencimento": vencimentoMaterialDidatico,
                             "MD forma pg": formaPagamentoMaterialDidatico,
-                            "TM Valor": 350 - descontoTaxaMatricula,
+                            "TM Valor": tax.total,
                             "TM forma de pg": formaPagamentoTaxaMatricula,
                             "TM Venc": dataPagamentoTaxaMatricula,
                             "TM parcelas": parcelasTaxaMatricula,
@@ -586,7 +603,7 @@ class RegisterContaAzulController {
                             "Aluno": nomeAluno,
                             "Responsável": nomeResponsavel,
                             "contrato": contrato,
-                            "serviço": "parcela",
+                            "serviço": "taxa de matricula",
                             "vendedor": vendedor,
                             "observacao do rd": observacaoPedagogico,
                             "observacao para o financeiro": observacaoFinanceiro,
