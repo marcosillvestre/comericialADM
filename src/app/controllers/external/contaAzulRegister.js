@@ -2,7 +2,6 @@ import axios from 'axios';
 import 'dotenv/config';
 import { DateTransformer } from '../../../config/DateTransformer.js';
 import { installments } from '../../../config/installments.js';
-import { parseNumber } from '../../../config/serializeNumbers.js';
 import { getToken } from '../../core/getToken.js';
 
 
@@ -98,6 +97,7 @@ class RegisterContaAzulController {
             Unidade,
             material,
             parcel,
+            tax,
 
             ['Nome do responsável']: nomeResponsavel,
             ['Valor do Desconto na Taxa de Matrícula']: descontoTaxaMatricula,
@@ -215,7 +215,6 @@ class RegisterContaAzulController {
 
 
 
-
                             return await new Promise(resolve => {
                                 resolve(
                                     axios.post('https://api.contaazul.com/v1/contracts', body,
@@ -249,6 +248,7 @@ class RegisterContaAzulController {
             })
 
         } catch (error) {
+            console.log(error)
             return res.status(400).json({ message: error })
         }
     }
@@ -265,6 +265,7 @@ class RegisterContaAzulController {
 
             material,
             parcel,
+            tax,
 
             ['Nome do responsável']: nomeResponsavel,
             ['Valor do Desconto na Taxa de Matrícula']: descontoTaxaMatricula,
@@ -300,10 +301,23 @@ class RegisterContaAzulController {
                     { headers: header }))
             }).then(async data => {
                 if (data.data[0]) {
+                    const [products, sellers, sales, paymentMethods] = await Promise.all([
+                        axios.get("https://api.contaazul.com/v1/products?size=10000",
+                            { headers: header }),
 
-                    const { data: sales } = await axios.get(`https://api.contaazul.com/v1/sales?customer_id=${data.data[0].id}`, { headers: header })
+                        axios.get("https://api.contaazul.com/v1/sales/sellers",
+                            { headers: header }),
 
-                    sales.map(async sale => {
+                        axios.get(`https://api.contaazul.com/v1/sales?customer_id=${data.data[0].id}`,
+                            { headers: header }),
+
+
+                        axios.get(`https://api.contaazul.com/v1/sales/banks`,
+                            { headers: header }),
+                    ])
+
+
+                    sales.data.map(async sale => {
                         let cleanData = sale.notes.replace(/\\n/g, "")
                         cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
 
@@ -316,9 +330,6 @@ class RegisterContaAzulController {
                             await axios.delete(`https://api.contaazul.com/v1/sales/${sale.id}`, { headers: header })
                         }
                     })
-
-
-                    const sellers = await axios.get("https://api.contaazul.com/v1/sales/sellers", { headers: header })
 
                     let seller = vendedor.split(" ")
                     let related = sellers.data.filter(res => res.name.includes(seller[0]))
@@ -366,31 +377,26 @@ class RegisterContaAzulController {
 
                     const saleNotes = JSON.stringify(salesNotesString, null, 2)
 
-
                     let productsSale = []
 
                     const product = materialDidatico.map(async teachMaterial => {
-                        await axios.get("https://api.contaazul.com/v1/products?size=10000",
-                            { headers: header })
-                            .then(async products => {
-                                let splited = teachMaterial.split(" / ")[1]
-                                let product;
-                                if (splited !== undefined) {
-                                    product = products.data.filter(data => data.code === splited)
-                                }
-                                if (splited === undefined) {
-                                    product = products.data.filter(data => data.name.includes(teachMaterial))
-                                }
-                                const pd = {
-                                    "description": product[0]?.name,
-                                    "quantity": 1,
-                                    "value": product[0]?.value === 0 ? product[0]?.value + 1 : product[0]?.value,
-                                    "product_id": product[0]?.id,
-                                }
+                        let splited = teachMaterial.split(" / ")[1]
+                        let product;
+                        if (splited !== undefined) {
+                            product = products.data.filter(data => data.code === splited)
+                        }
+                        if (splited === undefined) {
+                            product = products.data.filter(data => data.name.includes(teachMaterial))
+                        }
+                        const pd = {
+                            "description": product[0]?.name,
+                            "quantity": 1,
+                            "value": product[0]?.value === 0 ? product[0]?.value + 1 : product[0]?.value,
+                            "product_id": product[0]?.id,
+                        }
 
-                                productsSale.push(pd)
+                        productsSale.push(pd)
 
-                            })
 
                     })
 
@@ -424,19 +430,71 @@ class RegisterContaAzulController {
 
                     }
 
+                    const paymentType = {
+                        "Boleto": "BANKING_BILLET",
+                        "Cartão de crédito via link": "PAYMENT_LINK",
+                        "Boleto bancário": "BANKING_BILLET",
+                        "Cartão de crédito via outro bancos": "CREDIT_CARD",
+                        "Cartão de débito via outros bancos": "DEBIT_CARD",
+                        "Dinheiro": "CASH",
+                        "PIX - Pagamento Instantâneo": "INSTANT_PAYMENT",
+                        "Pix": "INSTANT_PAYMENT",
+                        "Pix cobrança": "PIX_CHARGE",
+                        "Sem pagamento": "WITHOUT_PAYMENT",
+                        "Isenção": "WITHOUT_PAYMENT",
+                        "Transferência bancária": "BANKING_TRANSFER",
+                        "Outros": "OTHER",
+
+                        "": "AUTOMATIC_DEBIT",
+                        "": "FIDELITY_PROGRAM",
+                        "": "DIGITAL_WALLET",
+                        "": "CASHBACK",
+                        "": "CHECK",
+                        "": "STORE_CREDIT",
+                        "": "VIRTUAL_CREDIT",
+                        "": "BANKING_DEPOSIT",
+                        "": "FOOD_VOUCHER",
+                        "": "FUEL_VOUCHER",
+                        "": "GIFT_VOUCHER",
+                        "": "MEAL_VOUCHER",
+                    }
+
+                    const financial_account = {
+                        "Boleto": 'Conta PJ Conta Azul',
+                        "Cartão de crédito via link": 'Conta PJ Conta Azul',
+                        "Cartão de débito via outros bancos": 'Rede',
+                        "Cartão de crédito via outro bancos": 'Rede',
+                        "Dinheiro": 'Caixa Físico',
+                        "Outros": 'Bolsas, isenções e outros meios indeterminados',
+                        "Pix": 'Inter_PJ',
+                        "Transferência bancária": 'Inter_PJ',
+                        "Pix cobrança": 'Conta PJ Conta Azul',
+                        "Sem pagamento": 'Bolsas, isenções e outros meios indeterminados',
+
+                        "": 'Amais Financeira',
+                        "": 'Azulzinha da Caixa',
+                        "": 'Bolsistas Integrais',
+                        "": 'BTG Pactual - PJ',
+                        "": 'Caixa Econômica Conta PJ',
+                        "": 'Caixa Excedente',
+                        "": 'Cartão Caixa',
+                        "": 'Cartão Inter PJ',
+                        "": 'Cartão PJ Santander 21',
+                        "": 'Cartão PJ Santander 26',
+                        "": 'Cartão Santander PJ 12',
+                        "": 'Itaú_PJ',
+                        "": 'Receba Fácil',
+                        "": 'Santander_PJ',
+                        "": 'ZOOP'
+
+                    }
+
                     if (productsSale.length === materialDidatico.length) {
 
-
-                        let descontoMd = valorDescontoMaterialDidatico.includes(",") ?
-                            parseFloat(valorDescontoMaterialDidatico.replace(",", ".")) :
-                            parseNumber(valorDescontoMaterialDidatico)
+                        const installment = await installments(dataPagamentoTaxaMatricula, material.materials.length, material.total)
+                        const financialId = paymentMethods.data.find(p => p.name === financial_account[formaPagamentoMaterialDidatico])
 
 
-                        let valorMd = material.total - descontoMd
-
-
-                        const installment = await installments(dataPagamentoTaxaMatricula, material.materials.length, valorMd)
-                        ////////////////
                         const teachingmaterial = {
                             "emission": new Date(),
                             "status": "PENDING",
@@ -445,20 +503,19 @@ class RegisterContaAzulController {
                             "seller_id": related.length === 0 ? "" : related[0].id,
                             "discount": {
                                 "measure_unit": "VALUE",
-                                "rate": descontoMd
+                                "rate": material.descount
                             },
                             "payment": {
                                 "type": "TIMES",
-                                "method": "BANKING_BILLET",
-                                "financial_account_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
-                                    "4ad586ad-3743-4d69-b311-913a66e24abb" : "e7b60ea7-0ec0-48fe-a196-d2833fc70f61",//
+                                "method": paymentType[formaPagamentoMaterialDidatico],
+                                "financial_account_id": financialId.uuid,
                                 "installments": installment
                             },
                             "notes": saleNotes,
                             "category_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
-                                "2f8a7a4e-c283-4a05-850a-c0de6a228b71" : "dcc730b4-89a6-4ccf-9dd7-7272345238d7" //
+                                "062c6bab-c7f4-4bd5-bed5-f9e340219642" : "466b417c-9945-413d-ad4b-637a1ad36d51" //
                         }
-                        // console.log(JSON.stringify(teachingmaterial, null, 2))
+
                         await ContaAzulSender(teachingmaterial)
                     }
 
@@ -526,6 +583,19 @@ class RegisterContaAzulController {
                     { headers: header }))
             }).then(async data => {
                 if (data.data[0]) {
+                    const [sellers, sales, paymentMethods] = await Promise.all([
+
+                        axios.get("https://api.contaazul.com/v1/sales/sellers",
+                            { headers: header }),
+
+                        axios.get(`https://api.contaazul.com/v1/sales?customer_id=${data.data[0].id}`,
+                            { headers: header }),
+
+
+                        axios.get(`https://api.contaazul.com/v1/sales/banks`,
+                            { headers: header }),
+                    ])
+
 
                     async function ContaAzulSender(cell) {
 
@@ -553,9 +623,7 @@ class RegisterContaAzulController {
                     }
 
                     if (tax.total > 0) {
-                        const { data: sales } = await axios.get(`https://api.contaazul.com/v1/sales?customer_id=${data.data[0].id}`, { headers: header })
-
-                        sales.map(async sale => {
+                        sales.data.map(async sale => {
                             let cleanData = sale.notes.replace(/\\n/g, "")
                             cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
 
@@ -565,12 +633,12 @@ class RegisterContaAzulController {
                             if (json["serviço"] === "taxa de matricula" &&
                                 json["Aluno"] === nomeAluno &&
                                 json["Responsável"] === nomeResponsavel &&
+                                json["Curso"] === Curso &&
                                 JSON.stringify(sale.total) === JSON.stringify(tax.total)) {
                                 await axios.delete(`https://api.contaazul.com/v1/sales/${sale.id}`, { headers: header })
                                 console.log("cópia deletada")
                             }
                         })
-
 
 
                         let promo = {
@@ -611,17 +679,73 @@ class RegisterContaAzulController {
                             "desconto no material didatico": valorDescontoMaterialDidatico,
                             "promoção": promocao === "Sim" ? promo : "Sem promoção"
                         }
+
                         const saleNotes = JSON.stringify(salesNotesString, null, 2)
-
-
-                        const sellers = await axios.get("https://api.contaazul.com/v1/sales/sellers",
-                            { headers: header })
 
                         let seller = vendedor.split(" ")[0]
                         let related = sellers.data.find(res => res.name.includes(seller))
 
+                        const paymentType = {
+                            "Boleto": "BANKING_BILLET",
+                            "Cartão de crédito via link": "PAYMENT_LINK",
+                            "Boleto bancário": "BANKING_BILLET",
+                            "Cartão de crédito via outro bancos": "CREDIT_CARD",
+                            "Cartão de débito via outros bancos": "DEBIT_CARD",
+                            "Dinheiro": "CASH",
+                            "PIX - Pagamento Instantâneo": "INSTANT_PAYMENT",
+                            "Pix": "INSTANT_PAYMENT",
+                            "Pix cobrança": "PIX_CHARGE",
+                            "Sem pagamento": "WITHOUT_PAYMENT",
+                            "Isenção": "WITHOUT_PAYMENT",
+                            "Transferência bancária": "BANKING_TRANSFER",
+                            "Outros": "OTHER",
+
+                            "": "AUTOMATIC_DEBIT",
+                            "": "FIDELITY_PROGRAM",
+                            "": "DIGITAL_WALLET",
+                            "": "CASHBACK",
+                            "": "CHECK",
+                            "": "STORE_CREDIT",
+                            "": "VIRTUAL_CREDIT",
+                            "": "BANKING_DEPOSIT",
+                            "": "FOOD_VOUCHER",
+                            "": "FUEL_VOUCHER",
+                            "": "GIFT_VOUCHER",
+                            "": "MEAL_VOUCHER",
+                        }
+
+                        const financial_account = {
+                            "Boleto": 'Conta PJ Conta Azul',
+                            "Cartão de crédito via link": 'Conta PJ Conta Azul',
+                            "Cartão de débito via outros bancos": 'Rede',
+                            "Cartão de crédito via outro bancos": 'Rede',
+                            "Dinheiro": 'Caixa Físico',
+                            "Outros": 'Bolsas, isenções e outros meios indeterminados',
+                            "Pix": 'Inter_PJ',
+                            "Transferência bancária": 'Inter_PJ',
+                            "Pix cobrança": 'Conta PJ Conta Azul',
+                            "Sem pagamento": 'Bolsas, isenções e outros meios indeterminados',
+
+                            "": 'Amais Financeira',
+                            "": 'Azulzinha da Caixa',
+                            "": 'Bolsistas Integrais',
+                            "": 'BTG Pactual - PJ',
+                            "": 'Caixa Econômica Conta PJ',
+                            "": 'Caixa Excedente',
+                            "": 'Cartão Caixa',
+                            "": 'Cartão Inter PJ',
+                            "": 'Cartão PJ Santander 21',
+                            "": 'Cartão PJ Santander 26',
+                            "": 'Cartão Santander PJ 12',
+                            "": 'Itaú_PJ',
+                            "": 'Receba Fácil',
+                            "": 'Santander_PJ',
+                            "": 'ZOOP'
+
+                        }
 
                         const installment = await installments(dataPagamentoTaxaMatricula, parcelasTaxaMatricula, tax.total)
+                        const financialId = paymentMethods.data.find(p => p.name === financial_account[formaPagamentoTaxaMatricula])
 
 
                         const taxCell = {
@@ -644,15 +768,14 @@ class RegisterContaAzulController {
                             },
                             "payment": {
                                 "type": "TIMES",
-                                "method": "BANKING_BILLET",
-                                "financial_account_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
-                                    "4ad586ad-3743-4d69-b311-913a66e24abb" : "e7b60ea7-0ec0-48fe-a196-d2833fc70f61",//
+                                "method": paymentType[formaPagamentoTaxaMatricula],
+                                "financial_account_id": financialId.uuid,
                                 "installments": installment
                                 ,
                             },
                             "notes": saleNotes,
                             "category_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
-                                "297e5d91-68c4-4ee8-aa9a-dc4b8a379767" : "b4574cdf-45b1-4647-a937-791607be9aba"
+                                "8d697a13-88df-4330-ab1b-c55ecb841b37" : "edd792ee-86ce-44a8-817d-1a54ba5482b0"
                         }
 
                         await ContaAzulSender(taxCell)
@@ -666,6 +789,7 @@ class RegisterContaAzulController {
                 }
             })
                 .catch(err => {
+                    console.log(err)
                     return res.status(400).json({ message: `Erro no cpf digitado: ${CPF}` })
 
                 })
