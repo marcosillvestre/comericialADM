@@ -47,6 +47,7 @@ routes.post('/nova-senha', SessionController.redefinePassword)
 routes.use(auth) // autenticated routes
 
 routes.get('/contrato/:unity', PostConttroller.getRecent)
+routes.get('/matricula/:id', PostConttroller.returnContract)
 
 ////////////////////////////
 routes.post("/campanha", CampaignController.store)

@@ -3,11 +3,11 @@ import "dotenv/config";
 import { funis } from "../../../utils/funnels.js";
 import { stages } from "../../../utils/stage.js";
 
-import { bodyMakerForCustomFields } from '../../../config/customFieldFinder.js';
+import { bodyFilterCustomFields, bodyMakerForCustomFields } from '../../../config/customFieldFinder.js';
 import prisma from '../../../database/database.js';
 import { Historic } from "../../../database/historic/properties.js";
 import { GetDocument } from '../../connection/externalConnections/autentique.js';
-import { winADeal } from '../../connection/externalConnections/rdStation.js';
+import { getContactsWithId, winADeal } from '../../connection/externalConnections/rdStation.js';
 import { CreateCommentOnTrello, StartCicleWhenNewRegisterIsCreated } from '../../connection/externalConnections/trello.js';
 import { ScheduleBotMessages, SendGroupAlerts, SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
 import { gatheringDataForDatabase } from '../../connection/rdSearchSync.js';
@@ -25,7 +25,7 @@ class PostController {
                 .then(async (response) => {
                     const array = []
                     for (const index of response?.data?.deals) {
-                        const body = await bodyMakerForCustomFields(index)
+                        const body = await bodyFilterCustomFields(index)
                         array.push(body)
                     }
 
@@ -40,6 +40,31 @@ class PostController {
             console.log("error " + error)
         }
     }
+
+    async returnContract(req, res) {
+        const { id } = req.params
+
+
+        const data = await getContactsWithId(id)
+
+        try {
+
+            const body = await bodyMakerForCustomFields(data)
+
+            return res.status(200).json({
+                contract: body,
+            })
+
+
+        } catch (error) {
+            console.log(error)
+            return res.status(400).json("Erro")
+        }
+    }
+
+
+
+
 
     async sender(req, res) {
         const { event: { data } } = req.body
@@ -231,9 +256,6 @@ acabou de assinar o contrato de ${newUser.customFields['Background do Aluno']}`
         }
 
     }
-
-
-
 
     async comissionData(req, res) {
         const { range, unity, dates } = req.query

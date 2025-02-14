@@ -30,7 +30,7 @@ const functionsArray = [
         fn: firstClassSearch
     },
     {
-        time: "0 12 * * *",
+        time: "0 4 * * *",
         fn: firstClassDaily
     },
 
