@@ -100,7 +100,6 @@ class RegisterContaAzulController {
             tax,
 
             ['Nome do responsável']: nomeResponsavel,
-            ['Valor do Desconto na Taxa de Matrícula']: descontoTaxaMatricula,
             ['Data de pagamento TM']: dataPagamentoTaxaMatricula,
             ['Quantidade de parcelas TM ']: parcelasTaxaMatricula,
             ['Forma de pagamento TM']: formaPagamentoTaxaMatricula,
@@ -146,7 +145,7 @@ class RegisterContaAzulController {
                     const salesNotesString = {
                         "id": id,
                         "Valor total": valorCurso,
-                        "Valor da Parcela": parseFloat(valorCurso) / parseInt(parcelas),
+                        "Valor da Parcela": parcel.parcels[parcel.parcels.length - 1].valor,
                         "PP Forma PG": formaPagamentoParcelas,
                         "Parcela dia de vencimento": vencimentoPrimeiraParcela.split("/")[0],
                         "Data de vencimento da primeira parcela": vencimentoPrimeiraParcela,
@@ -172,7 +171,8 @@ class RegisterContaAzulController {
                         "observacao do rd": observacaoPedagogico,
                         "observacao para o financeiro": observacaoFinanceiro,
 
-                        "desconto no material didatico": valorDescontoMaterialDidatico,
+                        "Desconto no material didatico": valorDescontoMaterialDidatico,
+                        "Desconto por pontualidade": parcel.descountForPontuality,
                         "promoção": promocao === "Sim" ? promo : "Sem promoção"
                     }
 
@@ -183,7 +183,6 @@ class RegisterContaAzulController {
                         .then(async info => {
                             const filtered = info.data?.find(services => services.name.includes(service))
 
-                            let value = parseFloat(valorCurso) / parseInt(parcelas)
 
                             let venc = await DateTransformer(vencimentoPrimeiraParcela)
                             venc.setDate(venc.getDate() - 20)
@@ -200,7 +199,7 @@ class RegisterContaAzulController {
                                         "description": filtered?.name,
                                         "quantity": 1,
                                         "service_id": filtered?.id,
-                                        "value": value.toFixed(2)
+                                        "value": parcel.parcels[parcel.parcels.length - 1].valor
                                     }
                                 ],
                                 "discount": {
@@ -237,13 +236,12 @@ class RegisterContaAzulController {
                             })
                         })
                         .catch((err) => {
-
-                            return res.status(400).json({ message: `Erro no cpf digitado: ${cpf}` })
+                            return res.status(400).json({ message: `Erro no cpf digitado: ${CPF}` })
                         })
 
                 }
                 if (data.data.length === 0) {
-                    return res.status(400).json({ message: `Erro no cpf digitado: ${cpf}` })
+                    return res.status(400).json({ message: `Erro no cpf digitado: ${CPF}` })
                 }
             })
 
