@@ -1,5 +1,5 @@
+import { gatheringDataForDatabase } from "../app/connection/rdSearchSync.js"
 import prisma from "../database/database.js"
-import { getDataFromCep } from '../app/connection/externalConnections/viaCep.js'
 
 
 export const findYourValueForCustomFields = (customFieldLabel, deal_custom_fields) => {
@@ -13,23 +13,17 @@ export const findYourValueForCustomFields = (customFieldLabel, deal_custom_field
 
 export const bodyMakerForCustomFields = async (contractData) => {
 
-    const { deal, phone, email } = contractData
+    const { deal, phone } = contractData
 
+    const [data] = await gatheringDataForDatabase([deal])
 
-    const address = await getDataFromCep(findYourValueForCustomFields("CEP", deal.deal_custom_fields))
     const material = findYourValueForCustomFields("Material didático", deal.deal_custom_fields)
 
     const materilFiltered = material[0] === "Outros" || material[0] === "Office" ?
         [] : material.map(res => { return res.split(" / ")[1] })
 
 
-    const [cf, products] = await prisma.$transaction([
-
-        prisma.customFields.findMany({
-            orderBy: {
-                order: 'asc'
-            }
-        }),
+    const [products] = await prisma.$transaction([
         prisma.products.findMany({
             where: {
                 sku: {
@@ -38,15 +32,6 @@ export const bodyMakerForCustomFields = async (contractData) => {
             }
         })
     ])
-
-    const data = {}
-
-    cf.map(res => {
-        data[res.name] = findYourValueForCustomFields(
-            res.name,
-            deal.deal_custom_fields
-        )
-    })
 
     const convenio = await findYourValueForCustomFields("Tipo de Campanha / Convênio", deal.deal_custom_fields)
 
@@ -59,15 +44,13 @@ export const bodyMakerForCustomFields = async (contractData) => {
 
     return {
         id: deal.id,
-        endereco: address,
-        products,
         promocao,
+        products,
         vendedor,
-        email,
         CelularResponsavel: phone,
         valorCurso: deal.deal_products[0]?.total,
         service: deal.deal_products[0]?.name,
-        ...data
+        ...data.customFields
     }
 
 }

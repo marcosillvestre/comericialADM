@@ -1,7 +1,11 @@
+import axios from "axios";
 import "dotenv/config";
+import { findYourValueForCustomFields } from "../../config/customFieldFinder.js";
+import { DateTransformer } from "../../config/DateTransformer.js";
 import prisma from '../../database/database.js';
 import { getContactsWithId } from './externalConnections/rdStation.js';
 import { StartCicleWhenNewRegisterIsCreated } from "./externalConnections/trello.js";
+import { getDataFromCep } from "./externalConnections/viaCep.js";
 
 const comebackDays = 3
 const options = { method: 'GET', headers: { accept: 'application/json' } };
@@ -37,11 +41,86 @@ async function UpdateTheCustomFields() {
         })
 }
 
+const calcularDiferencaAnos = async (dataString) => {
+    // const dataFornecida = new Date(dataString.split('/').reverse().join('-'));
+    const dataFornecida = await DateTransformer(dataString)
+
+    const hoje = new Date();
+
+    let diferenca = hoje.getFullYear() - dataFornecida.getFullYear();
+
+    // Ajusta a diferença se o aniversário ainda não ocorreu neste ano
+    if (
+        hoje.getMonth() < dataFornecida.getMonth() ||
+        (hoje.getMonth() === dataFornecida.getMonth() && hoje.getDate() < dataFornecida.getDate())
+    ) {
+        diferenca--;
+    }
+
+    return diferenca;
+}
+
+// Exemplo de uso:
+
+const courses = {
+    "Fluency Way Class - Adults": "Inglês/80/Em grupo",
+    "Fluency Way Class - Teens": "Inglês/80/Em grupo",
+    "Fluency Way Class - Online": "Inglês/80/Em grupo",
+    "Fluency Way Class - Kids": "Inglês/80/Em grupo",
+    "Fluency Way Class - Little Ones": "Inglês/80/Em grupo",
+    "Fluency Way Class - Standard One": "Inglês/80/Em grupo",
+
+    "Fluency Way X - One X": "Inglês/44/Individual",
+    "Fluency Way X - Double X": "Inglês/88/Individual",
+    "Fluency Way X - Triple X": "Inglês/132/Individual",
+    "Fluency Way X - 4X": "Inglês/176/Individual",
+    "Fluency Way X Plus - One X": "Inglês/44/Individual",
+    "Fluency Way X Plus - Double X": "Inglês/88/Individual",
+    "Fluency Way X Plus - Triple X": "Inglês/132/Individual",
+    "Fluency Way X Plus - 4X": "Inglês/176/Individual",
+
+    "El Español - En grupo - Turma": "Espanhol/80/Em grupo",
+    "El Español - X1": "Espanhol/44/Individual",
+    "El Español - X2": "Espanhol/88/Individual",
+    "El Español - X3": "Espanhol/88/Individual",
+
+    "Tecnologia - Office Essential": "Tecnologia/60/Em grupo",
+}
+
+
+
+async function GetPipelineStage(id) {
+    try {
+        const { data: { deal_pipeline } } = await axios.get(`https://crm.rdstation.com/api/v1/deal_stages/${id}?token=${process.env.RD_TOKEN}`)
+
+        return deal_pipeline
+    } catch (error) {
+        console.log(error)
+    }
+
+
+}
+
+
 export const gatheringDataForDatabase = async (deals) => {
     const data = []
     for (const deal of deals) {
 
-        const { id, deal_custom_fields, user, name } = deal
+        const { id, deal_custom_fields, user, name, deal_products: [service], deal_stage } = deal
+
+        const { name: pipeName } = await GetPipelineStage(deal_stage.id)
+        const CEP = await findYourValueForCustomFields('CEP', deal_custom_fields)
+
+
+        const { logradouro: Endereco, bairro: Bairro, localidade: Cidade, uf: Uf } = await getDataFromCep(CEP)
+
+        const studentBorn = await findYourValueForCustomFields('Data de nascimento do aluno', deal_custom_fields)
+        const studentAge = await calcularDiferencaAnos(studentBorn)
+
+
+        const [Classe, Subclasse] = service.name.split(' - ');
+
+
 
         const { phone, email } = await getContactsWithId(id)
 
@@ -58,15 +137,32 @@ export const gatheringDataForDatabase = async (deals) => {
                     .map(res => res.value)[0] || ""
             }
 
+            const splited = pipeName.split(" ")
+
+
             return await {
+                Endereco,
+                Bairro,
+                Cidade,
+                Uf,
                 Phone: phone,
                 Email: email,
+                Classe,
+                Subclasse,
+                Curso: courses[service.name] ? courses[service.name].split("/")[0] : "",
+                "Idade do Aluno": studentAge,
+                "Tipo/ modalidade": courses[service.name] ? courses[service.name].split("/")[2] : "",
+                "Carga horário do curso ": courses[service.name] ? courses[service.name].split("/")[1] : "",
+                "Background do Aluno": pipeName.includes("Rematrícula") ? "Rematrícula" : "Novo aluno",
+                "Unidade": splited[splited.length - 1],
+                "Automaticos": "true",
                 ...result
             }
 
         }
 
         const json = await customFields()
+
 
         data.push({
             id,
@@ -98,8 +194,8 @@ async function LoopForStoreNewRegisters(deals) {
         // Se pelo menos um registro foi salvo, retorna true
         sucesso = results.some((r) => r === true);
     } catch (error) {
-        if (error.meta.target[0] === 'id') sucesso = null
         console.error("Sem registros para armazenar");
+        if (error.meta?.target[0] === 'id') return sucesso = null
     }
     return sucesso;
 }
@@ -125,7 +221,7 @@ async function NewSearchSync() {
 }
 
 export default NewSearchSync
-
+// NewSearchSync()
 
 // const t = [
 

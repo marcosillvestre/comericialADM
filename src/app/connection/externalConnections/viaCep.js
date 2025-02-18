@@ -7,7 +7,8 @@ export const getDataFromCep = async (cep) => {
         const { data } = await axios.get(`https://viacep.com.br/ws/${cep}/json/`)
         return data
     } catch (error) {
-        throw new Error(`Error viaCep: ${error}`);
+        console.log(error)
+        // throw new Error(`Error viaCep: ${error}`);
     }
 
 }

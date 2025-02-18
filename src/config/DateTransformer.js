@@ -6,4 +6,3 @@ export function DateTransformer(dateStr) {
 
     return new Date(isoDate)
 }
-
