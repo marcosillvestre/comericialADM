@@ -150,7 +150,7 @@ export const gatheringDataForDatabase = async (deals) => {
                 Subclasse,
                 Curso: courses[service.name] ? courses[service.name].split("/")[0] : "",
                 Unidade: splited[splited.length - 1],
-                "Nº do contrato": encriptedCode,
+                // "Nº do contrato": encriptedCode,
                 "Idade do Aluno": studentAge,
                 "Tipo/ modalidade": courses[service.name] ? courses[service.name].split("/")[2] : "",
                 "Carga horário do curso": courses[service.name] ? courses[service.name].split("/")[1] : "",
