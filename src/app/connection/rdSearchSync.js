@@ -112,14 +112,10 @@ export const gatheringDataForDatabase = async (deals) => {
         const CEP = await findYourValueForCustomFields('CEP', deal_custom_fields)
 
 
-        const { logradouro: Endereco, bairro: Bairro, localidade: Cidade, uf: Uf } = await getDataFromCep(CEP)
+        const viaCepData = await getDataFromCep(CEP)
 
         const studentBorn = await findYourValueForCustomFields('Data de nascimento do aluno', deal_custom_fields)
         const studentAge = await calcularDiferencaAnos(studentBorn)
-
-
-        const [Classe, Subclasse] = service.name.split(' - ');
-
 
 
         const { phone, email } = await getContactsWithId(id)
@@ -138,25 +134,27 @@ export const gatheringDataForDatabase = async (deals) => {
             }
 
             const splited = pipeName.split(" ")
+            const [Classe, Subclasse] = service.name.split(' - ');
 
+            // const encriptedCode = result["Vendedor"]
 
             return await {
-                Endereco,
-                Bairro,
-                Cidade,
-                Uf,
+                ...result,
+                Endereco: viaCepData['logradouro'],
+                Bairro: viaCepData['bairro'],
+                Cidade: viaCepData['localidade'],
+                Uf: viaCepData['uf'],
                 Phone: phone,
                 Email: email,
                 Classe,
                 Subclasse,
                 Curso: courses[service.name] ? courses[service.name].split("/")[0] : "",
+                Unidade: splited[splited.length - 1],
+                "Nº do contrato": encriptedCode,
                 "Idade do Aluno": studentAge,
                 "Tipo/ modalidade": courses[service.name] ? courses[service.name].split("/")[2] : "",
-                "Carga horário do curso ": courses[service.name] ? courses[service.name].split("/")[1] : "",
+                "Carga horário do curso": courses[service.name] ? courses[service.name].split("/")[1] : "",
                 "Background do Aluno": pipeName.includes("Rematrícula") ? "Rematrícula" : "Novo aluno",
-                "Unidade": splited[splited.length - 1],
-                "Automaticos": "true",
-                ...result
             }
 
         }
@@ -216,6 +214,8 @@ async function NewSearchSync() {
         .then(response => response.json())
         .then(async response => {
             const { total, deals } = response
+            // console.log(deals[0])
+            // return
             if (total > 0) await LoopForStoreNewRegisters(deals)
         })
 }

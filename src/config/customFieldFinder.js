@@ -27,7 +27,7 @@ export const bodyMakerForCustomFields = async (contractData) => {
         prisma.products.findMany({
             where: {
                 sku: {
-                    in: materilFiltered
+                    in: materilFiltered.filter(res => res !== undefined)
                 }
             }
         })
@@ -43,6 +43,7 @@ export const bodyMakerForCustomFields = async (contractData) => {
         findYourValueForCustomFields("Vendedor", deal.deal_custom_fields) : deal.user.name
 
     return {
+        ...data.customFields,
         id: deal.id,
         promocao,
         products,
@@ -50,7 +51,6 @@ export const bodyMakerForCustomFields = async (contractData) => {
         CelularResponsavel: phone,
         valorCurso: deal.deal_products[0]?.total,
         service: deal.deal_products[0]?.name,
-        ...data.customFields
     }
 
 }
@@ -58,14 +58,17 @@ export const bodyMakerForCustomFields = async (contractData) => {
 
 export const bodyFilterCustomFields = async (deal) => {
 
+    const { id, deal_custom_fields, deal_products: [service], contacts } = deal
+    const [Classe, Subclasse] = service.name.split(' - ');
+
     return {
-        id: deal.id,
-        name: findYourValueForCustomFields("Nome do responsável", deal.deal_custom_fields),
-        student: findYourValueForCustomFields("Nome do aluno", deal.deal_custom_fields),
-        createdDate: findYourValueForCustomFields("Data de emissão da venda", deal.deal_custom_fields),
-        contract: findYourValueForCustomFields("Nº do contrato", deal.deal_custom_fields),
-        phone: deal.contacts[0]?.phones[0]?.phone,
-        subclass: findYourValueForCustomFields("Subclasse", deal.deal_custom_fields),
-        seller: findYourValueForCustomFields("Vendedor", deal.deal_custom_fields),
+        id: id,
+        name: findYourValueForCustomFields("Nome do responsável", deal_custom_fields),
+        student: findYourValueForCustomFields("Nome do aluno", deal_custom_fields),
+        createdDate: findYourValueForCustomFields("Data de emissão da venda", deal_custom_fields),
+        contract: findYourValueForCustomFields("Nº do contrato", deal_custom_fields),
+        phone: contacts[0]?.phones[0]?.phone,
+        subclass: Subclasse,
+        seller: findYourValueForCustomFields("Vendedor", deal_custom_fields),
     }
 }

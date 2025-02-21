@@ -31,6 +31,10 @@ export class PastCodes {
         return lastMondayDate.toLocaleDateString("pt-BR").replace(/\//g, "");
 
     }
-}
 
+    getCodeFor2Day() {
+        let today = new Date();
+        return today.toLocaleDateString("pt-BR").replace(/\//g, "")
+    }
+}
 

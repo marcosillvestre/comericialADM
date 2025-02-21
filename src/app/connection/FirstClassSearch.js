@@ -1,7 +1,6 @@
 import { DateTransformer } from "../../config/DateTransformer.js";
 import { PastCodes } from "../../config/getLastMonday.js";
 import prisma from "../../database/database.js";
-import { CreateCommentOnTrello } from "./externalConnections/trello.js";
 import { SendGroupAlerts } from "./externalConnections/wpp.js";
 
 
@@ -91,7 +90,7 @@ async function SearchFirstClassWeek(unity) {
 async function SearchFirstClassForTomorrow(unity) {
 
     const separated4Month = await databaseSearch(unity)
-    let listByWeek = await filterForPeriod(separated4Month, 1)
+    let listByWeek = await filterForPeriod(separated4Month, 2)
 
     return listByWeek
 }
@@ -126,34 +125,34 @@ export const firstClassDaily = async () => {
     console.log("[SEARCHING FIRST CLASSES: DAILY]")
 
     for (const unity of ["Centro", "PTB"]) {
-        let chat = unity === "Centro" ? process.env.UMBLER_TEACHER_CENTRO : process.env.UMBLER_TEACHER_PTB
+        let chat = unity === "Centro" ?
+            process.env.UMBLER_TEACHER_CENTRO : process.env.UMBLER_TEACHER_PTB
 
         const list = await SearchFirstClassForTomorrow(unity)
-
-
+        const date = new Date()
 
 
         if (list.length === 0) return await SendGroupAlerts(`*Sem registro de novos alunos até o momento*`,
             chat
         )
-        await SendGroupAlerts(`Lista de alunos que terão sua primeira aula hoje na unidade: *${unity}*`,
+
+        await SendGroupAlerts(`Lista de alunos que terão sua primeira aula entre ${date.toLocaleDateString('pt-Br')} e ${new Date(date.setDate(date.getDate() + 2)).toLocaleDateString('pt-Br')} na unidade: *${unity}*`,
             chat
         )
 
         for (const element of list) {
-            await Promise.all([SendGroupAlerts(
-                JSON.stringify(element, null, 2).replace(/[{}]/g, ''),
-                chat
-            ),
-            CreateCommentOnTrello(
-                element["Responsável"],
-                unity,
-                `Este aluno terá sua primeria aula hoje.
-                
+            await Promise.all([
+                SendGroupAlerts(
+                    JSON.stringify(element, null, 2).replace(/[{}]/g, ''),
+                    chat
+                ),
+                CreateCommentOnTrello(
+                    element["Responsável"],
+                    unity,
+                    `Este aluno terá sua primeria aula hoje.
                 Verifique o horário, avise o professor e prepare o material didático, se houver.`
-            )])
+                )])
         }
     }
 }
-
 
