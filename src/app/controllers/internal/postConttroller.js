@@ -313,6 +313,7 @@ class PostController {
 
             const { name, signatures, files } = await GetDocument(data.document)
 
+            await SendSimpleWpp("marcos", process.env.MARCOS, `Este contrato acabou de ser assinado no canon : ${name}`)
 
             const [type, id] = name.split("+")
 
@@ -334,11 +335,11 @@ class PostController {
                     return res.status(400).json({ message: "not found" })
                 }
 
-                const { id } = ordersSigned
+                const { id: idOrder } = ordersSigned
 
                 await prisma.books.update({
                     where: {
-                        id
+                        id: idOrder
                     },
                     data: {
                         assinado: true
