@@ -72,8 +72,6 @@ class PostController {
 
             const { name, signatures, files } = await GetDocument(data.document)
 
-            await SendSimpleWpp("marcos", process.env.MARCOS, `contrato assinado : ${name}`)
-
             const [type, id] = name.split("+")
 
             if (type.includes("reciboMd")) {

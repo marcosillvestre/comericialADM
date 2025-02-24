@@ -340,7 +340,10 @@ export async function StartCicleWhenNewRegisterIsCreated(object) {
 
         await CardCreationOnTrello(body)
             .then(async url => {
-                let message = `> *${body.name}*
+                let message = `
+🆕🆕🆕🆕🆕🆕🆕🆕🆕🆕🆕🆕
+
+> *${body.name}*
  
 Nome do aluno: *${customFields["Nome do aluno"]}*
 
@@ -352,7 +355,8 @@ Material didático: *${customFields["Material didático"]}*
 
 Responsável pela venda: *${customFields["Vendedor"]}*
 
-> Comece o processo de conferência dele no trello através desse link : 
+> Comece o processo de conferência dele no trello através desse link :
+
 ${url}`
 
 

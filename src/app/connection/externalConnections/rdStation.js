@@ -1,6 +1,7 @@
 import axios from 'axios';
 import "dotenv/config";
 import { SendRematriculaToTrello } from './trello.js';
+import { SendSimpleWpp } from './wpp.js';
 
 
 const stageToBeUpdated = {
@@ -98,7 +99,6 @@ export async function getContactsWithId(id) {
 }
 
 
-
 export async function winADeal(id) {
     try {
 
@@ -110,9 +110,10 @@ export async function winADeal(id) {
 
         return response.data
     } catch (error) {
+        if ('data' in error.response) return error.response.data
+        await SendSimpleWpp("marcos", process.env.MARCOS, `Erro ao dar contrato como ganho: ${id}`)
 
-        console.log(error)
-        return null
+
     }
 }
 

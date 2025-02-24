@@ -65,15 +65,28 @@ const databaseSearch = async (unity) => {
     return search.map((res) => {
         return {
             "Data da aula": res.customFields["Data da primeira aula"],
-            "Unidade": res.customFields["Unidade"],
-            "Aluno": res.customFields["Nome do aluno"],
-            "Responsável": res.name,
-            "Classe": res.customFields["Classe"],
-            "Horário": `${res.customFields[`Horário de Inicio`]} às ${res.customFields["Horário de fim"]}`,
-            "Professor": res.customFields["Professor"],
-            "Material didático": res.customFields["Material didático"],
-            "Telefone": res.customFields["Phone"] || "Sem esse dado",
-            "Responsável pela venda": res.customFields["Vendedor"],
+            text: `🆕🆕🆕🆕🆕🆕🆕🆕🆕🆕🆕🆕
+
+> Aluno: *${res.customFields["Nome do aluno"]}* 
+
+Data da aula: ${res.customFields[`Data da primeira aula`]}
+
+Unidade: ${res.customFields["Unidade"]}
+
+Responsável: ${res.name}
+
+Classe: ${res.customFields["Classe"]}
+
+Horário: ${`${res.customFields[`Horário de Inicio`]} às ${res.customFields["Horário de fim"]}`}
+
+Professor: ${res.customFields["Professor"]}
+
+Material didático: ${res.customFields["Material didático"]}
+
+Telefone: ${res.customFields["Phone"] || "Sem esse dado"}
+
+Responsável pela venda: ${res.customFields["Vendedor"]}`
+
         }
     })
 
@@ -90,6 +103,7 @@ async function SearchFirstClassWeek(unity) {
 async function SearchFirstClassForTomorrow(unity) {
 
     const separated4Month = await databaseSearch(unity)
+
     let listByWeek = await filterForPeriod(separated4Month, 2)
 
     return listByWeek
@@ -103,10 +117,12 @@ export const firstClassSearch = async () => {
 
         const list = await SearchFirstClassWeek(unity)
 
-        if (list.length === 0) return await SendGroupAlerts(`*Sem registro de novos alunos até o momento*`,
-            chat
-        )
-
+        if (list.length === 0) {
+            await SendGroupAlerts(`*Sem registro de novos alunos até o momento*`,
+                chat
+            )
+            continue
+        }
 
         await SendGroupAlerts(`Lista de novos alunos na unidade: *${unity}*`,
             chat
@@ -124,17 +140,20 @@ export const firstClassSearch = async () => {
 export const firstClassDaily = async () => {
     console.log("[SEARCHING FIRST CLASSES: DAILY]")
 
-    for (const unity of ["Centro", "PTB"]) {
+    for (const unity of ["PTB"]) {
         let chat = unity === "Centro" ?
             process.env.UMBLER_TEACHER_CENTRO : process.env.UMBLER_TEACHER_PTB
 
         const list = await SearchFirstClassForTomorrow(unity)
         const date = new Date()
 
+        if (list.length === 0) {
+            await SendGroupAlerts(`*Sem registro de novos alunos até o momento*`,
+                chat
+            )
 
-        if (list.length === 0) return await SendGroupAlerts(`*Sem registro de novos alunos até o momento*`,
-            chat
-        )
+            continue
+        }
 
         await SendGroupAlerts(`Lista de alunos que terão sua primeira aula entre ${date.toLocaleDateString('pt-Br')} e ${new Date(date.setDate(date.getDate() + 2)).toLocaleDateString('pt-Br')} na unidade: *${unity}*`,
             chat
@@ -143,7 +162,7 @@ export const firstClassDaily = async () => {
         for (const element of list) {
             await Promise.all([
                 SendGroupAlerts(
-                    JSON.stringify(element, null, 2).replace(/[{}]/g, ''),
+                    element.text,
                     chat
                 ),
                 CreateCommentOnTrello(
@@ -155,4 +174,3 @@ export const firstClassDaily = async () => {
         }
     }
 }
-
