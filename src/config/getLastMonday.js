@@ -1,12 +1,12 @@
+import { RegisterFinder } from "../database/registers/register.find.js";
 
-
+const { registerFinderForCustomFields } = new RegisterFinder()
 export class PastCodes {
-
     constructor() {
         this.getLastMondayCode = this.getLastMondayCode.bind(this)
         this.getLastWeekMondayCode = this.getLastWeekMondayCode.bind(this)
+        this.getCodeFor2Day = this.getCodeFor2Day.bind(this)
     }
-
     getLastMondayCode(date) {
         const dayOfWeek = date.getDay();
         const daysSinceMonday = (dayOfWeek + 6) % 7;
@@ -32,9 +32,24 @@ export class PastCodes {
 
     }
 
-    getCodeFor2Day() {
+    getCodeFor2Day = () => {
         let today = new Date();
         return today.toLocaleDateString("pt-BR").replace(/\//g, "")
     }
+
+    codeContractMaker = async (name) => {
+        const splitedName = name.split(" ")
+        const serializeDate = await this.getCodeFor2Day()
+
+        const encriptedCode = `${splitedName[0][0]}${splitedName[1][0]}${serializeDate}`
+        const codeFounded = await registerFinderForCustomFields("Nº do contrato", encriptedCode)
+
+        const code = await encriptedCode.concat(`-${codeFounded.length + 1}`);
+
+        return code
+
+    }
 }
+
+
 

@@ -2,7 +2,9 @@ import axios from "axios";
 import "dotenv/config";
 import { findYourValueForCustomFields } from "../../config/customFieldFinder.js";
 import { DateTransformer } from "../../config/DateTransformer.js";
+import { PastCodes } from "../../config/getLastMonday.js";
 import prisma from '../../database/database.js';
+import { RegisterFinder } from "../../database/registers/register.find.js";
 import { getContactsWithId } from './externalConnections/rdStation.js';
 import { StartCicleWhenNewRegisterIsCreated } from "./externalConnections/trello.js";
 import { getDataFromCep } from "./externalConnections/viaCep.js";
@@ -10,6 +12,8 @@ import { getDataFromCep } from "./externalConnections/viaCep.js";
 const comebackDays = 3
 const options = { method: 'GET', headers: { accept: 'application/json' } };
 
+const { getCodeFor2Day, codeContractMaker, getLastWeekMondayCode } = new PastCodes()
+const { registerFinderForCustomFields } = new RegisterFinder()
 async function UpdateTheCustomFields() {
     fetch(`https://crm.rdstation.com/api/v1/custom_fields?token=${process.env.RD_TOKEN}&for=deal`, options)
         .then(response => response.json())
@@ -86,9 +90,6 @@ const courses = {
 
     "Tecnologia - Office Essential": "Tecnologia/60/Em grupo",
 }
-
-
-
 async function GetPipelineStage(id) {
     try {
         const { data: { deal_pipeline } } = await axios.get(`https://crm.rdstation.com/api/v1/deal_stages/${id}?token=${process.env.RD_TOKEN}`)
@@ -100,7 +101,6 @@ async function GetPipelineStage(id) {
 
 
 }
-
 
 export const gatheringDataForDatabase = async (deals) => {
     const data = []
@@ -136,7 +136,7 @@ export const gatheringDataForDatabase = async (deals) => {
             const splited = pipeName.split(" ")
             const [Classe, Subclasse] = service.name.split(' - ');
 
-            // const encriptedCode = result["Vendedor"]
+            const code = await codeContractMaker(result["Vendedor"])
 
             return await {
                 ...result,
@@ -150,7 +150,7 @@ export const gatheringDataForDatabase = async (deals) => {
                 Subclasse,
                 Curso: courses[service.name] ? courses[service.name].split("/")[0] : "",
                 Unidade: splited[splited.length - 1],
-                // "Nº do contrato": encriptedCode,
+                "Nº do contrato": code,
                 "Idade do Aluno": studentAge,
                 "Tipo/ modalidade": courses[service.name] ? courses[service.name].split("/")[2] : "",
                 "Carga horário do curso": courses[service.name] ? courses[service.name].split("/")[1] : "",

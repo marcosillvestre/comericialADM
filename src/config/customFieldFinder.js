@@ -66,7 +66,6 @@ export const bodyFilterCustomFields = async (deal) => {
         name: findYourValueForCustomFields("Nome do responsável", deal_custom_fields),
         student: findYourValueForCustomFields("Nome do aluno", deal_custom_fields),
         createdDate: findYourValueForCustomFields("Data de emissão da venda", deal_custom_fields),
-        contract: findYourValueForCustomFields("Nº do contrato", deal_custom_fields),
         phone: contacts[0]?.phones[0]?.phone,
         subclass: Subclasse,
         seller: findYourValueForCustomFields("Vendedor", deal_custom_fields),
