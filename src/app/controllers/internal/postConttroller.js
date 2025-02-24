@@ -91,7 +91,7 @@ class PostController {
 
                 if (!ordersSigned) {
                     console.log("Contrato de recibo não encontrado")
-                    return res.status(400).json({ message: "not found" })
+                    return res.status(200).json({ message: "not found" })
                 }
 
                 const { id } = ordersSigned
