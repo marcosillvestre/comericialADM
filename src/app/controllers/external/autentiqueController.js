@@ -73,10 +73,11 @@ class AutentiqueController {
                             name,
                             number,
                             `Olá *${name}*, a American Way está te enviando um documento para assinatura neste link:
-${customerLink}
-
+                            
 Qualquer problema você pode entrar em contato com seu consultor responsável.
-                            `),
+
+${customerLink}`)
+                        ,
                         SendSimpleWpp("Victor", `${process.env.VICTOR}`,
                             `Victor, a American Way está te enviando um documento para assinatura em nome de ${name} neste link:
 ${school}`)
