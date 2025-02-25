@@ -319,13 +319,19 @@ class RegisterContaAzulController {
                         let cleanData = sale.notes.replace(/\\n/g, "")
                         cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
 
-                        const json = JSON.parse(cleanData)
+                        try {
 
-                        if (json["serviço"] === "material didatico" &&
-                            json["Aluno"] === nomeAluno &&
-                            json["Responsável"] === nomeResponsavel &&
-                            JSON.stringify(json["MD"]) === JSON.stringify(materialDidatico)) {
-                            await axios.delete(`https://api.contaazul.com/v1/sales/${sale.id}`, { headers: header })
+                            const json = JSON.parse(cleanData)
+
+                            if (json["serviço"] === "material didatico" &&
+                                json["Aluno"] === nomeAluno &&
+                                json["Responsável"] === nomeResponsavel &&
+                                JSON.stringify(json["MD"]) === JSON.stringify(materialDidatico)) {
+                                await axios.delete(`https://api.contaazul.com/v1/sales/${sale.id}`, { headers: header })
+                            }
+                        } catch (error) {
+                            console.log("erro ao deletar vendas antigas")
+
                         }
                     })
 
@@ -489,9 +495,8 @@ class RegisterContaAzulController {
 
                     if (productsSale.length === materialDidatico.length) {
 
-                        const installment = await installments(dataPagamentoTaxaMatricula, material.materials.length, material.total)
+                        const installment = await installments(vencimentoMaterialDidatico, material.materials.length, material.total)
                         const financialId = paymentMethods.data.find(p => p.name === financial_account[formaPagamentoMaterialDidatico])
-
 
                         const teachingmaterial = {
                             "emission": new Date(),
@@ -762,7 +767,7 @@ class RegisterContaAzulController {
                             ],
                             "discount": {
                                 "measure_unit": "VALUE",
-                                "rate": 0
+                                "rate": tax.descount
                             },
                             "payment": {
                                 "type": "TIMES",

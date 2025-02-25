@@ -12,7 +12,7 @@ export const installments = async (dataPagamento, length, valor) => {
 
         data.push({
             "number": index + 1,
-            "value": parseFloat(valor / length),
+            "value": parseFloat(valor / length).toFixed(2),
             "due_date": new Date(addedMonths),
             "status": "PENDING",
         })
