@@ -13,9 +13,9 @@ export const findYourValueForCustomFields = (customFieldLabel, deal_custom_field
 
 export const bodyMakerForCustomFields = async (contractData) => {
 
-    const { deal, phone } = contractData
+    const { deal, phone, contacts } = contractData
 
-    const [data] = await gatheringDataForDatabase([deal])
+    const [data] = await gatheringDataForDatabase([{ ...deal, contacts }])
 
     const material = findYourValueForCustomFields("Material didático", deal.deal_custom_fields)
 
@@ -35,7 +35,8 @@ export const bodyMakerForCustomFields = async (contractData) => {
 
     const convenio = await findYourValueForCustomFields("Tipo de Campanha / Convênio", deal.deal_custom_fields)
 
-    const promocao = convenio !== undefined && convenio.length > 0 ?
+
+    const promocao = convenio && convenio.length > 0 ?
         "Sim" : "Não"
 
 

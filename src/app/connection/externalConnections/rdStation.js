@@ -93,7 +93,8 @@ export async function getContactsWithId(id) {
     return {
         phone: contacts.contacts[0].phones[0]?.phone,
         email: contacts.contacts[0].emails[0]?.email,
-        deal
+        deal,
+        contacts: contacts.contacts[0]
     }
 
 }
@@ -112,7 +113,6 @@ export async function winADeal(id) {
     } catch (error) {
         if ('data' in error.response) return error.response.data
         await SendSimpleWpp("marcos", process.env.MARCOS, `Erro ao dar contrato como ganho: ${id}`)
-
 
     }
 }

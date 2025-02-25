@@ -6,6 +6,8 @@ export const installments = async (dataPagamento, length, valor) => {
     for (let index = 0; index < length; index++) {
 
         const dataVencimento = await DateTransformer(dataPagamento)
+        dataVencimento.setUTCHours(12)
+
         const addedMonths = dataVencimento.setMonth(dataVencimento.getMonth() + index)
 
         data.push({

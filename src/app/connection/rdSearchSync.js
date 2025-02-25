@@ -3,12 +3,12 @@ import "dotenv/config";
 import { findYourValueForCustomFields } from "../../config/customFieldFinder.js";
 import { DateTransformer } from "../../config/DateTransformer.js";
 import { PastCodes } from "../../config/getLastMonday.js";
+import { installments } from '../../config/installments.js';
 import prisma from '../../database/database.js';
 import { RegisterFinder } from "../../database/registers/register.find.js";
 import { getContactsWithId } from './externalConnections/rdStation.js';
 import { StartCicleWhenNewRegisterIsCreated } from "./externalConnections/trello.js";
 import { getDataFromCep } from "./externalConnections/viaCep.js";
-
 const comebackDays = 3
 const options = { method: 'GET', headers: { accept: 'application/json' } };
 
@@ -106,7 +106,8 @@ export const gatheringDataForDatabase = async (deals) => {
     const data = []
     for (const deal of deals) {
 
-        const { id, deal_custom_fields, user, name, deal_products: [service], deal_stage } = deal
+        const { id, deal_custom_fields, user, name,
+            deal_products: [service], deal_stage, contacts } = deal
 
         const { name: pipeName } = await GetPipelineStage(deal_stage.id)
         const CEP = await findYourValueForCustomFields('CEP', deal_custom_fields)
@@ -138,6 +139,20 @@ export const gatheringDataForDatabase = async (deals) => {
 
             const code = await codeContractMaker(result["Vendedor"])
 
+            if (result["O responsável e o aluno são a mesma pessoa ?"] === "Sim" && contacts !== undefined) {
+                result["Data de nascimento do aluno"] = contacts.birthday
+                result["Nome do aluno"] = contacts.name
+            }
+
+            const installment = await installments(
+                result["Data de vencimento da primeira parcela"],
+                result["Número de parcelas do curso"],
+                12
+            )
+
+            const endDate = await installment[installment.length - 1].due_date
+
+
             return await {
                 ...result,
                 Endereco: viaCepData['logradouro'],
@@ -150,6 +165,8 @@ export const gatheringDataForDatabase = async (deals) => {
                 Subclasse,
                 Curso: courses[service.name] ? courses[service.name].split("/")[0] : "",
                 Unidade: splited[splited.length - 1],
+                "Data de vencimento da última parcela": new Date(endDate).toLocaleDateString(),
+                "Nome do responsável": contacts ? contacts.name : "Dado não preenchido no rd",
                 "Nº do contrato": code,
                 "Idade do Aluno": studentAge,
                 "Tipo/ modalidade": courses[service.name] ? courses[service.name].split("/")[2] : "",
