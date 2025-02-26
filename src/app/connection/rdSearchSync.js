@@ -64,32 +64,7 @@ const calcularDiferencaAnos = async (dataString) => {
     return diferenca;
 }
 
-// Exemplo de uso:
 
-const courses = {
-    "Fluency Way Class - Adults": "Inglês/80/Em grupo",
-    "Fluency Way Class - Teens": "Inglês/80/Em grupo",
-    "Fluency Way Class - Online": "Inglês/80/Em grupo",
-    "Fluency Way Class - Kids": "Inglês/80/Em grupo",
-    "Fluency Way Class - Little Ones": "Inglês/80/Em grupo",
-    "Fluency Way Class - Standard One": "Inglês/80/Em grupo",
-
-    "Fluency Way X - One X": "Inglês/44/Individual",
-    "Fluency Way X - Double X": "Inglês/88/Individual",
-    "Fluency Way X - Triple X": "Inglês/132/Individual",
-    "Fluency Way X - 4X": "Inglês/176/Individual",
-    "Fluency Way X Plus - One X": "Inglês/44/Individual",
-    "Fluency Way X Plus - Double X": "Inglês/88/Individual",
-    "Fluency Way X Plus - Triple X": "Inglês/132/Individual",
-    "Fluency Way X Plus - 4X": "Inglês/176/Individual",
-
-    "El Español - En grupo - Turma": "Espanhol/80/Em grupo",
-    "El Español - X1": "Espanhol/44/Individual",
-    "El Español - X2": "Espanhol/88/Individual",
-    "El Español - X3": "Espanhol/88/Individual",
-
-    "Tecnologia - Office Essential": "Tecnologia/60/Em grupo",
-}
 async function GetPipelineStage(id) {
     try {
         const { data: { deal_pipeline } } = await axios.get(`https://crm.rdstation.com/api/v1/deal_stages/${id}?token=${process.env.RD_TOKEN}`)
@@ -98,10 +73,22 @@ async function GetPipelineStage(id) {
     } catch (error) {
         console.log(error)
     }
-
-
 }
 
+
+const getServiceByName = async (Param) => {
+    const response = await prisma.services.findFirst({
+        where: {
+            name: {
+                contains: Param,
+                mode: "insensitive"
+            }
+        }
+    })
+
+    return response
+
+}
 export const gatheringDataForDatabase = async (deals) => {
     const data = []
     for (const deal of deals) {
@@ -140,7 +127,7 @@ export const gatheringDataForDatabase = async (deals) => {
             const code = await codeContractMaker(result["Vendedor"])
 
             if (result["O responsável e o aluno são a mesma pessoa ?"] === "Sim" && contacts !== undefined) {
-                result["Data de nascimento do aluno"] = contacts.birthday
+                result["Data de nascimento do aluno"] = `${contacts.birthday.day}/${contacts.birthday.month}/${contacts.birthday.year}`
                 result["Nome do aluno"] = contacts.name
             }
 
@@ -151,7 +138,8 @@ export const gatheringDataForDatabase = async (deals) => {
             )
 
             const endDate = await installment[installment.length - 1].due_date
-
+            console.log(service.name)
+            const { course, workLoad, modality } = await getServiceByName(service.name)
 
             return await {
                 ...result,
@@ -163,14 +151,16 @@ export const gatheringDataForDatabase = async (deals) => {
                 Email: email,
                 Classe,
                 Subclasse,
-                Curso: courses[service.name] ? courses[service.name].split("/")[0] : "",
                 Unidade: splited[splited.length - 1],
-                "Data de vencimento da última parcela": new Date(endDate).toLocaleDateString(),
+                Curso: course,
+                "Data de nascimento do  responsável": contacts ? `${contacts.birthday.day}/${contacts.birthday.month}/${contacts.birthday.year}` : "Dado não preenchido no rd",
+                "Tipo/ modalidade": modality,
+                "Carga horário do curso": workLoad,
                 "Nome do responsável": contacts ? contacts.name : "Dado não preenchido no rd",
+                "Profissão": contacts ? contacts.title : "Dado não preenchido no rd",
+                "Data de vencimento da última parcela": new Date(endDate).toLocaleDateString('pt-BR'),
                 "Nº do contrato": code,
                 "Idade do Aluno": studentAge,
-                "Tipo/ modalidade": courses[service.name] ? courses[service.name].split("/")[2] : "",
-                "Carga horário do curso": courses[service.name] ? courses[service.name].split("/")[1] : "",
                 "Background do Aluno": pipeName.includes("Rematrícula") ? "Rematrícula" : "Novo aluno",
             }
 
@@ -242,7 +232,7 @@ export default NewSearchSync
 
 // const t = [
 
-//     "Lauren Pimenta Mota",
+//     "Ravi Murari Fernandes Veira de Queiros",
 // ]
 
 
