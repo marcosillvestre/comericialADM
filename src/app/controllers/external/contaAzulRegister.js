@@ -17,7 +17,7 @@ class RegisterContaAzulController {
             ['RG responsável']: rgResponsavel, ['Data de nascimento do  responsável']: nascimentoResponsavel,
             ['Nº do contrato']: contrato,
             ['Profissão']: profissao,
-            ['Endereço']: endereco, ['Número']: numero,
+            ['Endereco']: endereco, ['Número']: numero,
 
         } = req.body
 
@@ -797,7 +797,7 @@ class RegisterContaAzulController {
 
                 })
         } catch (error) {
-            return res.status(400).json({ message: error })
+            return res.status(400).json({ message: `error` })
         }
     }
 }

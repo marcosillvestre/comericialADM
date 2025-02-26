@@ -1,5 +1,5 @@
 import prisma from '../../../database/database.js';
-
+import { getOptionsFromRdCustomFields, updateRdOptionsCustomFields } from '../../connection/externalConnections/rdStation.js';
 class ProductsController {
 
     async index(req, res) {
@@ -72,14 +72,14 @@ class ProductsController {
             const { products, count } = query ? await withQuery() :
                 await withoutQuery()
 
-            res.status(200).json({
+            return res.status(200).json({
                 products,
                 total: count
             });
 
         } catch (error) {
             console.log(error)
-            res.status(500).json({ error: 'Failed to fetch Products' });
+            return res.status(500).json({ error: 'Failed to fetch Products' });
         }
     }
 
@@ -88,12 +88,16 @@ class ProductsController {
 
         try {
 
+            const opts = await getOptionsFromRdCustomFields("64bee4fa5ccd17001cec1e12")
+            let newMd = name.concat(` / ${sku}`)
+            let filteredOptions = opts.filter(res => !res.includes(fName))
+
+            await updateRdOptionsCustomFields("64bee4fa5ccd17001cec1e12", filteredOptions.concat(newMd))
 
             const increseTax = Math.ceil(price_selling * 0.25 + price_selling)
             const descreaseTw = Math.floor(increseTax - increseTax * 0.2)
             const descreaseThird = Math.floor(increseTax - increseTax * 0.3)
             const decreaseFifteen = Math.floor(increseTax - increseTax * 0.15)
-
 
             const newInsume = await prisma.products.create({
                 data: {
@@ -108,22 +112,48 @@ class ProductsController {
                     category: "Product"
                 },
             });
-            res.status(201).json(newInsume);
+
+            return res.status(201).json(newInsume);
         } catch (error) {
-            res.status(500).json({ error: 'Failed to create Insume' });
+            return res.status(500).json({ error: 'Failed to create Insume' });
         }
     }
 
     async update(req, res) {
         const { id } = req.params;
-        const { name, sku, price_selling, color } = req.body;
+        const { name, sku, price_selling, color, status } = req.body;
 
-        const increseTax = Math.ceil(price_selling * 0.25 + price_selling)
-        const descreaseTw = Math.floor(increseTax - increseTax * 0.2)
-        const descreaseThird = Math.floor(increseTax - increseTax * 0.3)
-        const decreaseFifteen = Math.floor(increseTax - increseTax * 0.15)
 
         try {
+            const { name: fName, status: fStatus } = await prisma.products.findUnique({
+                where: {
+                    id
+                }
+            });
+
+
+            if (name !== fName || status !== fStatus) {
+                try {
+                    const opts = await getOptionsFromRdCustomFields("64bee4fa5ccd17001cec1e12")
+                    let newMd = name.concat(` / ${sku}`)
+                    let filteredOptions = opts.filter(res => !res.includes(fName))
+
+                    status === false ? await updateRdOptionsCustomFields("64bee4fa5ccd17001cec1e12", filteredOptions) :
+                        await updateRdOptionsCustomFields("64bee4fa5ccd17001cec1e12", filteredOptions.concat(newMd))
+
+                } catch (error) {
+                    console.log(error)
+                    return res.status(500).json({ error: 'Failed to update Insume' });
+
+                }
+
+            }
+
+            const increseTax = Math.ceil(price_selling * 0.25 + price_selling)
+            const descreaseTw = Math.floor(increseTax - increseTax * 0.2)
+            const descreaseThird = Math.floor(increseTax - increseTax * 0.3)
+            const decreaseFifteen = Math.floor(increseTax - increseTax * 0.15)
+
             const updatedInsume = await prisma.products.update({
                 where: { id: id },
                 data: {
@@ -135,11 +165,15 @@ class ProductsController {
                     price_cash: descreaseThird,
                     price_link: decreaseFifteen,
                     color,
+                    status
                 },
-            });
-            res.status(200).json(updatedInsume);
+            })
+
+
+
+            return res.status(200).json(updatedInsume);
         } catch (error) {
-            res.status(500).json({ error: 'Failed to update Insume' });
+            return res.status(500).json({ error: 'Failed to update Insume' });
         }
     }
 
@@ -150,9 +184,9 @@ class ProductsController {
             await prisma.products.delete({
                 where: { id },
             });
-            res.status(204).send();
+            return res.status(204).send();
         } catch (error) {
-            res.status(500).json({ error: 'Failed to delete Insume' });
+            return res.status(500).json({ error: 'Failed to delete Insume' });
         }
     }
 }
