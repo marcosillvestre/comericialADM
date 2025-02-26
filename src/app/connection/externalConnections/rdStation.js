@@ -144,6 +144,36 @@ export async function createNewCustomField(params) {
 
 }
 
+
+export async function getOptionsFromRdCustomFields(id) {
+    try {
+        const { data: { opts } } = await axios.get(`https://crm.rdstation.com/api/v1/custom_fields/${id}?token=64c1219c7de4220029d55fc7`)
+        return opts
+    } catch (error) {
+        console.log(error)
+
+        return new Error(error)
+    }
+}
+
+export async function updateRdOptionsCustomFields(id, params) {
+    try {
+
+
+        await axios.
+            put(`https://crm.rdstation.com/api/v1/custom_fields/${id}?token=${process.env.RD_TOKEN}`, {
+                custom_field: {
+                    "opts": params,
+                }
+            })
+
+        return true
+    } catch (error) {
+
+        return new Error(error)
+    }
+}
+
 export async function deleteCustomField(id) {
     try {
         await axios.
