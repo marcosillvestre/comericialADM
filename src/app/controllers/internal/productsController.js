@@ -90,7 +90,7 @@ class ProductsController {
 
             const opts = await getOptionsFromRdCustomFields("64bee4fa5ccd17001cec1e12")
             let newMd = name.concat(` / ${sku}`)
-            let filteredOptions = opts.filter(res => !res.includes(fName))
+            let filteredOptions = opts.filter(res => !res.includes(name))
 
             await updateRdOptionsCustomFields("64bee4fa5ccd17001cec1e12", filteredOptions.concat(newMd))
 
@@ -115,6 +115,7 @@ class ProductsController {
 
             return res.status(201).json(newInsume);
         } catch (error) {
+            console.log(error)
             return res.status(500).json({ error: 'Failed to create Insume' });
         }
     }
@@ -180,12 +181,27 @@ class ProductsController {
     async delete(req, res) {
         const { id } = req.params;
 
+        const { name: fName } = await prisma.products.findUnique({
+            where: {
+                id
+            }
+        });
+
         try {
+            const opts = await getOptionsFromRdCustomFields("64bee4fa5ccd17001cec1e12")
+
+            let filteredOptions = opts.filter(res => !res.includes(fName))
+
+            await updateRdOptionsCustomFields("64bee4fa5ccd17001cec1e12", filteredOptions)
+
+
+
             await prisma.products.delete({
                 where: { id },
             });
-            return res.status(204).send();
+            return res.status(200).json({ message: 'Insume deleted successfully' });
         } catch (error) {
+
             return res.status(500).json({ error: 'Failed to delete Insume' });
         }
     }
