@@ -42,17 +42,33 @@ async function EchoRegister(response, where, saleId) {
     
 Realizou o pagamento do material didático
     
-> ${response.customFields["Material didático"]}`,
+> ${response.customFields["Material didático"]}
+
+Aluno: *${response.customFields["Nome do aluno"]}*
+
+Professor: *${response.customFields["Professor"]}*
+`,
 
 
         "pagamentoPrimeiraParcelaStatus": `> *${response.name}*
             
-Realizou o pagamento da primeira parcela do curso`,
+Realizou o pagamento da primeira parcela do curso: *${response.customFields["Curso"]}*
+
+Aluno: *${response.customFields["Nome do aluno"]}*
+
+Professor: *${response.customFields["Professor"]}*
+
+`,
 
 
         "taxaMatriculaStatus": `> *${response.name}*
             
-Realizou o pagamento da taxa de matrícula
+Realizou o pagamento da taxa de matrícula do curso: *${response.customFields["Curso"]}*
+
+Aluno: *${response.customFields["Nome do aluno"]}*
+
+Professor: *${response.customFields["Professor"]}*
+
             `,
     }
 

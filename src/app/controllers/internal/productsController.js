@@ -1,3 +1,4 @@
+import { AplieDescount } from '../../../config/descountAplied.js';
 import prisma from '../../../database/database.js';
 import { getOptionsFromRdCustomFields, updateRdOptionsCustomFields } from '../../connection/externalConnections/rdStation.js';
 class ProductsController {
@@ -94,10 +95,8 @@ class ProductsController {
 
             await updateRdOptionsCustomFields("64bee4fa5ccd17001cec1e12", filteredOptions.concat(newMd))
 
-            const increseTax = Math.ceil(price_selling * 0.25 + price_selling)
-            const descreaseTw = Math.floor(increseTax - increseTax * 0.2)
-            const descreaseThird = Math.floor(increseTax - increseTax * 0.3)
-            const decreaseFifteen = Math.floor(increseTax - increseTax * 0.15)
+
+            const { decreaseFifteen, descreaseThird, descreaseTw, increseTax } = await AplieDescount(price_selling)
 
             const newInsume = await prisma.products.create({
                 data: {
@@ -142,6 +141,7 @@ class ProductsController {
                     status === false ? await updateRdOptionsCustomFields("64bee4fa5ccd17001cec1e12", filteredOptions) :
                         await updateRdOptionsCustomFields("64bee4fa5ccd17001cec1e12", filteredOptions.concat(newMd))
 
+
                 } catch (error) {
                     console.log(error)
                     return res.status(500).json({ error: 'Failed to update Insume' });
@@ -150,10 +150,7 @@ class ProductsController {
 
             }
 
-            const increseTax = Math.ceil(price_selling * 0.25 + price_selling)
-            const descreaseTw = Math.floor(increseTax - increseTax * 0.2)
-            const descreaseThird = Math.floor(increseTax - increseTax * 0.3)
-            const decreaseFifteen = Math.floor(increseTax - increseTax * 0.15)
+            const { decreaseFifteen, descreaseThird, descreaseTw, increseTax } = await AplieDescount(price_selling)
 
             const updatedInsume = await prisma.products.update({
                 where: { id: id },

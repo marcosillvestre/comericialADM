@@ -1,5 +1,5 @@
+import { AplieDescount } from '../../../config/descountAplied.js';
 import prisma from '../../../database/database.js';
-
 class ServicesController {
 
     async index(req, res) {
@@ -73,26 +73,24 @@ class ServicesController {
             const { services, count } = query ? await withQuery() :
                 await withoutQuery()
 
-            res.status(200).json({
+            return res.status(200).json({
                 services,
                 total: count
             });
 
         } catch (error) {
-            res.status(500).json({ error: 'Failed to fetch Insumes' });
+            return res.status(500).json({ error: 'Failed to fetch Insumes' });
         }
     }
 
     async store(req, res) {
-        const { name, sku, price_selling, color } = req.body;
+        const { name, sku, price_selling, color, status } = req.body;
+
 
         try {
 
+            const { decreaseFifteen, descreaseThird, descreaseTw, increseTax } = await AplieDescount(price_selling)
 
-            const increseTax = Math.ceil(price_selling * 0.25 + price_selling)
-            const descreaseTw = Math.floor(increseTax - increseTax * 0.2)
-            const descreaseThird = Math.floor(increseTax - increseTax * 0.3)
-            const decreaseFifteen = Math.floor(increseTax - increseTax * 0.15)
 
 
             const newInsume = await prisma.services.create({
@@ -105,12 +103,16 @@ class ServicesController {
                     price_card: descreaseTw,
                     price_cash: descreaseThird,
                     price_link: decreaseFifteen,
-                    category: "Service"
+                    category: "Service",
+                    status
                 },
             });
-            res.status(201).json(newInsume);
+
+
+
+            return res.status(201).json(newInsume);
         } catch (error) {
-            res.status(500).json({ error: 'Failed to create Insume' });
+            return res.status(500).json({ error: 'Failed to create Insume' });
         }
     }
 
@@ -118,10 +120,8 @@ class ServicesController {
         const { id } = req.params;
         const { name, sku, price_selling, color } = req.body;
 
-        const increseTax = Math.ceil(price_selling * 0.25 + price_selling)
-        const descreaseTw = Math.floor(increseTax - increseTax * 0.2)
-        const descreaseThird = Math.floor(increseTax - increseTax * 0.3)
-        const decreaseFifteen = Math.floor(increseTax - increseTax * 0.15)
+        const { decreaseFifteen, descreaseThird, descreaseTw, increseTax } = await AplieDescount(price_selling)
+
 
         try {
             const updatedInsume = await prisma.services.update({
@@ -137,9 +137,9 @@ class ServicesController {
                     color,
                 },
             });
-            res.status(200).json(updatedInsume);
+            return res.status(200).json(updatedInsume);
         } catch (error) {
-            res.status(500).json({ error: 'Failed to update Insume' });
+            return res.status(500).json({ error: 'Failed to update Insume' });
         }
     }
 
@@ -150,9 +150,9 @@ class ServicesController {
             await prisma.services.delete({
                 where: { id },
             });
-            res.status(204).send();
+            return res.status(204).send();
         } catch (error) {
-            res.status(500).json({ error: 'Failed to delete Insume' });
+            return res.status(500).json({ error: 'Failed to delete Insume' });
         }
     }
 }

@@ -138,7 +138,6 @@ export const gatheringDataForDatabase = async (deals) => {
             )
 
             const endDate = await installment[installment.length - 1].due_date
-            console.log(service.name)
             const { course, workLoad, modality } = await getServiceByName(service.name)
 
             return await {
