@@ -316,7 +316,7 @@ model services {
   updated_at        DateTime      @updatedAt
 }
 
-/ const courses = {
+// const courses = {
 //     "Fluency Way Class - Adults": "12",
 //     "Fluency Way Class - Teens": "12",
 //     "Fluency Way Class - Online": "12",

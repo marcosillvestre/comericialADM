@@ -140,6 +140,7 @@ export const gatheringDataForDatabase = async (deals) => {
             const endDate = await installment[installment.length - 1].due_date
             const { course, workLoad, modality } = await getServiceByName(service.name)
 
+            console.log(contacts)
             return await {
                 ...result,
                 Endereco: viaCepData['logradouro'],
@@ -152,11 +153,11 @@ export const gatheringDataForDatabase = async (deals) => {
                 Subclasse,
                 Unidade: splited[splited.length - 1],
                 Curso: course,
-                "Data de nascimento do  responsável": contacts ? `${contacts.birthday.day}/${contacts.birthday.month}/${contacts.birthday.year}` : "Dado não preenchido no rd",
+                "Data de nascimento do  responsável": contacts.birthday ? `${contacts.birthday?.day}/${contacts.birthday?.month}/${contacts.birthday?.year}` : "Dado não preenchido no rd",
                 "Tipo/ modalidade": modality,
                 "Carga horário do curso": workLoad,
                 "Nome do responsável": contacts ? contacts.name : "Dado não preenchido no rd",
-                "Profissão": contacts ? contacts.title : "Dado não preenchido no rd",
+                "Profissão": contacts.title ? contacts.title : "Dado não preenchido no rd",
                 "Data de vencimento da última parcela": new Date(endDate).toLocaleDateString('pt-BR'),
                 "Nº do contrato": code,
                 "Idade do Aluno": studentAge,
