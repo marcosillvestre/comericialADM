@@ -293,7 +293,7 @@ já está disponível para retirada em nossa unidade.
 
 Qualquer dúvida, entre em contato com o nosso whatsapp pedagógico através do número da unidade 
 
-> ${rest.unity} : ${unityNumber[rest.unity]}.
+> ${response.unity} : ${unityNumber[response.unity]}.
                                 
 Atenciosamente, equipe American Way.
 FAVOR NÃO RESPONDER ESTA MENSAGEM 🗽.`)
