@@ -102,16 +102,11 @@ export const gatheringDataForDatabase = async (deals) => {
 
         const viaCepData = await getDataFromCep(CEP)
 
-        const studentBorn = await findYourValueForCustomFields('Data de nascimento do aluno', deal_custom_fields)
-        const studentAge = await calcularDiferencaAnos(studentBorn)
-
-
         const { phone, email, contacts } = await getContactsWithId(id)
 
         const customFields = async () => {
             const cf = await prisma.customFields.findMany()
             const result = {}
-
             for (let index = 0; index < cf.length; index++) {
                 const element = cf[index];
                 const { name } = element;
@@ -121,15 +116,18 @@ export const gatheringDataForDatabase = async (deals) => {
                     .map(res => res.value)[0] || ""
             }
 
+            if (result["O responsável e o aluno são a mesma pessoa ?"] === "Sim" && contacts.birthday) {
+                result["Data de nascimento do aluno"] = `${contacts.birthday?.day}/0${contacts.birthday?.month}/${contacts.birthday?.year}`
+                result["Nome do aluno"] = contacts.name
+            }
+
+
             const splited = pipeName.split(" ")
             const [Classe, Subclasse] = service.name.split(' - ');
 
             const code = await codeContractMaker(result["Vendedor"])
 
-            if (result["O responsável e o aluno são a mesma pessoa ?"] === "Sim" && contacts.birthday) {
-                result["Data de nascimento do aluno"] = `${contacts.birthday?.day}/0${contacts.birthday?.month}/${contacts.birthday?.year}`
-                result["Nome do aluno"] = contacts.name
-            }
+            const studentAge = await calcularDiferencaAnos(result["Data de nascimento do aluno"])
 
             const installment = await installments(
                 result["Data de vencimento da primeira parcela"],
@@ -139,6 +137,8 @@ export const gatheringDataForDatabase = async (deals) => {
 
             const endDate = await installment[installment.length - 1].due_date
             const { course, workLoad, modality } = await getServiceByName(service.name)
+
+
 
             return await {
                 ...result,
