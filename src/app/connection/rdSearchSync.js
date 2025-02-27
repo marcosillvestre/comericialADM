@@ -94,7 +94,7 @@ export const gatheringDataForDatabase = async (deals) => {
     for (const deal of deals) {
 
         const { id, deal_custom_fields, user, name,
-            deal_products: [service], deal_stage, contacts } = deal
+            deal_products: [service], deal_stage } = deal
 
         const { name: pipeName } = await GetPipelineStage(deal_stage.id)
         const CEP = await findYourValueForCustomFields('CEP', deal_custom_fields)
@@ -106,7 +106,7 @@ export const gatheringDataForDatabase = async (deals) => {
         const studentAge = await calcularDiferencaAnos(studentBorn)
 
 
-        const { phone, email } = await getContactsWithId(id)
+        const { phone, email, contacts } = await getContactsWithId(id)
 
         const customFields = async () => {
             const cf = await prisma.customFields.findMany()
@@ -126,15 +126,15 @@ export const gatheringDataForDatabase = async (deals) => {
 
             const code = await codeContractMaker(result["Vendedor"])
 
-            if (result["O responsável e o aluno são a mesma pessoa ?"] === "Sim" && contacts !== undefined) {
-                result["Data de nascimento do aluno"] = `${contacts.birthday.day}/${contacts.birthday.month}/${contacts.birthday.year}`
+            if (result["O responsável e o aluno são a mesma pessoa ?"] === "Sim" && contacts.birthday) {
+                result["Data de nascimento do aluno"] = `${contacts.birthday?.day}/0${contacts.birthday?.month}/${contacts.birthday?.year}`
                 result["Nome do aluno"] = contacts.name
             }
 
             const installment = await installments(
                 result["Data de vencimento da primeira parcela"],
                 result["Número de parcelas do curso"],
-                12
+                0
             )
 
             const endDate = await installment[installment.length - 1].due_date
@@ -152,11 +152,11 @@ export const gatheringDataForDatabase = async (deals) => {
                 Subclasse,
                 Unidade: splited[splited.length - 1],
                 Curso: course,
-                "Data de nascimento do  responsável": contacts.birthday ? `${contacts.birthday?.day}/${contacts.birthday?.month}/${contacts.birthday?.year}` : "Dado não preenchido no rd",
+                "Data de nascimento do  responsável": contacts.birthday ? `${contacts.birthday?.day}/0${contacts.birthday?.month}/${contacts.birthday?.year}` : undefined,
                 "Tipo/ modalidade": modality,
                 "Carga horário do curso": workLoad,
-                "Nome do responsável": contacts?.name ? contacts.name : "Dado não preenchido no rd",
-                "Profissão": contacts?.title ? contacts.title : "Dado não preenchido no rd",
+                "Nome do responsável": contacts?.name ? contacts.name : undefined,
+                "Profissão": contacts?.title ? contacts.title : undefined,
                 "Data de vencimento da última parcela": new Date(endDate).toLocaleDateString('pt-BR'),
                 "Nº do contrato": code,
                 "Idade do Aluno": studentAge,
