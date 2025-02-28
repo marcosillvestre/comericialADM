@@ -14,11 +14,15 @@ const options = { method: 'GET', headers: { accept: 'application/json' } };
 
 const { getCodeFor2Day, codeContractMaker, getLastWeekMondayCode } = new PastCodes()
 const { registerFinderForCustomFields } = new RegisterFinder()
+
+
 async function UpdateTheCustomFields() {
     fetch(`https://crm.rdstation.com/api/v1/custom_fields?token=${process.env.RD_TOKEN}&for=deal`, options)
         .then(response => response.json())
-        .then(res => {
+        .then(async res => {
             console.log(res.length)
+
+
             res.map(async (r, i) => {
                 await prisma.customFields.upsert({
                     where: {
@@ -45,19 +49,17 @@ async function UpdateTheCustomFields() {
         })
 }
 
-const calcularDiferencaAnos = async (dataString) => {
-    // const dataFornecida = new Date(dataString.split('/').reverse().join('-'));
-    const dataFornecida = await DateTransformer(dataString)
 
+
+const calcularDiferencaAnos = async (dataString) => {
+    const dataFornecida = await DateTransformer(dataString)
     const hoje = new Date();
 
     let diferenca = hoje.getFullYear() - dataFornecida.getFullYear();
 
     // Ajusta a diferença se o aniversário ainda não ocorreu neste ano
-    if (
-        hoje.getMonth() < dataFornecida.getMonth() ||
-        (hoje.getMonth() === dataFornecida.getMonth() && hoje.getDate() < dataFornecida.getDate())
-    ) {
+    if (hoje.getMonth() < dataFornecida.getMonth() ||
+        (hoje.getMonth() === dataFornecida.getMonth() && hoje.getDate() < dataFornecida.getDate())) {
         diferenca--;
     }
 
@@ -91,92 +93,95 @@ const getServiceByName = async (Param) => {
 }
 export const gatheringDataForDatabase = async (deals) => {
     const data = []
-    for (const deal of deals) {
+    try {
 
-        const { id, deal_custom_fields, user, name,
-            deal_products: [service], deal_stage } = deal
+        for (const deal of deals) {
 
-        const { name: pipeName } = await GetPipelineStage(deal_stage.id)
-        const CEP = await findYourValueForCustomFields('CEP', deal_custom_fields)
+            const { id, deal_custom_fields, user, name,
+                deal_products: [service], deal_stage } = deal
+
+            const { name: pipeName } = await GetPipelineStage(deal_stage.id)
+            const CEP = await findYourValueForCustomFields('CEP', deal_custom_fields)
+
+            const viaCepData = await getDataFromCep(CEP)
+
+            const { phone, email, contacts } = await getContactsWithId(id)
+
+            const customFields = async () => {
+                const cf = await prisma.customFields.findMany()
+                const result = {}
+                for (let index = 0; index < cf.length; index++) {
+                    const element = cf[index];
+                    const { name } = element;
+
+                    result[name] = deal_custom_fields
+                        .filter(res => res.custom_field.label === name)
+                        .map(res => res.value)[0] || ""
+                }
+
+                if (result["O responsável e o aluno são a mesma pessoa ?"] === "Sim" && contacts.birthday) {
+                    result["Data de nascimento do aluno"] = `0${contacts.birthday?.day}/0${contacts.birthday?.month}/${contacts.birthday?.year}`
+                    result["Nome do aluno"] = contacts.name
+                }
 
 
-        const viaCepData = await getDataFromCep(CEP)
+                const splited = pipeName.split(" ")
+                const [Classe, Subclasse] = service.name.split(' - ');
 
-        const { phone, email, contacts } = await getContactsWithId(id)
+                const code = await codeContractMaker(result["Vendedor"])
 
-        const customFields = async () => {
-            const cf = await prisma.customFields.findMany()
-            const result = {}
-            for (let index = 0; index < cf.length; index++) {
-                const element = cf[index];
-                const { name } = element;
+                const studentAge = await calcularDiferencaAnos(result["Data de nascimento do aluno"])
 
-                result[name] = deal_custom_fields
-                    .filter(res => res.custom_field.label.includes(name))
-                    .map(res => res.value)[0] || ""
+                const installment = await installments(
+                    result["Data de vencimento da primeira parcela"],
+                    result["Número de parcelas do curso"],
+                    0
+                )
+
+                const endDate = await installment[installment.length - 1].due_date
+                const { course, workLoad, modality } = await getServiceByName(service.name)
+
+                return await {
+                    ...result,
+                    Endereco: viaCepData['logradouro'],
+                    Bairro: viaCepData['bairro'],
+                    Cidade: viaCepData['localidade'],
+                    Uf: viaCepData['uf'],
+                    Phone: phone,
+                    Email: email,
+                    Classe,
+                    Subclasse,
+                    Unidade: splited[splited.length - 1],
+                    Curso: course,
+                    "Data de nascimento do  responsável": contacts.birthday ? `${contacts.birthday?.day}/0${contacts.birthday?.month}/${contacts.birthday?.year}` : undefined,
+                    "Tipo/ modalidade": modality,
+                    "Carga horário do curso": workLoad,
+                    "Nome do responsável": contacts?.name ? contacts.name : undefined,
+                    "Profissão": contacts?.title ? contacts.title : undefined,
+                    "Data de vencimento da última parcela": new Date(endDate).toLocaleDateString('pt-BR'),
+                    "Nº do contrato": code,
+                    "Idade do Aluno": studentAge,
+                    "Background do Aluno": pipeName.includes("Rematrícula") ? "Rematrícula" : "Novo aluno",
+                }
+
             }
 
-            if (result["O responsável e o aluno são a mesma pessoa ?"] === "Sim" && contacts.birthday) {
-                result["Data de nascimento do aluno"] = `${contacts.birthday?.day}/0${contacts.birthday?.month}/${contacts.birthday?.year}`
-                result["Nome do aluno"] = contacts.name
-            }
+            const json = await customFields()
 
-
-            const splited = pipeName.split(" ")
-            const [Classe, Subclasse] = service.name.split(' - ');
-
-            const code = await codeContractMaker(result["Vendedor"])
-
-            const studentAge = await calcularDiferencaAnos(result["Data de nascimento do aluno"])
-
-            const installment = await installments(
-                result["Data de vencimento da primeira parcela"],
-                result["Número de parcelas do curso"],
-                0
-            )
-
-            const endDate = await installment[installment.length - 1].due_date
-            const { course, workLoad, modality } = await getServiceByName(service.name)
-
-
-
-            return await {
-                ...result,
-                Endereco: viaCepData['logradouro'],
-                Bairro: viaCepData['bairro'],
-                Cidade: viaCepData['localidade'],
-                Uf: viaCepData['uf'],
-                Phone: phone,
-                Email: email,
-                Classe,
-                Subclasse,
-                Unidade: splited[splited.length - 1],
-                Curso: course,
-                "Data de nascimento do  responsável": contacts.birthday ? `${contacts.birthday?.day}/0${contacts.birthday?.month}/${contacts.birthday?.year}` : undefined,
-                "Tipo/ modalidade": modality,
-                "Carga horário do curso": workLoad,
-                "Nome do responsável": contacts?.name ? contacts.name : undefined,
-                "Profissão": contacts?.title ? contacts.title : undefined,
-                "Data de vencimento da última parcela": new Date(endDate).toLocaleDateString('pt-BR'),
-                "Nº do contrato": code,
-                "Idade do Aluno": studentAge,
-                "Background do Aluno": pipeName.includes("Rematrícula") ? "Rematrícula" : "Novo aluno",
-            }
+            data.push({
+                id,
+                name: json['Nome do responsável'],
+                owner: json['Vendedor'] || user.name,
+                customFields: json
+            })
 
         }
+        return data
+    } catch (error) {
 
-        const json = await customFields()
-
-
-        data.push({
-            id,
-            name: json['Nome do responsável'],
-            owner: json['Vendedor'] || user.name,
-            customFields: json
-        })
-
+        await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[GATHERINGDATAFORDATABASE]: ${error}`, null, 2))
+        return []
     }
-    return data
 }
 
 async function LoopForStoreNewRegisters(deals) {
