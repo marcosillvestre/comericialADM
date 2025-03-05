@@ -11,15 +11,14 @@ class RegisterContaAzulController {
 
     async storeCostumer(req, res) {
 
-
-        const { CelularResponsavel, email, Bairro, CEP, Complemento, Unidade, CPF,
+        const { CelularResponsavel, Email, Bairro, CEP, Complemento, Unidade, CPF,
             ['Nome do responsável']: nomeResponsavel,
             ['RG responsável']: rgResponsavel, ['Data de nascimento do  responsável']: nascimentoResponsavel,
             ['Nº do contrato']: contrato,
             ['Profissão']: profissao,
             ['Endereco']: endereco, ['Número']: numero,
-
         } = req.body
+
 
         var header = {
             "Authorization": `Bearer ${await getToken(Unidade, 'refresh')}`,
@@ -32,7 +31,7 @@ class RegisterContaAzulController {
 
             const customerBody = {
                 "name": nomeResponsavel,
-                "email": email,
+                "email": Email,
                 "business_phone": CelularResponsavel,
                 "mobile_phone": CelularResponsavel,
                 "person_type": CPF.length > 11 ? "LEGAL" : "NATURAL",
@@ -44,7 +43,7 @@ class RegisterContaAzulController {
                     {
                         "name": nomeResponsavel.split("-")[0],
                         "business_phone": CelularResponsavel,
-                        "email": email,
+                        "email": Email,
                         "job_title": profissao
                     }
                 ],
@@ -74,13 +73,23 @@ class RegisterContaAzulController {
                         return res.status(201).json({ message: "Success" })
                     }
                     if (error.response.data.message !== 'CPF/CPNJ já utilizado por outro cliente.') {
+
                         return res.status(401).json({ message: error.response.data.message })
                     }
 
                 })
 
         } catch (error) {
-            return res.status(400).json({ message: error })
+            const valid = {
+                CelularResponsavel, Email, Bairro, CEP, Complemento, Unidade, CPF,
+                nomeResponsavel, rgResponsavel, nascimentoResponsavel, contrato, profissao, endereco, numero,
+            }
+            const invalid = Object.keys(valid).filter(res => !valid[res])
+            console.log({
+                where: "[CLIENT]",
+                error
+            })
+            return res.status(400).json({ message: `Campos inválidos: ${invalid}` })
         }
 
     }
@@ -412,13 +421,14 @@ class RegisterContaAzulController {
                             resolve(
                                 axios.post('https://api.contaazul.com/v1/sales', cell, { headers: header })
                                     .then(data => {
+                                        console.log(data)
                                         if (data.status === 201 || data.status === 200) {
                                             console.log("O md foi lançado")
                                             return res.status(200).json({ message: "O md foi lançado" })
                                         }
 
                                     }).catch((err) => {
-
+                                        console.log(err)
                                         if (err.response.data.message === "The sale product's value cannot be null") {
                                             // console.log("produto nao encontrado")
                                             return res.status(400).json({ message: "Material didático não cadastrado no conta azul!" })
@@ -535,6 +545,7 @@ class RegisterContaAzulController {
 
         } catch (error) {
             console.log(error)
+            await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[CA:FEE]: ${error}`, null, 2))
 
             return res.status(400).json({ message: error })
         }
@@ -618,6 +629,7 @@ class RegisterContaAzulController {
                                             return res.status(400).json({ message: "Material didático não cadastrado no conta azul!" })
                                         }
                                         if (err.response.data.message !== "The sale product's value cannot be null") {
+                                            console.log(err.response.data)
                                             return res.status(400).json({ message: err.response.data.message })
                                         }
                                     })
@@ -625,166 +637,165 @@ class RegisterContaAzulController {
                         })
                     }
 
-                    if (tax.total > 0) {
-                        sales.data.map(async sale => {
-                            let cleanData = sale.notes.replace(/\\n/g, "")
-                            cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
+                    // if (tax.total > 0) {
+                    sales.data.map(async sale => {
+                        let cleanData = sale.notes.replace(/\\n/g, "")
+                        cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
 
-                            const json = JSON.parse(cleanData)
-
-
-                            if (json["serviço"] === "taxa de matricula" &&
-                                json["Aluno"] === nomeAluno &&
-                                json["Responsável"] === nomeResponsavel &&
-                                json["Curso"] === Curso &&
-                                JSON.stringify(sale.total) === JSON.stringify(tax.total)) {
-                                await axios.delete(`https://api.contaazul.com/v1/sales/${sale.id}`, { headers: header })
-                                console.log("cópia deletada")
-                            }
-                        })
+                        const json = JSON.parse(cleanData)
 
 
-                        let promo = {
-                            "parcelas afetadas": parcel?.campaign?.affectedParcels,
-                            "tipo de desconto": parcel?.campaign?.descountType === "Value" ? "Valor Cheio" : "Porcentagem",
-                            "desconto nas primeiras parcelas": parcel?.campaign?.value,
-                            "descrição da campanha": parcel?.campaign?.description
+                        if (json["serviço"] === "taxa de matricula" &&
+                            json["Aluno"] === nomeAluno &&
+                            json["Responsável"] === nomeResponsavel &&
+                            json["Curso"] === Curso &&
+                            JSON.stringify(sale.total) === JSON.stringify(tax.total)) {
+                            await axios.delete(`https://api.contaazul.com/v1/sales/${sale.id}`, { headers: header })
+                            console.log("cópia deletada")
                         }
-                        const salesNotesString = {
-                            "id": id,
-                            "Valor total": valorCurso,
-                            "Valor da Parcela": parseFloat(valorCurso) / parseInt(parcelas),
-                            "PP Forma PG": formaPagamentoParcelas,
-                            "Parcela dia de vencimento": vencimentoPrimeiraParcela.split("/")[0],
-                            "Data de vencimento da primeira parcela": vencimentoPrimeiraParcela,
-                            "Data de vencimento da última parcela": vencimentoUltimaParcela,
-                            "N° de Parcelas": parcelas,
-                            "Desconto total": descontoTotal,
-                            "MD": materialDidatico.map(res => res),
-                            "MD Valor": material.total,
-                            "MD vencimento": vencimentoMaterialDidatico,
-                            "MD forma pg": formaPagamentoMaterialDidatico,
-                            "TM Valor": tax.total,
-                            "TM forma de pg": formaPagamentoTaxaMatricula,
-                            "TM Venc": dataPagamentoTaxaMatricula,
-                            "TM parcelas": parcelasTaxaMatricula,
-                            "Carga Horária do Curso": cargaHoraria,
-                            "Unidade": Unidade,
-                            "Curso": Curso,
-                            "Aluno": nomeAluno,
-                            "Responsável": nomeResponsavel,
-                            "contrato": contrato,
-                            "serviço": "taxa de matricula",
-                            "vendedor": vendedor,
-                            "observacao do rd": observacaoPedagogico,
-                            "observacao para o financeiro": observacaoFinanceiro,
-
-                            "desconto no material didatico": valorDescontoMaterialDidatico,
-                            "promoção": promocao === "Sim" ? promo : "Sem promoção"
-                        }
-
-                        const saleNotes = JSON.stringify(salesNotesString, null, 2)
-
-                        let seller = vendedor.split(" ")[0]
-                        let related = sellers.data.find(res => res.name.includes(seller))
-
-                        const paymentType = {
-                            "Boleto": "BANKING_BILLET",
-                            "Cartão de crédito via link": "PAYMENT_LINK",
-                            "Boleto bancário": "BANKING_BILLET",
-                            "Cartão de crédito via outro bancos": "CREDIT_CARD",
-                            "Cartão de débito via outros bancos": "DEBIT_CARD",
-                            "Dinheiro": "CASH",
-                            "PIX - Pagamento Instantâneo": "INSTANT_PAYMENT",
-                            "Pix": "INSTANT_PAYMENT",
-                            "Pix cobrança": "PIX_CHARGE",
-                            "Sem pagamento": "WITHOUT_PAYMENT",
-                            "Isenção": "WITHOUT_PAYMENT",
-                            "Transferência bancária": "BANKING_TRANSFER",
-                            "Outros": "OTHER",
-
-                            "": "AUTOMATIC_DEBIT",
-                            "": "FIDELITY_PROGRAM",
-                            "": "DIGITAL_WALLET",
-                            "": "CASHBACK",
-                            "": "CHECK",
-                            "": "STORE_CREDIT",
-                            "": "VIRTUAL_CREDIT",
-                            "": "BANKING_DEPOSIT",
-                            "": "FOOD_VOUCHER",
-                            "": "FUEL_VOUCHER",
-                            "": "GIFT_VOUCHER",
-                            "": "MEAL_VOUCHER",
-                        }
-
-                        const financial_account = {
-                            "Boleto": 'Conta PJ Conta Azul',
-                            "Cartão de crédito via link": 'Conta PJ Conta Azul',
-                            "Cartão de débito via outros bancos": 'Rede',
-                            "Cartão de crédito via outro bancos": 'Rede',
-                            "Dinheiro": 'Caixa Físico',
-                            "Outros": 'Bolsas, isenções e outros meios indeterminados',
-                            "Pix": 'Inter_PJ',
-                            "Transferência bancária": 'Inter_PJ',
-                            "Pix cobrança": 'Conta PJ Conta Azul',
-                            "Sem pagamento": 'Bolsas, isenções e outros meios indeterminados',
-
-                            "": 'Amais Financeira',
-                            "": 'Azulzinha da Caixa',
-                            "": 'Bolsistas Integrais',
-                            "": 'BTG Pactual - PJ',
-                            "": 'Caixa Econômica Conta PJ',
-                            "": 'Caixa Excedente',
-                            "": 'Cartão Caixa',
-                            "": 'Cartão Inter PJ',
-                            "": 'Cartão PJ Santander 21',
-                            "": 'Cartão PJ Santander 26',
-                            "": 'Cartão Santander PJ 12',
-                            "": 'Itaú_PJ',
-                            "": 'Receba Fácil',
-                            "": 'Santander_PJ',
-                            "": 'ZOOP'
-
-                        }
-
-                        const installment = await installments(dataPagamentoTaxaMatricula, parcelasTaxaMatricula, tax.total)
-                        const financialId = paymentMethods.data.find(p => p.name === financial_account[formaPagamentoTaxaMatricula])
+                    })
 
 
-                        const taxCell = {
-                            "emission": new Date(),
-                            "status": "PENDING",
-                            "customer_id": data.data[0].id,
-                            "seller_id": related ? related.id : "",
-                            "services": [
-                                {
-                                    "description": "Taxa de Matrícula",
-                                    "quantity": 1,
-                                    "service_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
-                                        "09a1a3f8-f75e-4b25-a2ce-e815514028de" : "682c4202-e0c2-4bab-a847-c8dbe89b80d9",
-                                    "value": parseFloat(tax.total)
-                                }
-                            ],
-                            "discount": {
-                                "measure_unit": "VALUE",
-                                "rate": tax.descount
-                            },
-                            "payment": {
-                                "type": "TIMES",
-                                "method": paymentType[formaPagamentoTaxaMatricula],
-                                "financial_account_id": financialId.uuid,
-                                "installments": installment
-                                ,
-                            },
-                            "notes": saleNotes,
-                            "category_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
-                                "8d697a13-88df-4330-ab1b-c55ecb841b37" : "edd792ee-86ce-44a8-817d-1a54ba5482b0"
-                        }
+                    let promo = {
+                        "parcelas afetadas": parcel?.campaign?.affectedParcels,
+                        "tipo de desconto": parcel?.campaign?.descountType === "Value" ? "Valor Cheio" : "Porcentagem",
+                        "desconto nas primeiras parcelas": parcel?.campaign?.value,
+                        "descrição da campanha": parcel?.campaign?.description
+                    }
+                    const salesNotesString = {
+                        "id": id,
+                        "Valor total": valorCurso,
+                        "Valor da Parcela": parseFloat(valorCurso) / parseInt(parcelas),
+                        "PP Forma PG": formaPagamentoParcelas,
+                        "Parcela dia de vencimento": vencimentoPrimeiraParcela.split("/")[0],
+                        "Data de vencimento da primeira parcela": vencimentoPrimeiraParcela,
+                        "Data de vencimento da última parcela": vencimentoUltimaParcela,
+                        "N° de Parcelas": parcelas,
+                        "Desconto total": descontoTotal,
+                        "MD": materialDidatico.map(res => res),
+                        "MD Valor": material?.total,
+                        "MD vencimento": vencimentoMaterialDidatico,
+                        "MD forma pg": formaPagamentoMaterialDidatico,
+                        "TM Valor": tax?.total,
+                        "TM forma de pg": formaPagamentoTaxaMatricula,
+                        "TM Venc": dataPagamentoTaxaMatricula,
+                        "TM parcelas": parcelasTaxaMatricula,
+                        "Carga Horária do Curso": cargaHoraria,
+                        "Unidade": Unidade,
+                        "Curso": Curso,
+                        "Aluno": nomeAluno,
+                        "Responsável": nomeResponsavel,
+                        "contrato": contrato,
+                        "serviço": "taxa de matricula",
+                        "vendedor": vendedor,
+                        "observacao do rd": observacaoPedagogico,
+                        "observacao para o financeiro": observacaoFinanceiro,
 
-                        await ContaAzulSender(taxCell)
+                        "desconto no material didatico": valorDescontoMaterialDidatico,
+                        "promoção": promocao === "Sim" ? promo : "Sem promoção"
+                    }
+
+                    const saleNotes = JSON.stringify(salesNotesString, null, 2)
+
+                    let seller = vendedor.split(" ")[0]
+                    let related = sellers.data.find(res => res.name.includes(seller))
+
+                    const paymentType = {
+                        "Boleto": "BANKING_BILLET",
+                        "Cartão de crédito via link": "PAYMENT_LINK",
+                        "Boleto bancário": "BANKING_BILLET",
+                        "Cartão de crédito via outro bancos": "CREDIT_CARD",
+                        "Cartão de débito via outros bancos": "DEBIT_CARD",
+                        "Dinheiro": "CASH",
+                        "PIX - Pagamento Instantâneo": "INSTANT_PAYMENT",
+                        "Pix": "INSTANT_PAYMENT",
+                        "Pix cobrança": "PIX_CHARGE",
+                        "Sem pagamento": "WITHOUT_PAYMENT",
+                        "Isenção": "WITHOUT_PAYMENT",
+                        "Transferência bancária": "BANKING_TRANSFER",
+                        "Outros": "OTHER",
+
+                        "": "AUTOMATIC_DEBIT",
+                        "": "FIDELITY_PROGRAM",
+                        "": "DIGITAL_WALLET",
+                        "": "CASHBACK",
+                        "": "CHECK",
+                        "": "STORE_CREDIT",
+                        "": "VIRTUAL_CREDIT",
+                        "": "BANKING_DEPOSIT",
+                        "": "FOOD_VOUCHER",
+                        "": "FUEL_VOUCHER",
+                        "": "GIFT_VOUCHER",
+                        "": "MEAL_VOUCHER",
+                    }
+
+                    const financial_account = {
+                        "Boleto": 'Conta PJ Conta Azul',
+                        "Cartão de crédito via link": 'Conta PJ Conta Azul',
+                        "Cartão de débito via outros bancos": 'Rede',
+                        "Cartão de crédito via outro bancos": 'Rede',
+                        "Dinheiro": 'Caixa Físico',
+                        "Outros": 'Bolsas, isenções e outros meios indeterminados',
+                        "Pix": 'Inter_PJ',
+                        "Transferência bancária": 'Inter_PJ',
+                        "Pix cobrança": 'Conta PJ Conta Azul',
+                        "Sem pagamento": 'Bolsas, isenções e outros meios indeterminados',
+
+                        "": 'Amais Financeira',
+                        "": 'Azulzinha da Caixa',
+                        "": 'Bolsistas Integrais',
+                        "": 'BTG Pactual - PJ',
+                        "": 'Caixa Econômica Conta PJ',
+                        "": 'Caixa Excedente',
+                        "": 'Cartão Caixa',
+                        "": 'Cartão Inter PJ',
+                        "": 'Cartão PJ Santander 21',
+                        "": 'Cartão PJ Santander 26',
+                        "": 'Cartão Santander PJ 12',
+                        "": 'Itaú_PJ',
+                        "": 'Receba Fácil',
+                        "": 'Santander_PJ',
+                        "": 'ZOOP'
 
                     }
 
+
+                    const installment = await installments(dataPagamentoTaxaMatricula, parcelasTaxaMatricula, tax?.total)
+
+                    const financialId = paymentMethods.data.find(p => p.name === financial_account[formaPagamentoTaxaMatricula])
+
+
+                    const taxCell = {
+                        "emission": new Date(),
+                        "status": "PENDING",
+                        "customer_id": data.data[0].id,
+                        "seller_id": related ? related.id : "",
+                        "services": [
+                            {
+                                "description": "Taxa de Matrícula",
+                                "quantity": 1,
+                                "service_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
+                                    "09a1a3f8-f75e-4b25-a2ce-e815514028de" : "682c4202-e0c2-4bab-a847-c8dbe89b80d9",
+                                "value": parseFloat(tax?.total) > 0 ? parseFloat(tax?.total) : 349
+                            }
+                        ],
+                        "discount": {
+                            "measure_unit": "VALUE",
+                            "rate": parseFloat(tax?.total) > 0 ? tax.descount : 350
+                        },
+                        "payment": {
+                            "type": "TIMES",
+                            "method": tax?.total > 0 ? paymentType[formaPagamentoTaxaMatricula] : paymentType["Sem pagamento"],
+                            "financial_account_id": financialId.uuid,
+                            "installments": installment
+                            ,
+                        },
+                        "notes": saleNotes,
+                        "category_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
+                            "8d697a13-88df-4330-ab1b-c55ecb841b37" : "edd792ee-86ce-44a8-817d-1a54ba5482b0"
+                    }
+
+                    await ContaAzulSender(taxCell)
                 }
 
                 if (data.data.length === 0) {
@@ -797,6 +808,13 @@ class RegisterContaAzulController {
 
                 })
         } catch (error) {
+            console.log({
+                where: "[TAX]",
+                error
+            })
+
+            await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[CA:FEE]: ${error}`, null, 2))
+
             return res.status(400).json({ message: `error` })
         }
     }

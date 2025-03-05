@@ -47,4 +47,13 @@ export const getSaleProducts = async (headers, id) => {
     }
 }
 
+export async function CreateProductsAtContaAzul(product) {
 
+
+
+}
+export async function CreateServicesAtContaAzul(product) {
+
+
+
+}

@@ -1,4 +1,5 @@
 export function DateTransformer(dateStr) {
+    if (!dateStr) return "Invalid Date"
     let [day, month, year] = dateStr.split('/');
 
     // Reorganiza para o formato "YYYY-MM-DD"

@@ -70,9 +70,26 @@ class PostController {
         const { event: { data } } = req.body
         try {
 
+
             const { name, signatures, files } = await GetDocument(data.document)
 
             const [type, id] = name.split("+")
+
+            if (data.user.name === "Victor Souza") {
+                await prisma.historic.create({
+                    data: {
+                        responsible: responsible,
+                        information: {
+                            field: "assinaturaContratoStatus",
+                            text: `O status do contrato foi alterado para assinado`,
+                            from: "",
+                        }
+                    }
+                })
+            }
+
+
+
 
             if (type.includes("reciboMd")) {
 
@@ -166,9 +183,9 @@ class PostController {
                     id: deal.id
                 }
             }).then(async register => {
-                const newUser = register ?
-                    await update(data.user.name, deal) :
-                    await create(data.user.name, deal)
+                if (register) return await update(data.user.name, deal)
+
+                const newUser = await create(data.user.name, deal)
 
                 const unityNumber = {
                     "Golfinho Azul": "31 8713-7018",
@@ -249,7 +266,7 @@ acabou de assinar o contrato de ${newUser.customFields['Background do Aluno']}`
             })
 
         } catch (error) {
-            await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`erro stageTest: ${error}`, null, 2))
+            await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[SENDER:CONTRACTS]: ${error}`, null, 2))
             return res.status(200).json({ message: "Success" })
 
         }

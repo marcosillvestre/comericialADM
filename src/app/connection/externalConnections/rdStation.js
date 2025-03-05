@@ -186,3 +186,25 @@ export async function deleteCustomField(id) {
     }
 }
 
+
+export async function CreateProductsAtRD(product) {
+
+    try {
+
+        const { data } = await axios.post(`https://crm.rdstation.com/api/v1/products?token=${process.env.RD_TOKEN}`, {
+            product
+        })
+
+        return data
+    } catch (error) {
+        return new Error(`product create error ${error}`)
+    }
+
+}
+
+export async function CreateServicesAtRD(product) {
+
+
+
+}
+

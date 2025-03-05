@@ -84,14 +84,13 @@ class ServicesController {
     }
 
     async store(req, res) {
-        const { name, sku, price_selling, color, status } = req.body;
+        const { name, sku, price_selling, color, status, workLoad, course, modality, duration } = req.body;
 
 
         try {
 
+
             const { decreaseFifteen, descreaseThird, descreaseTw, increseTax } = await AplieDescount(price_selling)
-
-
 
             const newInsume = await prisma.services.create({
                 data: {

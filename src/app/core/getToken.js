@@ -32,7 +32,7 @@ async function refreshToken(id, token) {
         return access_token
 
     } catch (error) {
-        console.log(error.response.data)
+        console.log(error.response)
         // return error
     }
 }

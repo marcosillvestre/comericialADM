@@ -2,6 +2,7 @@ import axios from 'axios'
 import 'dotenv'
 import * as yup from 'yup'
 import prisma from '../../../database/database.js'
+import { getOptionsFromRdCustomFields, updateRdOptionsCustomFields } from '../../connection/externalConnections/rdStation.js'
 
 class CampaignController {
     async store(req, res) {
@@ -13,12 +14,13 @@ class CampaignController {
             affectedParcels: yup.number().required(),
             destiny: yup.string().required(),
             value: yup.number().required(),
+            status: yup.bool().required(),
         })
 
         try {
             await schema.validateSync(req.body, { abortEarly: false })
 
-            const { name, affectedParcels, descountType, description, value, destiny } = req.body
+            const { name, affectedParcels, descountType, description, value, destiny, status } = req.body
 
             const storeCampaign = async (name, affectedParcels, descountType, description, value, destiny) => {
 
@@ -29,7 +31,8 @@ class CampaignController {
                         descountType,
                         description,
                         value,
-                        for: destiny
+                        for: destiny,
+                        status
 
                     }
                 })
@@ -60,6 +63,7 @@ class CampaignController {
 
 
     }
+
     async index(req, res) {
         try {
 
@@ -76,6 +80,7 @@ class CampaignController {
 
         }
     }
+
     async update(req, res) {
         const { id } = req.params
 
@@ -96,7 +101,7 @@ class CampaignController {
 
 
 
-        const { name: stored } = await prisma.campaign.findFirst({
+        const { name: storedName, status: storedStatus } = await prisma.campaign.findFirst({
             where: {
                 id: id
             }
@@ -104,18 +109,11 @@ class CampaignController {
 
 
 
-        if (stored !== name) {
+        if (storedName !== name || storedStatus !== status) {
 
-            await axios.get(`https://crm.rdstation.com/api/v1/custom_fields/${process.env.CAMPAIGN_ID}?token=${process.env.RD_TOKEN}`)
-                .then(async res => {
-
-                    const options = res.data.opts.filter(res => res !== stored)
-
-                    await axios.put(`https://crm.rdstation.com/api/v1/custom_fields/${process.env.CAMPAIGN_ID}?token=${process.env.RD_TOKEN}`, {
-                        opts: options.concat(name)
-                    })
-
-                })
+            const options = await getOptionsFromRdCustomFields(process.env.CAMPAIGN_ID)
+            const newOptions = options.filter(r => r !== name)
+            await updateRdOptionsCustomFields(process.env.CAMPAIGN_ID, status === false ? newOptions : options.concat(name))
         }
 
 
