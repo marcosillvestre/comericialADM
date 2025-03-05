@@ -775,12 +775,12 @@ class RegisterContaAzulController {
                                 "quantity": 1,
                                 "service_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
                                     "09a1a3f8-f75e-4b25-a2ce-e815514028de" : "682c4202-e0c2-4bab-a847-c8dbe89b80d9",
-                                "value": parseFloat(tax?.total) > 0 ? parseFloat(tax?.total) : 349
+                                "value": 350
                             }
                         ],
                         "discount": {
                             "measure_unit": "VALUE",
-                            "rate": parseFloat(tax?.total) > 0 ? tax.descount : 350
+                            "rate": tax.descount
                         },
                         "payment": {
                             "type": "TIMES",
