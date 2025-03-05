@@ -84,8 +84,8 @@ class ServicesController {
     }
 
     async store(req, res) {
-        const { name, sku, price_selling, color, status, workLoad, course, modality, duration } = req.body;
-
+        const { name, sku, price_selling, color, status,
+            workLoad, course, modality, duration } = req.body;
 
         try {
 
@@ -103,11 +103,10 @@ class ServicesController {
                     price_cash: descreaseThird,
                     price_link: decreaseFifteen,
                     category: "Service",
-                    status
+                    status,
+                    workLoad, course, modality, duration
                 },
             });
-
-
 
             return res.status(201).json(newInsume);
         } catch (error) {
