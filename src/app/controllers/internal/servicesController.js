@@ -1,5 +1,6 @@
 import { AplieDescount } from '../../../config/descountAplied.js';
 import prisma from '../../../database/database.js';
+import { CreateServicesAtRD, EditServicesAtRD, ReturnServiceAtRD } from '../../connection/externalConnections/rdStation.js';
 class ServicesController {
 
     async index(req, res) {
@@ -89,8 +90,20 @@ class ServicesController {
 
         try {
 
-
             const { decreaseFifteen, descreaseThird, descreaseTw, increseTax } = await AplieDescount(price_selling)
+
+            await CreateServicesAtRD({
+                "name": name,
+                "description": `
+sku: ${sku},
+carga horária: ${workLoad},
+modalidade: ${modality},
+duração: ${duration},
+curso: ${course}
+`,
+                "base_price": increseTax * parseInt(duration),
+            })
+
 
             const newInsume = await prisma.services.create({
                 data: {
@@ -116,12 +129,53 @@ class ServicesController {
 
     async update(req, res) {
         const { id } = req.params;
-        const { name, sku, price_selling, color } = req.body;
+        const { name, sku, price_selling, color, status,
+            workLoad, course, modality, duration
+        } = req.body;
 
         const { decreaseFifteen, descreaseThird, descreaseTw, increseTax } = await AplieDescount(price_selling)
 
 
         try {
+
+            const { name: fName, status: fStatus } = await prisma.services.findUnique({
+                where: {
+                    id
+                }
+            });
+
+
+            if (name !== fName || status !== fStatus) {
+                try {
+                    const { id } = await ReturnServiceAtRD(fName)
+
+                    if (!id) res.status(500).json({ error: 'Failed to update Insume' });
+
+                    const editBody = {
+                        name,
+                        visible: status,
+                        description: `
+sku: ${sku},
+carga horária: ${workLoad},
+modalidade: ${modality},
+duração: ${duration},
+curso: ${course}
+`,
+                    }
+
+
+                    await EditServicesAtRD(id, editBody)
+
+                } catch (error) {
+                    console.log(error)
+                    return res.status(500).json({ error: 'Failed to update Insume' });
+
+                }
+
+            }
+
+
+
             const updatedInsume = await prisma.services.update({
                 where: { id: id },
                 data: {
@@ -133,8 +187,12 @@ class ServicesController {
                     price_cash: descreaseThird,
                     price_link: decreaseFifteen,
                     color,
+                    status,
+                    workLoad, course, modality, duration
+
                 },
             });
+
             return res.status(200).json(updatedInsume);
         } catch (error) {
             return res.status(500).json({ error: 'Failed to update Insume' });
@@ -145,10 +203,19 @@ class ServicesController {
         const { id } = req.params;
 
         try {
+            const { id } = await ReturnServiceAtRD(fName)
+
+
+            await EditServicesAtRD(id, {
+                visible: false,
+
+            })
+
             await prisma.services.delete({
                 where: { id },
             });
             return res.status(204).send();
+
         } catch (error) {
             return res.status(500).json({ error: 'Failed to delete Insume' });
         }

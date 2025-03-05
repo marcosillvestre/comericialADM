@@ -150,9 +150,11 @@ export async function getOptionsFromRdCustomFields(id) {
         const { data: { opts } } = await axios.get(`https://crm.rdstation.com/api/v1/custom_fields/${id}?token=64c1219c7de4220029d55fc7`)
         return opts
     } catch (error) {
-        console.log(error)
 
-        return new Error(error)
+        return new Error({
+            where: "[PRODUCT.OPTIONS]",
+            what: `${error}`
+        })
     }
 }
 
@@ -204,7 +206,47 @@ export async function CreateProductsAtRD(product) {
 
 export async function CreateServicesAtRD(product) {
 
+    try {
+        const { data } = await axios.post(`https://crm.rdstation.com/api/v1/products?token=${process.env.RD_TOKEN}`, product)
 
+        return data
+    } catch (error) {
+        return new Error({
+            where: "[PRODUCT.CREATE]",
+            what: `${error}`
+        })
+    }
 
 }
 
+export async function EditServicesAtRD(id, product) {
+
+    try {
+        const { data } = await axios.put(`https://crm.rdstation.com/api/v1/products/${id}?token=${process.env.RD_TOKEN}`, product)
+
+        return data
+    } catch (error) {
+
+        return new Error({
+            where: "[PRODUCT.EDIT]",
+            what: `${error}`
+        })
+    }
+
+}
+export async function ReturnServiceAtRD(name) {
+
+    try {
+        const { data: { products } } = await axios.get(`https://crm.rdstation.com/api/v1/products?limit=50&token=${process.env.RD_TOKEN}`)
+
+        return products.find(res => res.name.includes(name))
+
+    } catch (error) {
+
+        return new Error({
+            where: "[PRODUCT.GET]",
+            what: `${error}`
+        })
+    }
+
+}
