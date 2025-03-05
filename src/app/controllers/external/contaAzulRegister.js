@@ -654,7 +654,6 @@ class RegisterContaAzulController {
                         }
                     })
 
-
                     let promo = {
                         "parcelas afetadas": parcel?.campaign?.affectedParcels,
                         "tipo de desconto": parcel?.campaign?.descountType === "Value" ? "Valor Cheio" : "Porcentagem",

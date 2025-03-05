@@ -74,13 +74,16 @@ class AutentiqueController {
                             number,
                             `Olá *${name}*, a American Way está te enviando um documento para assinatura neste link:
                             
-Qualquer problema você pode entrar em contato com seu consultor responsável.
+${customerLink}
 
-${customerLink}`)
+Qualquer problema você pode entrar em contato com seu consultor responsável(para tornar o link clicável você pode salvar o número da American Way🗽).
+`)
                         ,
                         SendSimpleWpp("Victor", `${process.env.VICTOR}`,
-                            `Victor, a American Way está te enviando um documento para assinatura em nome de ${name} neste link:
-${school}`)
+                            `🆕🆕🆕🆕🆕🆕🆕
+Victor, novo contrato para você assinar em nome de *${name}* neste link:
+${school}`
+                        )
                     ])
 
                     return res.status(200).json({
@@ -166,17 +169,19 @@ ${school}`)
 
             await axios(config)
                 .then(function (response) {
-                    const customerLink = response.data.data.createDocument.signatures[1].link.short_link
-                    const school = response.data.data.createDocument.signatures[2].link.short_link
+
+                    const { data: { data } } = response
+
+                    const customerLink = data.createDocument.signatures[1].link.short_link
 
                     Promise.all([
                         SendSimpleWpp(
                             name,
                             number,
                             `Olá *${name}*, a American Way está te enviando um documento para assinatura neste link:
-                            ${customerLink}
+${customerLink}
 
-Qualquer problema você pode entrar em contato com seu consultor responsável.
+Qualquer problema você pode entrar em contato com seu consultor responsável(para tornar o link clicável você pode salvar o número da American Way🗽).
                             `),
                     ])
 
