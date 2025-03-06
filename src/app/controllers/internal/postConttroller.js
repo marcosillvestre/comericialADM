@@ -75,20 +75,7 @@ class PostController {
 
             const [type, id] = name.split("+")
 
-            if (data.user.name === "Victor Souza") {
-                await prisma.historic.create({
-                    data: {
-                        responsible: responsible,
-                        information: {
-                            field: "assinaturaContratoStatus",
-                            text: `O status do contrato foi alterado para assinado`,
-                            from: "",
-                        }
-                    }
-                })
-            }
-
-
+            await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[STAGEtEST/SENDER:CONTRACTS]: ${data.user.name} acabou de assinar esse contrato: ${name}}`, null, 2))
 
 
             if (type.includes("reciboMd")) {
@@ -222,7 +209,7 @@ Te esperamos na aula 👩‍💻`,
                 }
 
 
-                if (newUser.customFields['Background do Aluno'] !== "Rematrícula") {
+                if (newUser.customFields['Background do Aluno'] !== "Rematrícula" && data.user.name !== "Victor Souza") {
 
                     await Promise.all([
 
