@@ -30,6 +30,111 @@ const idList = {
     'Centro': "Centro"
 }
 
+async function SyncOrdersToContaAzul(sale, headers, unity) {
+
+    const { id, customer, payment } = sale
+    if (payment.installments[0]?.status === "ACQUITTED") {
+        // console.log(`[ORDER] => ${customer.name} ` + unity)
+
+
+        const { data } = await axios.get(
+            `https://api.contaazul.com/v1/sales/${id}/items?Type=Product`,
+            { headers: headers })
+
+
+        let item = data.filter(item => item.itemType === "PRODUCT")
+
+
+        const searchOnDatabase = await prisma.person.findFirst({
+            where: {
+                name: {
+                    contains: customer.name,
+                    mode: "insensitive"
+                }
+            }
+        })
+        if (searchOnDatabase) {
+            var { tel, aluno } = searchOnDatabase
+        }
+
+        if (item.length > 0) {
+            // log(item, "item")
+
+            await ordersController.store({
+                body: {
+                    orders: await order(
+                        customer.name,
+                        item.map(res => res.item),
+                        unity,
+                        tel || "",
+                        aluno || "",
+                    ),
+                    unity: idList[unity]
+                }
+            })
+        }
+
+
+    }
+}
+
+async function Echo(response, where) {
+
+    await historic._store("Automatização", where, "Ok", response.contrato)
+
+    if (where === "mdStatus") {
+
+        let message = `> *${response.name}*
+realizou o pagamento do material didático
+
+> ${response.materialDidatico}`
+
+        await SendtoWpp(message, response.unidade)
+
+        if (!(response.materialDidatico.find(r => r === "Outros" || r === "Office"))) {
+
+            let bodyOrder = {
+                body: {
+                    orders: await order(
+                        response.name,
+                        response.materialDidatico,
+                        response.unidade,
+                        response.tel,
+                        response.aluno
+                    ),
+                    unity: idList[response.unidade]
+                }
+            }
+            // console.log(JSON.stringify(bodyOrder, null, 2))
+            await ordersController.store(bodyOrder)
+
+        }
+    }
+
+    let checkup = {
+        "ppStatus": "AUTOMÁTICO - Confirmação de pagamento da primeira mensalidade.",
+        "tmStatus": "AUTOMÁTICO - Confirmação pagamento da taxa de matrícula (se houver)",
+        "mdStatus": "AUTOMÁTICO - Confirmação de pagamento do material didático."
+    }
+
+
+    let type = {
+        "ppStatus": response.ppFormaPg,
+        "tmStatus": response.tmFormaPg,
+        "mdStatus": response.mdFormaPg
+    }
+
+    let trelloMessage = `${response.name} -- realizou o pagamento da(o) ${routes[where]} via ${type[where]} no dia ${new Date().toLocaleDateString('pt-BR')}`
+    Promise.all([
+        CompleteCheckPointOnTrello([{ nome: response.name }], response.unidade, `ADM - Checkup inicial/${checkup[where]}`),
+        CreateCommentOnTrello(response.name, response.unidade, trelloMessage)
+    ])
+
+
+
+
+}
+
 const order = async (name, material, unity, tel, aluno) => {
 
     const header = {
@@ -98,53 +203,12 @@ const order = async (name, material, unity, tel, aluno) => {
 }
 
 
-async function SyncOrdersToContaAzul(sale, headers, unity) {
-
-    const { id, customer, payment } = sale
-    if (payment.installments[0]?.status === "ACQUITTED") {
-        // console.log(`[ORDER] => ${customer.name} ` + unity)
 
 
-        const { data } = await axios.get(
-            `https://api.contaazul.com/v1/sales/${id}/items?Type=Product`,
-            { headers: headers })
 
 
-        let item = data.filter(item => item.itemType === "PRODUCT")
 
 
-        const searchOnDatabase = await prisma.person.findFirst({
-            where: {
-                name: {
-                    contains: customer.name,
-                    mode: "insensitive"
-                }
-            }
-        })
-        if (searchOnDatabase) {
-            var { tel, aluno } = searchOnDatabase
-        }
-
-        if (item.length > 0) {
-            // log(item, "item")
-
-            await ordersController.store({
-                body: {
-                    orders: await order(
-                        customer.name,
-                        item.map(res => res.item),
-                        unity,
-                        tel || "",
-                        aluno || "",
-                    ),
-                    unity: idList[unity]
-                }
-            })
-        }
-
-
-    }
-}
 
 
 const getSalesByCustomerId = async (databaseFilteredList, headers, unity) => {
@@ -170,7 +234,7 @@ const getSalesByCustomerId = async (databaseFilteredList, headers, unity) => {
 
 
         if (!user || notes === "") {
-            await SyncOrdersToContaAzul(eachSale, headers, unity)
+            // await SyncOrdersToContaAzul(eachSale, headers, unity)
             continue
         }
 
@@ -207,64 +271,6 @@ const getSalesByCustomerId = async (databaseFilteredList, headers, unity) => {
 
 
     return data.filter(res => res !== undefined)
-}
-
-
-async function Echo(response, where) {
-
-    await historic._store("Automatização", where, "Ok", response.contrato)
-
-    if (where === "mdStatus") {
-
-        let message = `> *${response.name}*
-realizou o pagamento do material didático
-
-> ${response.materialDidatico}`
-
-        await SendtoWpp(message, response.unidade)
-
-        if (!(response.materialDidatico.find(r => r === "Outros" || r === "Office"))) {
-
-            let bodyOrder = {
-                body: {
-                    orders: await order(
-                        response.name,
-                        response.materialDidatico,
-                        response.unidade,
-                        response.tel,
-                        response.aluno
-                    ),
-                    unity: idList[response.unidade]
-                }
-            }
-            // console.log(JSON.stringify(bodyOrder, null, 2))
-            await ordersController.store(bodyOrder)
-
-        }
-    }
-
-    let checkup = {
-        "ppStatus": "AUTOMÁTICO - Confirmação de pagamento da primeira mensalidade.",
-        "tmStatus": "AUTOMÁTICO - Confirmação pagamento da taxa de matrícula (se houver)",
-        "mdStatus": "AUTOMÁTICO - Confirmação de pagamento do material didático."
-    }
-
-
-    let type = {
-        "ppStatus": response.ppFormaPg,
-        "tmStatus": response.tmFormaPg,
-        "mdStatus": response.mdFormaPg
-    }
-
-    let trelloMessage = `${response.name} -- realizou o pagamento da(o) ${routes[where]} via ${type[where]} no dia ${new Date().toLocaleDateString('pt-BR')}`
-    Promise.all([
-        CompleteCheckPointOnTrello([{ nome: response.name }], response.unidade, `ADM - Checkup inicial/${checkup[where]}`),
-        CreateCommentOnTrello(response.name, response.unidade, trelloMessage)
-    ])
-
-
-
-
 }
 
 async function updateOnDatabase(contrato, whereIs) {
