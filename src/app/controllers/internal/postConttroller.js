@@ -75,38 +75,44 @@ class PostController {
 
             const [type, id] = name.split("+")
 
-            await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[STAGEtEST/SENDER:CONTRACTS]: ${data.user.name} acabou de assinar esse contrato: ${name}}`, null, 2))
+            await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[STAGETEST/SENDER:CONTRACTS]: ${data.user.name} acabou de assinar esse contrato: ${name}}`, null, 2))
 
+            // reciboMd-Hudson Fernandes Barbosa da Silva+62a0cf82ecd0/8e522cab0683
 
             if (type.includes("reciboMd")) {
 
-                const [_, nameTruncked] = type.split("-")
-
-                const ordersSigned = await prisma.books.findFirst({
+                const { orders } = await prisma.weekOrder.findFirst({
                     where: {
-                        nome: {
-                            contains: nameTruncked,
-                            mode: "insensitive"
+                        id: {
+                            contains: id.split("_")[0]
                         }
-                    }
-                })
-
-
-                if (!ordersSigned) {
-                    console.log("Contrato de recibo não encontrado")
-                    return res.status(200).json({ message: "not found" })
-                }
-
-                const { id } = ordersSigned
-
-                await prisma.books.update({
-                    where: {
-                        id
                     },
-                    data: {
-                        assinado: true
+                    include: {
+                        orders: true
                     }
                 })
+
+                const ordersIds = id.split("_")
+
+                for (let index = 0; index < ordersIds.length; index++) {
+                    const element = ordersIds[index];
+                    const orderFound = orders.find(t => t.id.includes(element))
+
+                    if (index === 0 || !orderFound) continue
+
+                    await prisma.books.update({
+                        where: {
+                            id: {
+                                contains: element
+                            }
+                        },
+                        data: {
+                            assinado: true
+                        }
+                    })
+
+                    console.log("Assinado")
+                }
 
                 return res.status(201).json({ message: "link atribuido com sucesso" })
             }
