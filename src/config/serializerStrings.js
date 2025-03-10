@@ -2,6 +2,7 @@
 export class StringsMethods {
 
     spacesAndLowerCase(str) {
+        if (!str) return ''
         return str.replace(/\s+/g, '').toLowerCase()
     }
 

@@ -1,6 +1,7 @@
 import { DateTransformer } from "../../config/DateTransformer.js";
 import { PastCodes } from "../../config/getLastMonday.js";
 import prisma from "../../database/database.js";
+import { CreateCommentOnTrello } from "./externalConnections/trello.js";
 import { SendGroupAlerts } from "./externalConnections/wpp.js";
 
 
@@ -65,6 +66,7 @@ const databaseSearch = async (unity) => {
     return search.map((res) => {
         return {
             "Data da aula": res.customFields["Data da primeira aula"],
+            "Responsável": res.name,
             text: `🆕🆕🆕🆕🆕🆕🆕🆕🆕🆕🆕🆕
 
 > Aluno: *${res.customFields["Nome do aluno"]}* 
@@ -160,6 +162,7 @@ export const firstClassDaily = async () => {
         )
 
         for (const element of list) {
+
             await Promise.all([
                 SendGroupAlerts(
                     element.text,

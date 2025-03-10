@@ -52,9 +52,7 @@ async function getData(listId) {
 async function filteredData(name, array) {
 
 
-    const filtered = await array.filter(res =>
-        spacesAndLowerCase(res.name)
-            .includes(spacesAndLowerCase(name)))
+    const filtered = await array.filter(res => spacesAndLowerCase(res.name).includes(spacesAndLowerCase(name)))
 
     if (filtered.length > 0) {
         try {
@@ -163,7 +161,7 @@ export async function CompleteCheckPointOnTrello(array, unity, where) {
 export async function CreateCommentOnTrello(name, unity, message) {
     const { id } = await GotIdFromCardOnList(name, unity)
 
-    if (id === undefined) {
+    if (!id) {
         await SendSimpleWpp("Marcos", `${process.env.MARCOS}`, `${name} --> não foi encontrado no trello.`)
         return "Não encontrado no Trello";
     }
