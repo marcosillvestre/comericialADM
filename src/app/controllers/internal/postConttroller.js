@@ -70,14 +70,11 @@ class PostController {
         const { event: { data } } = req.body
         try {
 
-
             const { name, signatures, files } = await GetDocument(data.document)
 
             const [type, id] = name.split("+")
 
             await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[STAGETEST/SENDER:CONTRACTS]: ${data.user.name} acabou de assinar esse contrato: ${name}}`, null, 2))
-
-            // reciboMd-Hudson Fernandes Barbosa da Silva+62a0cf82ecd0/8e522cab0683
 
             if (type.includes("reciboMd")) {
 
@@ -123,20 +120,27 @@ class PostController {
             const [deal] = await gatheringDataForDatabase([dealWin])
 
 
-            const create = async (responsible, data) => {
+            const create = async (data) => {
+
+                const usersSigned = signatures.map(sign => {
+                    return sign.link !== null && {
+                        responsible: sign.user.name,
+                        information: {
+                            field: "assinaturaContratoStatus",
+                            text: "O status do contrato foi alterado para assinado",
+                            from: data.id,
+                        }
+                    }
+                })
+
                 const register = await prisma.registers.create({
                     data: {
                         ...data,
                         assinaturaContratoStatus: "Ok",
                         historic: {
-                            create: {
-                                responsible: responsible,
-                                information: {
-                                    field: "assinaturaContratoStatus",
-                                    text: `O status do contrato foi alterado para assinado`,
-                                    from: data.id,
-                                }
-                            }
+
+                            create: usersSigned.filter(res => res !== false)
+
                         }
                     }
                 })
@@ -178,7 +182,9 @@ class PostController {
             }).then(async register => {
                 if (register) return await update(data.user.name, deal)
 
-                const newUser = await create(data.user.name, deal)
+                if (data.user.name === "Victor Souza") return res.status(200).send()
+
+                const newUser = await create(deal)
 
                 const unityNumber = {
                     "Golfinho Azul": "31 8713-7018",
@@ -215,7 +221,7 @@ Te esperamos na aula 👩‍💻`,
                 }
 
 
-                if (newUser.customFields['Background do Aluno'] !== "Rematrícula" && data.user.name !== "Victor Souza") {
+                if (newUser.customFields['Background do Aluno'] !== "Rematrícula") {
 
                     await Promise.all([
 
