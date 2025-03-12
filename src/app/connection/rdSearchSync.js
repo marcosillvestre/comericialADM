@@ -9,6 +9,7 @@ import { RegisterFinder } from "../../database/registers/register.find.js";
 import { getContactsWithId } from './externalConnections/rdStation.js';
 import { StartCicleWhenNewRegisterIsCreated } from "./externalConnections/trello.js";
 import { getDataFromCep } from "./externalConnections/viaCep.js";
+import { SendSimpleWpp } from "./externalConnections/wpp.js";
 const comebackDays = 3
 const options = { method: 'GET', headers: { accept: 'application/json' } };
 
@@ -52,6 +53,8 @@ async function UpdateTheCustomFields() {
 
 
 const calcularDiferencaAnos = async (dataString) => {
+    if (!dataString) return undefined
+
     const dataFornecida = await DateTransformer(dataString)
     const hoje = new Date();
 
@@ -178,7 +181,6 @@ export const gatheringDataForDatabase = async (deals) => {
         }
         return data
     } catch (error) {
-
         await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[GATHERINGDATAFORDATABASE]: ${error}`, null, 2))
         return []
     }
