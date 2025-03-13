@@ -67,14 +67,14 @@ class PostController {
 
 
     async sender(req, res) {
-        const { event: { data } } = req.body
         try {
+            const { event: { data } } = req.body
 
             const { name, signatures, files } = await GetDocument(data.document)
 
             const [type, id] = name.split("+")
 
-            await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[STAGETEST/SENDER:CONTRACTS]: ${data.user.name} acabou de assinar esse contrato: ${name}}`, null, 2))
+            // await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[STAGETEST/SENDER:CONTRACTS]: ${data.user.name} acabou de assinar esse contrato: ${name}`, null, 2))
 
             if (type.includes("reciboMd")) {
 
@@ -113,12 +113,6 @@ class PostController {
 
                 return res.status(201).json({ message: "link atribuido com sucesso" })
             }
-
-
-            const dealWin = await winADeal(id)
-
-            const [deal] = await gatheringDataForDatabase([dealWin])
-
 
             const create = async (data) => {
 
@@ -177,12 +171,16 @@ class PostController {
 
             await prisma.registers.findUnique({
                 where: {
-                    id: deal.id
+                    id: id
                 }
             }).then(async register => {
-                if (register) return await update(data.user.name, deal)
+                if (register) await update(data.user.name, register)
 
-                if (data.user.name === "Victor Souza") return res.status(200).send()
+                if (data.user.name === "Victor Souza") return res.status(200).send("ok")
+
+                const dealWin = await winADeal(id)
+
+                const [deal] = await gatheringDataForDatabase([dealWin])
 
                 const newUser = await create(deal)
 
