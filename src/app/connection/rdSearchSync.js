@@ -103,12 +103,14 @@ export const gatheringDataForDatabase = async (deals) => {
             const { id, deal_custom_fields, user, name,
                 deal_products: [service], deal_stage } = deal
 
+            const { phone, email, contacts } = await getContactsWithId(id)
+
+            if (!service || !contacts) continue
+
             const { name: pipeName } = await GetPipelineStage(deal_stage.id)
             const CEP = await findYourValueForCustomFields('CEP', deal_custom_fields)
 
             const viaCepData = await getDataFromCep(CEP)
-
-            const { phone, email, contacts } = await getContactsWithId(id)
 
             const customFields = async () => {
                 const cf = await prisma.customFields.findMany()
@@ -123,7 +125,7 @@ export const gatheringDataForDatabase = async (deals) => {
                 }
 
                 if (result["O responsável e o aluno são a mesma pessoa ?"] === "Sim" && contacts.birthday) {
-                    result["Data de nascimento do aluno"] = `0${contacts.birthday?.day}/0${contacts.birthday?.month}/${contacts.birthday?.year}`
+                    result["Data de nascimento do aluno"] = new Date(`${contacts.birthday?.year}/${contacts.birthday?.month}/${contacts.birthday?.day}`).toLocaleDateString()
                     result["Nome do aluno"] = contacts.name
                 }
 
@@ -182,6 +184,7 @@ export const gatheringDataForDatabase = async (deals) => {
         return data
     } catch (error) {
         await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[GATHERINGDATAFORDATABASE]: ${error}`, null, 2))
+        console.log(error)
         return []
     }
 }
