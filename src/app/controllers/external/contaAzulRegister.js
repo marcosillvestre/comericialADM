@@ -1,9 +1,9 @@
 import axios from 'axios';
 import 'dotenv/config';
+import * as yup from 'yup';
 import { DateTransformer } from '../../../config/DateTransformer.js';
 import { installments } from '../../../config/installments.js';
 import { getToken } from '../../core/getToken.js';
-
 
 class RegisterContaAzulController {
 
@@ -11,22 +11,29 @@ class RegisterContaAzulController {
 
     async storeCostumer(req, res) {
 
-        const { CelularResponsavel, Email, Bairro, CEP, Complemento, Unidade, CPF,
-            ['Nome do responsável']: nomeResponsavel,
-            ['RG responsável']: rgResponsavel, ['Data de nascimento do  responsável']: nascimentoResponsavel,
-            ['Nº do contrato']: contrato,
-            ['Profissão']: profissao,
-            ['Endereco']: endereco, ['Número']: numero,
-        } = req.body
-
-
-        var header = {
-            "Authorization": `Bearer ${await getToken(Unidade, 'refresh')}`,
-            "Content-Type": "application/json"
-        }
-
+        const schema = yup.object().shape({
+            CPF: yup.string().transform((curr) => curr.replace(" ", "")).required(),
+            CelularResponsavel: yup.string().transform((curr) => curr.replace(" ", "")).required(),
+            Email: yup.string().transform((curr) => curr.replace(" ", "")).email().required(),
+        })
 
         try {
+            await schema.validateSync(req.query, { abortEarly: false })
+
+
+            const { CelularResponsavel, Email, Bairro, CEP, Complemento, Unidade, CPF,
+                ['Nome do responsável']: nomeResponsavel,
+                ['RG responsável']: rgResponsavel, ['Data de nascimento do  responsável']: nascimentoResponsavel,
+                ['Nº do contrato']: contrato,
+                ['Profissão']: profissao,
+                ['Endereco']: endereco, ['Número']: numero,
+            } = req.body
+
+
+            var header = {
+                "Authorization": `Bearer ${await getToken(Unidade, 'refresh')}`,
+                "Content-Type": "application/json"
+            }
 
 
             const customerBody = {
