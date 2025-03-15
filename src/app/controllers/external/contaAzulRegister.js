@@ -18,7 +18,7 @@ class RegisterContaAzulController {
         })
 
         try {
-            await schema.validateSync(req.query, { abortEarly: false })
+            await schema.validateSync(req.body, { abortEarly: false })
 
 
             const { CelularResponsavel, Email, Bairro, CEP, Complemento, Unidade, CPF,
