@@ -3,9 +3,13 @@ import prisma from "../database/database.js"
 
 
 export const findYourValueForCustomFields = (customFieldLabel, deal_custom_fields) => {
-    return deal_custom_fields.filter(res =>
+    const value = deal_custom_fields.filter(res =>
         res.custom_field.label.includes(customFieldLabel))
         .map(res => res.value)[0]
+
+    if (!value) return "Dado não cadastrado"
+
+    return value
 }
 
 
