@@ -64,14 +64,16 @@ export const bodyMakerForCustomFields = async (contractData) => {
 export const bodyFilterCustomFields = async (deal) => {
 
     const { id, deal_custom_fields, deal_products: [service], contacts } = deal
-    const [_, Subclasse] = service.name.split(' - ');
+
+    const serviceName = service.name || " - Sem serviço cadastrado"
+    const [_, Subclasse] = serviceName.split(' - ');
 
     return {
         id: id,
-        name: contacts[0].name,
+        name: contacts[0]?.name || " ",
         student: findYourValueForCustomFields("Nome do aluno", deal_custom_fields),
         createdDate: findYourValueForCustomFields("Data de emissão da venda", deal_custom_fields),
-        phone: contacts[0]?.phones[0]?.phone,
+        phone: contacts[0]?.phones[0]?.phone || " ",
         subclass: Subclasse,
         seller: findYourValueForCustomFields("Vendedor", deal_custom_fields),
     }
