@@ -7,7 +7,7 @@ export const findYourValueForCustomFields = (customFieldLabel, deal_custom_field
         res.custom_field.label.includes(customFieldLabel))
         .map(res => res.value)[0]
 
-    if (!value) return "Dado não cadastrado"
+    if (!value) return " "
 
     return value
 }
