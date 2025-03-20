@@ -182,10 +182,10 @@ const orderRegisterForContaAzulSales = async (sale, products, unity) => {
                 contains: "pendente",
                 mode: "insensitive"
             },
-            customFields: {
-                path: ["Material didático"],
-                array_contains: products.name.concat(" / ").concat(products.code)
-            }
+            // customFields: {
+            //     path: ["Material didático"],
+            //     array_contains: products.name.concat(" / ").concat(products.code)
+            // }
         }
     })
 
@@ -203,12 +203,12 @@ const orderRegisterForContaAzulSales = async (sale, products, unity) => {
         })
     }
 
+    const { id: idSale, customer } = sale
+
+
     for (let index = 0; index < products.length; index++) {
         const element = products[index];
 
-        const { id: idSale, customer } = sale
-
-        if (element.itemType !== 'PRODUCT') continue
 
         const body = {
             id: idSale.concat(`-${index}`),
@@ -228,6 +228,7 @@ const orderRegisterForContaAzulSales = async (sale, products, unity) => {
 
     }
 
+
     let bodyOrder = {
         body: {
             orders: data,
@@ -235,7 +236,8 @@ const orderRegisterForContaAzulSales = async (sale, products, unity) => {
         }
     }
 
-    await ordersController.store(bodyOrder)
+    data.length > 0 &&
+        await ordersController.store(bodyOrder)
 
 }
 ////provenientes do banco de dados
@@ -291,6 +293,7 @@ async function gatheringSaleAndProducts(unity) {
 
         const data = [];
 
+
         for (let index = 0; index < allSales.length; index++) {
             const eachSale = allSales[index];
 
@@ -300,8 +303,8 @@ async function gatheringSaleAndProducts(unity) {
 
 
             if (notes === "" &&
-                payment.installments[0] &&
-                payment.installments[0]?.status === "ACQUITTED"
+                (payment.method === "WITHOUT_PAYMENT" || payment.installments[0] &&
+                    payment.installments[0]?.status === "ACQUITTED")
             ) {
                 orderRegisterForContaAzulSales(eachSale, products, unity)
                 continue

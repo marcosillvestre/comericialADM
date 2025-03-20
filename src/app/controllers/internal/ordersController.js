@@ -1,4 +1,4 @@
-import { HandleUTCDate } from "../../../config/DateTransformer.js";
+import { DateTransformer, HandleUTCDate } from "../../../config/DateTransformer.js";
 import { PastCodes } from "../../../config/getLastMonday.js";
 
 import prisma from "../../../database/database.js";
@@ -301,7 +301,6 @@ class OrderController {
 
             const { orders, unity } = req.body
 
-
             const date = new Date()
             const code = await getLastMondayCode(date);
 
@@ -332,31 +331,16 @@ class OrderController {
 
             const creation = async (code, data) => {
 
-                await Promise.all([
-                    prisma.orders.create({
-                        data: {
-                            unity,
-                            id: data.id,
-                            sku: data.sku,
-                            name: data.nome,
-                            value: data.valor,
-                            student: data.aluno,
-                            phone: data.tel,
-                            book: data.materialDidatico,
-                            link: "",
-                            removedBy: "",
-                        }
-                    }),
-                    prisma.weekOrder.create({
-                        data: {
-                            code,
-                            orders: {
-                                create: data
-                            },
-                            unity
-                        }
-                    })])
 
+                prisma.weekOrder.create({
+                    data: {
+                        code,
+                        orders: {
+                            create: data
+                        },
+                        unity
+                    }
+                })
                     .then(() => {
                         if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
                         console.log("Pedido criado com sucesso")
@@ -382,7 +366,7 @@ class OrderController {
                             },
                             {
                                 aluno: order.aluno,
-                                materialDidatico: order.materialDidatico,
+                                book: order.materialDidatico,
                             }
                         ]
 
@@ -402,9 +386,29 @@ class OrderController {
                         }
                     })
 
+                    orders.map(async data => {
+
+                        await prisma.orders.create({
+                            data: {
+                                unity,
+                                id: data.id,
+                                sku: data.sku,
+                                name: data.nome,
+                                value: data.valor,
+                                student: data.aluno,
+                                phone: data.tel,
+                                book: data.materialDidatico,
+                                link: "",
+                                removedBy: "",
+                            }
+
+                        }).then(t => console.log(t.name + " foi adicionado ao sistema de livros"))
+                    })
                     weekOrder ?
                         await update(weekOrder.id, orders) :
                         await creation(code, orders)
+
+
                 }
             }
 
