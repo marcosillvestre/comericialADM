@@ -7,3 +7,12 @@ export function DateTransformer(dateStr) {
 
     return new Date(isoDate)
 }
+
+
+export function HandleUTCDate(date) {
+    if (date === 'null') return new Date()
+
+    let newDate = new Date(date).setUTCHours(0)
+
+    return new Date(newDate)
+}

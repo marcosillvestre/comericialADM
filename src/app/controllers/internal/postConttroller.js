@@ -19,7 +19,6 @@ class PostController {
         const { unity } = req.params
         const { take, skip } = req.query
 
-
         try {
             await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=1000&token=${process.env.RD_TOKEN}&deal_pipeline_id=${funis[unity]}&deal_stage_id=${stages[unity]}&page=${skip}&limit=${take}`)
                 .then(async (response) => {
@@ -37,7 +36,12 @@ class PostController {
                 })
 
         } catch (error) {
-            console.log("error " + error)
+            console.log({
+                where: '[getrecent]',
+                error
+            })
+
+            return res.status(400).json(error)
         }
     }
 
@@ -63,9 +67,6 @@ class PostController {
     }
 
 
-
-
-
     async sender(req, res) {
         try {
             const { event: { data } } = req.body
@@ -74,11 +75,8 @@ class PostController {
 
             const [type, id] = name.split("+")
 
-            // await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[STAGETEST/SENDER:CONTRACTS]: ${data.user.name} acabou de assinar esse contrato: ${name}`, null, 2))
-
             if (type.includes("reciboMd")) {
-
-                const { orders } = await prisma.weekOrder.findFirst({
+                const orders = await prisma.weekOrder.findFirst({
                     where: {
                         id: {
                             contains: id.split("_")[0]
@@ -97,16 +95,30 @@ class PostController {
 
                     if (index === 0 || !orderFound) continue
 
-                    await prisma.books.update({
-                        where: {
-                            id: {
-                                contains: element
+
+                    await prisma.$transaction([
+
+                        prisma.books.update({
+                            where: {
+                                id: {
+                                    contains: element
+                                }
+                            },
+                            data: {
+                                assinado: true
                             }
-                        },
-                        data: {
-                            assinado: true
-                        }
-                    })
+                        }),
+                        prisma.order.update({
+                            where: {
+                                id: {
+                                    contains: element
+                                }
+                            },
+                            data: {
+                                assinado: true
+                            }
+                        }),
+                    ])
 
                     console.log("Assinado")
                 }

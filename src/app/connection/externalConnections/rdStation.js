@@ -91,10 +91,10 @@ export async function getContactsWithId(id) {
     ])
 
     return {
-        phone: contacts.contacts[0].phones[0]?.phone,
-        email: contacts.contacts[0].emails[0]?.email,
         deal,
-        contacts: contacts.contacts[0]
+        phone: contacts.contacts[0] ? contacts.contacts[0].phones[0]?.phone : "",
+        email: contacts.contacts[0] ? contacts.contacts[0].emails[0]?.email : "",
+        contacts: contacts.contacts[0] ? contacts.contacts[0] : ""
     }
 
 }

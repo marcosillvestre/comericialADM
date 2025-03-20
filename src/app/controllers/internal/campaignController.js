@@ -57,7 +57,7 @@ class CampaignController {
             return res.status(201).json("Criado com sucesso")
 
         } catch (error) {
-            console.log(error)
+            console.log(error.ValidationError)
             return res.status(401).json(error)
         }
 
@@ -140,7 +140,7 @@ class CampaignController {
             return res.status(200).json("Editado com successo")
 
         } catch (error) {
-            console.log(error)
+            console.log({ error })
             return res.status(401).json(error)
         }
     }

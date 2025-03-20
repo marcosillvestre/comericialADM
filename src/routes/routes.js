@@ -94,9 +94,18 @@ routes.put('/campos-personalizados', CustomFieldsController.update)
 // routes.put('/novos-contratos', ContractsController.update)
 
 
-routes.get('/pedidos', OrdersController.index)
-routes.put('/pedidos', OrdersController.edit)
-routes.put('/linkpedido', OrdersController.putDataOrders)
+routes.post('/pedidos', OrdersController.index)
+routes.post('/pedidos-query', OrdersController.query)
+
+routes.delete('/pedidos/:id', OrdersController.delete)
+routes.put('/pedidos', OrdersController.update)
+routes.put('/multi-pedidos', OrdersController.updateManyOrders)
+
+routes.post('/pedidos', OrdersController.store)
+
+
+// routes.put('/pedidos', OrdersController.edit)
+// routes.put('/linkpedido', OrdersController.putDataOrders)
 
 
 routes.post('/cliente', RegisterContaAzulController.storeCostumer)

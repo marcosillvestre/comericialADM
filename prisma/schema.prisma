@@ -197,6 +197,91 @@ model books {
   orderRelated weekOrder @relation(fields: [orderId], references: [id])
   orderId   String
 }
+
+enum situation {
+  REVISAR
+  REVISADO
+  ENVIADO
+  CHEGOU
+  DISPONIVEL
+  ENTREGUE
+  CANCELADO
+}
+enum logisticType {
+  ENCOMENDA
+  REPOSICAO
+}
+model order {
+  id         String   @id  @default(uuid())
+  phone      String?
+  student    String?
+  
+  sku      String
+  link     String
+  name     String
+  unity    String
+  value    Float
+
+  arrived          Boolean     @default(false) // chegada
+  arrivingDate     String     // data que foi entregue
+  
+  signed     Boolean           @default(false) //assinado
+  available  Boolean           @default(true) //disponivel
+
+  delivery    Boolean          @default(false) //entregue
+  withdraw     String // data que foi entregue
+
+  removedBy    String // quem entregou
+  book         String 
+
+  status       situation       @default(REVISAR)
+  type         logisticType    @default(ENCOMENDA)
+
+  tags         String[]
+  logistic     Json[]
+  logs         Json[]
+
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+}
+
+model orders {
+  id         String   @id  @default(uuid())
+  phone      String?
+  student    String?
+  
+  sku      String
+  link     String
+  name     String
+  unity    String
+  value    Float
+
+  arrived          Boolean     @default(false) // chegada
+  arrivingDate     DateTime?     // data que foi entregue
+  
+  signed     Boolean           @default(false) //assinado
+  available  Boolean           @default(true) //disponivel
+
+  delivery    Boolean          @default(false) //entregue
+  withdraw     DateTime? // data que foi entregue
+
+  removedBy    String // quem entregou
+  book         String 
+
+  status       situation       @default(REVISAR)
+  type         logisticType    @default(ENCOMENDA)
+
+  tags            String[]
+  logistic        Json[]
+  logs            Json[]
+  observations    Json[]
+  
+
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+}
+
+
 model files {
   id            String    @id  @default(cuid())
   name          String

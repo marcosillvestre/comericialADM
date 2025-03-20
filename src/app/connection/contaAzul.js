@@ -191,6 +191,8 @@ const orderRegisterForContaAzulSales = async (sale, products, unity) => {
 
     if (found) {
         console.log("found: " + found.name)
+        console.log(found.name)
+
         await prisma.registers.update({
             where: {
                 id: found.id
@@ -452,7 +454,7 @@ async function SearchPendentsRegister(unity) {
             })
 
 
-            console.log(await databaseSynchronizedWithContaAzul.length + " sales sinc")
+            console.log(`${databaseSynchronizedWithContaAzul.length} sales sinc`)
 
             await updateOnDatabaseRegister(databaseSynchronizedWithContaAzul)
             console.log("Atualizado")
@@ -475,9 +477,114 @@ const syncContaAzulRegister = async () => {
 
     }
 }
-
+// syncContaAzulRegister()
 export default syncContaAzulRegister
 /*
+const data = {
+    id: "1541",
+    sku: "splited[1]",
+    nome: "name",
+    materialDidatico: "splited[0]",
+    valor: 451,
+    data: new Date().toLocaleDateString("pt-BR"),
+    assinado: false,
+    dataRetirada: "",
+    link: "",
+    retiradoPor: "",
+    aluno: "iorvj",
+    tel: "446",
+    type: "auto"
+}
+
+await prisma.orders.create({
+    data: {
+        unity: "centro",
+        id: data.id,
+        sku: data.sku,
+        name: data.nome,
+        value: data.valor,
+        student: data.aluno,
+        phone: data.tel,
+        book: data.materialDidatico,
+        link: "",
+        removedBy: "",
+    }
+})
+    .then(r => console.log(r))
+    .catch(r => console.log(r))
+
+
+await prisma.books.findMany({
+    include: {
+        orderRelated: true
+    }
+})
+    .then(async r => {
+
+        for (let index = 0; index < r.length; index++) {
+            const res = r[index];
+
+
+            const dates = (d) => {
+
+                if (!d) return ''
+
+                const [date, _] = d.split(", ")
+                const [day, m, y] = date.split("/")
+                const rm = date && new Date(y, m, day)
+
+                return rm
+            }
+
+            const w = {
+                id: res.id,
+                phone: res.tel,
+                student: res.aluno,
+                sku: res.sku,
+                link: res.link,
+                name: res.nome,
+                value: res.valor,
+                arrived: res.chegada,
+                signed: res.assinado,
+                status: "REVISAR",
+                removedBy: res.retiradoPor,
+                withdraw: dates(res.dataRetirada),
+                book: res.materialDidatico,
+                unity: res.orderRelated.unity,
+                created_at: DateTransformer(res.data)
+            }
+
+            const wt = {
+                id: res.id,
+                phone: res.tel,
+                student: res.aluno,
+                sku: res.sku,
+                link: res.link,
+                name: res.nome,
+                value: res.valor,
+                arrived: res.chegada,
+                signed: res.assinado,
+                status: "REVISAR",
+                removedBy: res.retiradoPor,
+                book: res.materialDidatico,
+                unity: res.orderRelated.unity,
+                created_at: DateTransformer(res.data)
+
+            }
+            try {
+
+                await prisma.orders.create({
+                    data: dates(res.dataRetirada) ? w : wt
+                }).then(res => console.log(res.name))
+            } catch (error) {
+                continue
+            }
+
+
+        }
+    })
+
+
 
 async function deletadorDeLivrosDuplicados(params) {
 
