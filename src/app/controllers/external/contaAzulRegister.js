@@ -15,17 +15,17 @@ class RegisterContaAzulController {
             CPF: yup.string().transform((curr) => curr.replace(" ", "")).required(),
             CelularResponsavel: yup.string().transform((curr) => curr.replace(" ", "")).required(),
             Email: yup.string().transform((curr) => curr.replace(" ", "")).email().required(),
+            CEP: yup.string().transform((curr) => curr.replace(" ", "")).required(),
+            'Nome do responsável': yup.string().transform((curr) => curr.replace(" ", "")).required(),
+            'Data de nascimento do  responsável': yup.string().transform((curr) => curr.replace(" ", "")).required(),
         })
 
         try {
             await schema.validateSync(req.body, { abortEarly: false })
 
-
             const { CelularResponsavel, Email, Bairro, CEP, Complemento, Unidade, CPF,
-                ['Nome do responsável']: nomeResponsavel,
-                ['RG responsável']: rgResponsavel, ['Data de nascimento do  responsável']: nascimentoResponsavel,
-                ['Nº do contrato']: contrato,
-                ['Profissão']: profissao,
+                ['Nome do responsável']: nomeResponsavel, ['Data de nascimento do  responsável']: nascimentoResponsavel,
+                ['Nº do contrato']: contrato, ['Profissão']: profissao,
                 ['Endereco']: endereco, ['Número']: numero,
             } = req.body
 
@@ -43,7 +43,7 @@ class RegisterContaAzulController {
                 "mobile_phone": CelularResponsavel,
                 "person_type": CPF.length > 11 ? "LEGAL" : "NATURAL",
                 "document": CPF,
-                "identity_document": rgResponsavel,
+                "identity_document": "",
                 "date_of_birth": new Date(nascimentoResponsavel.split("/").reverse().join("-")),
                 "notes": contrato,
                 "contacts": [
@@ -87,16 +87,8 @@ class RegisterContaAzulController {
                 })
 
         } catch (error) {
-            const valid = {
-                CelularResponsavel, Email, Bairro, CEP, Complemento, Unidade, CPF,
-                nomeResponsavel, rgResponsavel, nascimentoResponsavel, contrato, profissao, endereco, numero,
-            }
-            const invalid = Object.keys(valid).filter(res => !valid[res])
-            console.log({
-                where: "[CLIENT]",
-                error
-            })
-            return res.status(400).json({ message: `Campos inválidos: ${invalid}` })
+
+            return res.status(400).json({ message: `Campos inválidos: ${error.errors}` })
         }
 
     }
