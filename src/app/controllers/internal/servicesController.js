@@ -1,17 +1,9 @@
-import * as yup from 'yup';
 import { AplieDescount } from '../../../config/descountAplied.js';
 import prisma from '../../../database/database.js';
 import { CreateServicesAtRD, EditServicesAtRD, ReturnServiceAtRD } from '../../connection/externalConnections/rdStation.js';
 class ServicesController {
 
     async index(req, res) {
-        const schema = yup.object().shape({
-            take: yup.string().required(),
-            orderBy: yup.string().required(),
-            skip: yup.string().required(),
-            query: yup.string().required(),
-
-        })
 
         try {
             await schema.validateSync(req.query, { abortEarly: false })

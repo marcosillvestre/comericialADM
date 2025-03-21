@@ -182,16 +182,11 @@ const orderRegisterForContaAzulSales = async (sale, products, unity) => {
                 contains: "pendente",
                 mode: "insensitive"
             },
-            // customFields: {
-            //     path: ["Material didático"],
-            //     array_contains: products.name.concat(" / ").concat(products.code)
-            // }
         }
     })
 
     if (found) {
         console.log("found: " + found.name)
-        console.log(found.name)
 
         await prisma.registers.update({
             where: {

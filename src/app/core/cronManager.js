@@ -25,6 +25,7 @@ const functionsArray = [
         time: "0 */3 * * *",
         fn: syncContaAzulRegister
     },
+
     {
         time: "0 0 5 * * mon",
         fn: firstClassSearch

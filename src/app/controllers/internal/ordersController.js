@@ -41,6 +41,7 @@ class OrderController {
                     "Sim": true,
                     "Não": false
                 }
+
                 if (res.label.includes("DATA")) {
                     const [initialValue, finalValue] = res.value.split("~")
 
@@ -49,12 +50,21 @@ class OrderController {
                             gte: HandleUTCDate(initialValue),
                             lte: HandleUTCDate(finalValue)
                         }
-
                     }
                 }
+                if (res.label.includes("TAG")) {
+                    return {
+                        [res.key]: {
+                            contains: res.value,
+                            mode: "insensitive"
+                        }
+                    }
+                }
+
                 return {
                     [res.key]: {
-                        equals: !bools[res.value] ? res.value : bools[res.value],
+                        equals: bools[res.value] === undefined ?
+                            res.value : bools[res.value],
 
                     }
                 }
@@ -178,7 +188,6 @@ class OrderController {
                                 AND: [
                                     {
                                         OR: [
-
                                             {
                                                 name: {
                                                     contains: query,
@@ -187,12 +196,6 @@ class OrderController {
                                             },
                                             {
                                                 student: {
-                                                    contains: query,
-                                                    mode: "insensitive"
-                                                }
-                                            },
-                                            {
-                                                unity: {
                                                     contains: query,
                                                     mode: "insensitive"
                                                 }
@@ -234,12 +237,6 @@ class OrderController {
                                             },
                                             {
                                                 student: {
-                                                    contains: query,
-                                                    mode: "insensitive"
-                                                }
-                                            },
-                                            {
-                                                unity: {
                                                     contains: query,
                                                     mode: "insensitive"
                                                 }
@@ -346,7 +343,7 @@ class OrderController {
                         console.log("Pedido criado com sucesso")
                     })
                     .catch((err) => {
-                        console.log(err)
+                        // console.log(err)
                         if (res) return res.status(400).json({ err })
                     })
             }
@@ -402,7 +399,9 @@ class OrderController {
                                 removedBy: "",
                             }
 
-                        }).then(t => console.log(t.name + " foi adicionado ao sistema de livros"))
+                        })
+                            .then(t => console.log(t.name + " foi adicionado ao sistema de livros"))
+                            .catch(t => console.log(data.nome + " ja está cadastrada"))
                     })
                     weekOrder ?
                         await update(weekOrder.id, orders) :
@@ -577,14 +576,14 @@ class OrderController {
             const { id } = req.params
             const { responsible } = req.query
 
-            const { name } = await prisma.orders.findUnique({
+            const order = await prisma.orders.findUnique({
                 where: {
                     id
                 }
             })
 
             await Promise.all([
-                _storeLog(responsible, "pedido de livro", `${responsible} deletou o pedido de livro em nome de ${name}`, ""),
+                _store(responsible, "pedido de livro", `${responsible} deletou o pedido de livro em nome de ${order.name}`, ""),
                 prisma.orders.delete({
                     where: {
                         id
@@ -599,6 +598,7 @@ class OrderController {
             return res.status(500).json(error)
         }
     }
+
     async deleteManyOrders(req, res) {
         const schemaParams = yup.object().shape({
             id: yup.string().required(),
