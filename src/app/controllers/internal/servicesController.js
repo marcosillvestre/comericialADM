@@ -5,13 +5,6 @@ class ServicesController {
 
     async index(req, res) {
 
-        try {
-            await schema.validateSync(req.query, { abortEarly: false })
-
-        } catch (error) {
-            return res.status(400).json({ message: error })
-        }
-
         const { take, skip, orderBy, query } = req.query
 
         try {
