@@ -3,6 +3,7 @@ import 'dotenv/config';
 import * as yup from 'yup';
 import { DateTransformer } from '../../../config/DateTransformer.js';
 import { installments } from '../../../config/installments.js';
+import { SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
 import { getToken } from '../../core/getToken.js';
 
 class RegisterContaAzulController {
@@ -335,6 +336,7 @@ class RegisterContaAzulController {
                                 json["Responsável"] === nomeResponsavel &&
                                 JSON.stringify(json["MD"]) === JSON.stringify(materialDidatico)) {
                                 await axios.delete(`https://api.contaazul.com/v1/sales/${sale.id}`, { headers: header })
+                                console.log("copias deletadas")
                             }
                         } catch (error) {
                             console.log("erro ao deletar vendas antigas")
@@ -419,7 +421,6 @@ class RegisterContaAzulController {
                             resolve(
                                 axios.post('https://api.contaazul.com/v1/sales', cell, { headers: header })
                                     .then(data => {
-                                        console.log(data)
                                         if (data.status === 201 || data.status === 200) {
                                             console.log("O md foi lançado")
                                             return res.status(200).json({ message: "O md foi lançado" })
@@ -504,7 +505,7 @@ class RegisterContaAzulController {
                     if (productsSale.length === materialDidatico.length) {
 
                         const installment = await installments(vencimentoMaterialDidatico, material.materials.length, material.total)
-                        const financialId = paymentMethods.data.find(p => p.name === financial_account[formaPagamentoMaterialDidatico])
+                        const financialId = paymentMethods.data.find(p => p.name.includes(financial_account[formaPagamentoMaterialDidatico]))
 
                         const teachingmaterial = {
                             "emission": new Date(),
@@ -519,7 +520,7 @@ class RegisterContaAzulController {
                             "payment": {
                                 "type": "TIMES",
                                 "method": paymentType[formaPagamentoMaterialDidatico],
-                                "financial_account_id": financialId.uuid,
+                                "financial_account_id": financialId ? financialId.uuid : "",
                                 "installments": installment
                             },
                             "notes": saleNotes,
