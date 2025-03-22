@@ -759,8 +759,7 @@ class RegisterContaAzulController {
 
 
                     const installment = await installments(dataPagamentoTaxaMatricula, parcelasTaxaMatricula, tax?.total)
-
-                    const financialId = paymentMethods.data.find(p => p.name === financial_account[formaPagamentoTaxaMatricula])
+                    const financialId = paymentMethods.data.find(p => p.name.includes(financial_account[formaPagamentoMaterialDidatico]))
 
 
                     const taxCell = {
@@ -784,7 +783,8 @@ class RegisterContaAzulController {
                         "payment": {
                             "type": "TIMES",
                             "method": tax?.total > 0 ? paymentType[formaPagamentoTaxaMatricula] : paymentType["Sem pagamento"],
-                            "financial_account_id": financialId.uuid,
+                            "financial_account_id": financialId ? financialId.uuid : "",
+
                             "installments": installment
                             ,
                         },
@@ -800,11 +800,7 @@ class RegisterContaAzulController {
                     return res.status(400).json({ message: `Erro no cpf digitado: ${CPF}` })
                 }
             })
-                .catch(err => {
-                    console.log(err)
-                    return res.status(400).json({ message: `Erro no cpf digitado: ${CPF}` })
 
-                })
         } catch (error) {
             console.log({
                 where: "[TAX]",
