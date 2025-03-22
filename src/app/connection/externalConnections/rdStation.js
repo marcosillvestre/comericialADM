@@ -250,3 +250,33 @@ export async function ReturnServiceAtRD(name) {
     }
 
 }
+
+
+
+export async function Funnels(id) {
+
+    if (!id) {
+
+        try {
+            const { data } = await axios.
+                get(`https://crm.rdstation.com/api/v1/deal_pipelines?limit=1000&token=${process.env.RD_TOKEN}`)
+
+            return data.filter(res => !res.name.toLowerCase().includes("teste"))
+        } catch (error) {
+
+            return error
+        }
+    }
+
+
+    try {
+        const { data } = await axios.
+            get(`https://crm.rdstation.com/api/v1/deal_pipelines/${id}?token=${process.env.RD_TOKEN}`)
+
+        return data
+    } catch (error) {
+
+        return error
+    }
+
+}

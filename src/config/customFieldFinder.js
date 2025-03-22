@@ -65,8 +65,8 @@ export const bodyFilterCustomFields = async (deal) => {
 
     const { id, deal_custom_fields, deal_products: [service], contacts } = deal
 
-    const serviceName = service.name || " - Sem serviço cadastrado"
-    const [_, Subclasse] = serviceName.split(' - ');
+    const serviceName = service?.name || undefined
+    const Subclasse = serviceName ? serviceName.split(' - ') : serviceName;
 
     return {
         id: id,

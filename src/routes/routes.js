@@ -44,7 +44,10 @@ routes.post('/redefinir-senha', SessionController.forgetPassword)
 
 routes.post('/nova-senha', SessionController.redefinePassword)
 
+
+
 routes.use(auth) // autenticated routes
+routes.get('/funis', PostConttroller.funnels)
 
 routes.get('/contrato/:unity', PostConttroller.getRecent)
 routes.get('/matricula/:id', PostConttroller.returnContract)
