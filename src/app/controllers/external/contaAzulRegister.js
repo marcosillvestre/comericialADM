@@ -392,8 +392,9 @@ class RegisterContaAzulController {
 
                     let productsSale = []
 
-                    const product = materialDidatico.map(async teachMaterial => {
-                        let splited = teachMaterial.split(" / ")[1]
+                    const product = materialDidatico.map(teachMaterial => {
+                        let splited = teachMaterial.split(" / ")[1].replace(/\s+/g, "")
+
                         let product;
                         if (splited !== undefined) {
                             product = products.data.filter(data => data.code === splited)
@@ -415,7 +416,6 @@ class RegisterContaAzulController {
 
                     await Promise.all(product)
 
-
                     async function ContaAzulSender(cell) {
                         return await new Promise(resolve => {
                             resolve(
@@ -427,7 +427,7 @@ class RegisterContaAzulController {
                                         }
 
                                     }).catch((err) => {
-                                        console.log(err)
+                                        console.log(err.response.data)
                                         if (err.response.data.message === "The sale product's value cannot be null") {
                                             // console.log("produto nao encontrado")
                                             return res.status(400).json({ message: "Material didático não cadastrado no conta azul!" })
@@ -543,8 +543,10 @@ class RegisterContaAzulController {
             })
 
         } catch (error) {
-            console.log(error)
-            await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[CA:FEE]: ${error}`, null, 2))
+            console.log(error.response.data)
+            await SendSimpleWpp(
+                "marcos", process.env.MARCOS,
+                JSON.stringify(`[CA:FEE]: ${error}`, null, 2))
 
             return res.status(400).json({ message: error })
         }
