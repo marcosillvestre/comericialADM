@@ -3,6 +3,32 @@ import prisma from '../../../database/database.js';
 import { getOptionsFromRdCustomFields, updateRdOptionsCustomFields } from '../../connection/externalConnections/rdStation.js';
 class ProductsController {
 
+    async indexFilter(req, res) {
+        try {
+
+
+            const [products, count] = await prisma.$transaction([
+                prisma.products.findMany({
+
+                    orderBy: {
+                        name: "asc"
+                    }
+                }),
+                prisma.products.count()
+
+            ])
+
+
+            return res.status(200).json({
+                products,
+                total: count
+            });
+
+        } catch (error) {
+            console.log({ error })
+            return res.status(500).json({ error: 'Failed to fetch Products' });
+        }
+    }
     async index(req, res) {
         const { take, skip, orderBy, query } = req.query
         try {

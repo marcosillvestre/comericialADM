@@ -51,7 +51,6 @@ async function UpdateTheCustomFields() {
 }
 
 
-
 const calcularDiferencaAnos = async (dataString) => {
     if (!dataString) return undefined
 

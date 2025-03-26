@@ -8,7 +8,7 @@ const { _storeLog, _store } = new Historic()
 const { getLastMondayCode } = new PastCodes()
 
 import * as yup from 'yup';
-class OrderController {
+class RequestsController {
 
     async index(req, res) {
         const schema = yup.object().shape({
@@ -70,9 +70,8 @@ class OrderController {
                 }
             })
 
-
             const [order, count] = await prisma.$transaction([
-                prisma.orders.findMany({
+                prisma.requests.findMany({
                     orderBy: {
                         [orderBy]: orderFor
                     },
@@ -87,12 +86,12 @@ class OrderController {
                                 },
                             },
                             {
-                                AND: filters
+                                OR: filters
                             }
                         ]
                     }
                 }),
-                prisma.orders.count({
+                prisma.requests.count({
                     where: {
                         AND: [
                             {
@@ -102,7 +101,7 @@ class OrderController {
                                 },
                             },
                             {
-                                AND: filters
+                                OR: filters
                             }
                         ]
                     }
@@ -167,7 +166,6 @@ class OrderController {
                     }
                 }
             })
-
 
 
             const [order, count] = await prisma.$transaction([
@@ -300,6 +298,8 @@ class OrderController {
 
             const { orders, unity } = req.body
 
+
+
             const date = new Date()
             const code = await getLastMondayCode(date);
 
@@ -355,7 +355,7 @@ class OrderController {
             for (let index = 0; index < orders.length; index++) {
                 const order = orders[index]
 
-                const searchOnDb = await prisma.orders.findFirst({
+                const searchOnDb = await prisma.requests.findFirst({
                     where: {
                         OR: [
                             {
@@ -387,7 +387,7 @@ class OrderController {
 
                     orders.map(async data => {
 
-                        await prisma.orders.create({
+                        await prisma.requests.create({
                             data: {
                                 unity,
                                 id: data.id,
@@ -428,176 +428,6 @@ class OrderController {
         }
     }
 
-    async update(req, res) {
-
-        const nullable = (value) => {
-            return !value || value === 'null' ?
-                undefined : value
-        }
-
-        const schema = yup.object().shape({
-            id: yup.string().required(),
-            link: yup.string(),
-            type: yup.string(),
-            removedBy: yup.string(),
-            status: yup.string(),
-
-            tags: yup.array(),
-            logistic: yup.array(),
-            logs: yup.array(),
-            observations: yup.array(),
-
-            arrived: yup.bool(),
-            signed: yup.bool(),
-            available: yup.bool(),
-            delivery: yup.bool(),
-
-            arrivingDate: yup.date().transform(nullable), // ambos devem ser feitos automatico
-            withdraw: yup.date().transform(nullable),
-        })
-
-        try {
-            await schema.validateSync(req.body, { abortEarly: false })
-
-            const { withdraw, arrivingDate, id, link, type, removedBy,
-                status, tags, logistic, logs, arrived, signed, delivery, available, responsible, observations } = req.body
-
-
-            await Promise.all([
-                _store(responsible, "pedido de livro",
-                    `Pedido de livros editado por ${responsible}`, id),
-            ])
-
-            const response = await prisma.orders.update({
-                where: {
-                    id
-                },
-                data: {
-                    link, type, removedBy, status, tags, logistic,
-                    arrived, signed, delivery, available,
-
-                    arrivingDate,
-                    withdraw,
-                    observations,
-
-                    logs,
-                },
-            })
-
-
-            return res.status(201).json(response)
-
-        } catch (error) {
-            console.log({ message: error })
-            return res.status(500).json({ message: error.errors })
-        }
-    }
-
-    async updateManyOrders(req, res) {
-
-        const schema = yup.object().shape({
-            ids: yup.array().required(),
-            responsible: yup.string().required(),
-            where: yup.string().required(),
-            what: yup.string().required(),
-            logistic: yup.array()
-        })
-
-        try {
-            await schema.validateSync(req.body, { abortEarly: false })
-
-            const { ids, responsible, where, what } = req.body
-
-            const dateTypes = {
-                delivery: "withdraw",
-                arrived: "arrivingDate",
-                type: "arrivingDate"
-            }
-
-            const logisticTypes = {
-                delivery: {
-                    stage: "ENTREGUE",
-                    active: true
-                },
-                arrived: {
-                    stage: "CHEGOU",
-                    active: true
-                },
-                available: {
-                    stage: "DISPONIVEL",
-                    active: true
-                },
-                status: {
-                    stage: what,
-                    active: true
-                }
-            }
-
-            const dateType = dateTypes[where]
-
-            const data = dateType ?
-                {
-                    [where]: what,
-                    [dateType]: new Date(),
-                    logistic: {
-                        push:
-                            logisticTypes[where]
-
-                    },
-
-                } :
-                {
-                    [where]: what,
-                    logistic: {
-                        push:
-                            logisticTypes[where]
-
-                    },
-                }
-
-
-            for (let index = 0; index < ids.length; index++) {
-                const id = ids[index];
-
-                const { name } = await prisma.orders.findUnique({
-                    where: {
-                        id
-                    }
-                })
-
-
-                await Promise.all([
-                    _store(responsible,
-                        "pedido de livro",
-                        `${responsible} alterou o campo ${where} para ${what} referente ao pedido de livro em nome de ${name}`,
-                        ""
-                    ),
-                    prisma.orders.update({
-                        where: {
-                            id
-                        },
-                        data: {
-                            ...data,
-                            logs: {
-                                push: {
-                                    responsible: responsible,
-                                    description: `alterou o campo ${where} para ${JSON.stringify(what)}`
-                                }
-                            }
-                        }
-                    })
-                ])
-
-            }
-
-
-
-            return res.status(201).send()
-        } catch (error) {
-            console.log(error)
-            return res.status(500).json(error)
-        }
-    }
 
     async delete(req, res) {
         const schemaParams = yup.object().shape({
@@ -615,7 +445,7 @@ class OrderController {
             const { id } = req.params
             const { responsible } = req.query
 
-            const order = await prisma.orders.findUnique({
+            const order = await prisma.requests.findUnique({
                 where: {
                     id
                 }
@@ -623,7 +453,7 @@ class OrderController {
 
             await Promise.all([
                 _store(responsible, "pedido de livro", `${responsible} deletou o pedido de livro em nome de ${order.name}`, ""),
-                prisma.orders.delete({
+                prisma.requests.delete({
                     where: {
                         id
                     }
@@ -637,184 +467,6 @@ class OrderController {
             return res.status(500).json(error)
         }
     }
-
-    async deleteManyOrders(req, res) {
-        const schemaParams = yup.object().shape({
-            id: yup.string().required(),
-        })
-        const schemaQuery = yup.object().shape({
-            responsible: yup.string().required(),
-        })
-
-        try {
-            await schemaParams.validateSync(req.params, { abortEarly: false })
-            await schemaQuery.validateSync(req.query, { abortEarly: false })
-
-
-            const { id } = req.params
-            const { responsible } = req.query
-
-            const { name } = await prisma.order.findUnique({
-                where: {
-                    id
-                }
-            })
-
-            await Promise.all([
-                _storeLog(responsible, "pedido de livro", `${responsible} deletou o pedido de livro em nome de ${name}`, ""),
-                prisma.order.delete({
-                    where: {
-                        id
-                    }
-                })
-            ])
-
-
-            return res.status(200).send()
-        } catch (error) {
-            console.log(error)
-            return res.status(500).json(error)
-        }
-    }
-
-    async orderProducts(req, res) {
-        const schema = yup.object().shape({
-
-        })
-
-
-    }
-
-
-    //     async edit(req, res) {
-    //         const schema = yup.object().shape({
-
-    //             id: yup.string().required(),
-    //             responsible: yup.string().required()
-
-    //         })
-
-    //         try {
-    //             await schema.validateSync(req.body, { abortEarly: false })
-
-    //         } catch (error) {
-    //             return res.status(400).json({ message: error })
-    //         }
-
-    //         const { id, responsible } = req.body
-
-
-    //         try {
-    //             await prisma.books.delete({
-    //                 where: {
-    //                     id
-    //                 }
-    //             })
-
-
-
-    //             await _storeLog(responsible, "Pedido", "Deletado", id)
-
-    //             if (res) return res.status(201).json({ message: "Pedido removido com sucesso" })
-    //             console.log("Pedido editado")
-
-    //         } catch (error) {
-
-    //             console.log(error)
-    //             return res.status(400).json({ message: error })
-
-    //         }
-
-    //     }
-
-    //     async putDataOrders(req, res) {
-    //         const schema = yup.object().shape({
-    //             where: yup.string().required(),
-    //             value: yup.string(),
-    //             order: yup.array().required().of(yup.string())
-    //         })
-
-    //         try {
-    //             await schema.validateSync(req.body, { abortEarly: false })
-
-    //         } catch (error) {
-    //             console.log(error)
-    //             return res.status(400).json({ message: error })
-    //         }
-
-    //         const { where, value, order } = req.body
-
-    //         //orders é um array de ids dos pedidos 
-
-    //         try {
-
-    //             for (let index = 0; index < order.length; index++) {
-    //                 const bookId = order[index];
-
-    //                 await prisma.books.update({
-    //                     where: {
-    //                         id: bookId
-    //                     },
-    //                     data: {
-    //                         [where]: value
-    //                     },
-    //                     include: {
-    //                         orderRelated: true
-    //                     }
-    //                 })
-    //                     .then(async response => {
-    //                         const { orderId, orderRelated, ...rest } = response
-
-    //                         if (where === "dataRetirada") await CompleteCheckPointOnTrello(
-    //                             rest,
-    //                             orderRelated.unity,
-    //                             "Material Didático/Confirmação de retirada pelo aluno ou responsável")
-
-    //                         if (where === "chegada" && value) {
-    //                             await CompleteCheckPointOnTrello(
-    //                                 rest,
-    //                                 orderRelated.unity,
-    //                                 "Material Didático/Confirmação de disponibilidade para retirada do material na escola")
-
-
-    //                             const unityNumber = {
-    //                                 "Golfinho Azul": "31 8713-7018",
-    //                                 'PTB': "31 8713-7018",
-    //                                 'Centro': "31 8284-0590"
-    //                             }
-
-    //                             if ("tel" in rest) await SendSimpleWpp(rest.nome, rest.tel,
-    //                                 `Olá *${rest.nome}*, 
-    // Temos uma ótima notícia, o seu material didático: 
-
-    // > ${rest.materialDidatico}
-
-    // já está disponível para retirada em nossa unidade. 
-
-    // Qualquer dúvida, entre em contato com o nosso whatsapp pedagógico através do número da unidade 
-
-    // > ${response.unity} : ${unityNumber[response.unity]}.
-
-    // Atenciosamente, equipe American Way.
-    // FAVOR NÃO RESPONDER ESTA MENSAGEM 🗽.`)
-
-    //                         }
-    //                     })
-    //             }
-
-    //             return res.status(201).json({ message: "link atribuido com sucesso" })
-
-    //         } catch (error) {
-    //             console.log(error)
-    //             return res.status(201).json({ message: error })
-    //         }
-
-
-
-    //     }
-
-
-
 }
 
-export default new OrderController
+export default new RequestsController

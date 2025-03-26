@@ -17,6 +17,7 @@ import OrdersController from '../app/controllers/internal/ordersController.js';
 import ProductsController from '../app/controllers/internal/productsController.js';
 import RegistersController from '../app/controllers/internal/registersController.js';
 import ServicesController from '../app/controllers/internal/servicesController.js';
+import SupliersController from '../app/controllers/internal/supliersController.js';
 import UmblerWebhook from '../app/webhooks/umbler.js';
 import { storage } from '../config/multer.js';
 import auth from "../middleware/auth.js";
@@ -66,8 +67,15 @@ routes.delete("/servicos/:id", ServicesController.delete)
 
 routes.post("/produtos", ProductsController.store)
 routes.get("/produtos", ProductsController.index)
+routes.get("/produtos-totais", ProductsController.index)
 routes.put("/produtos/:id", ProductsController.update)
 routes.delete("/produtos/:id", ProductsController.delete)
+
+routes.post("/novo-fornecedor", SupliersController.store)
+routes.post("/fornecedor", SupliersController.index)
+routes.get("/fornecedor-totais", SupliersController.indexFilter)
+routes.put("/fornecedor/:id", SupliersController.update)
+routes.delete("/fornecedor/:id", SupliersController.delete)
 
 ///////////////////////////
 
@@ -98,6 +106,7 @@ routes.put('/campos-personalizados', CustomFieldsController.update)
 
 
 routes.post('/pedidos', OrdersController.index)
+routes.post('/fazer-pedido', OrdersController.orderProducts)
 routes.post('/pedidos-query', OrdersController.query)
 
 routes.delete('/pedidos/:id', OrdersController.delete)

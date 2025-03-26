@@ -160,6 +160,7 @@ model person {
 model unities {
   id         String    @id @default(uuid())
   name       String
+  requests   requests[]
 }
 
 model historic {
@@ -245,41 +246,7 @@ model order {
   updated_at   DateTime  @updatedAt
 }
 
-model orders {
-  id         String   @id  @default(uuid())
-  phone      String?
-  student    String?
-  
-  sku      String
-  link     String
-  name     String
-  unity    String
-  value    Float
 
-  arrived          Boolean     @default(false) // chegada
-  arrivingDate     DateTime?     // data que foi entregue
-  
-  signed     Boolean           @default(false) //assinado
-  available  Boolean           @default(true) //disponivel
-
-  delivery    Boolean          @default(false) //entregue
-  withdraw     DateTime? // data que foi entregue
-
-  removedBy    String // quem entregou
-  book         String 
-
-  status       situation       @default(REVISAR)
-  type         logisticType    @default(ENCOMENDA)
-
-  tags            String[]
-  logistic        Json[]
-  logs            Json[]
-  observations    Json[]
-  
-
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @updatedAt
-}
 
 
 model files {
@@ -399,4 +366,84 @@ model services {
   duration          String        @default("0")
   created_at        DateTime      @default(now())
   updated_at        DateTime      @updatedAt
+}
+
+enum supliersType {
+FISICO
+JURIDICO
+}
+model supliers {
+  id                String   @id  @default(cuid())
+  name              String
+  docment           String   @unique
+  type              supliersType  @default(JURIDICO)
+  contacts          Json
+  address           Json
+
+  orders            requests[]
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+}
+
+
+model requests {
+  id         String   @id  @default(uuid())
+
+  orders     orders[]
+
+  suplier     supliers  @relation(fields: [suplierID], references: [id])
+  suplierID   String
+  codeRequest String
+  price       Float
+
+  unityId     String
+  unity       unities @relation(fields: [unityId], references: [id])
+
+  messageSent  String
+
+  user        String
+
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+}
+
+
+model orders {
+  id         String   @id  @default(uuid())
+  phone      String?
+  student    String?
+  
+  sku      String
+  link     String
+  name     String
+  unity    String
+  value    Float
+
+  arrived          Boolean     @default(false) // chegada
+  arrivingDate     DateTime?     // data que foi entregue
+  
+  signed     Boolean           @default(false) //assinado
+  available  Boolean           @default(true) //disponivel
+
+  delivery    Boolean          @default(false) //entregue
+  withdraw     DateTime? // data que foi entregue
+
+  removedBy    String // quem entregou
+  book         String 
+
+  status       situation       @default(REVISAR)
+  type         logisticType    @default(ENCOMENDA)
+
+  tags            String[]
+  logistic        Json[]
+  logs            Json[]
+  observations    Json[]
+  
+
+  request     requests?  @relation(fields: [requestId], references: [id])
+  requestId   String?
+
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+
 }
