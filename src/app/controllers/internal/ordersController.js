@@ -167,11 +167,11 @@ class OrderController {
                     }
                 }
             })
-
+            console.log(query)
 
 
             const [order, count] = await prisma.$transaction([
-                prisma.order.findMany({
+                prisma.orders.findMany({
                     orderBy: {
                         [orderBy]: orderFor
                     },
@@ -202,12 +202,6 @@ class OrderController {
                                                     mode: "insensitive"
                                                 }
                                             },
-                                            {
-                                                book: {
-                                                    contains: query,
-                                                    mode: "insensitive"
-                                                }
-                                            },
                                         ]
                                     },
                                     ...filters
@@ -217,7 +211,7 @@ class OrderController {
                         ]
                     }
                 }),
-                prisma.order.count({
+                prisma.orders.count({
                     where: {
                         AND: [
                             {
@@ -243,12 +237,7 @@ class OrderController {
                                                     mode: "insensitive"
                                                 }
                                             },
-                                            {
-                                                book: {
-                                                    contains: query,
-                                                    mode: "insensitive"
-                                                }
-                                            },
+
                                         ]
                                     },
                                     ...filters
@@ -654,7 +643,7 @@ class OrderController {
             const { id } = req.params
             const { responsible } = req.query
 
-            const { name } = await prisma.order.findUnique({
+            const { name } = await prisma.orders.findUnique({
                 where: {
                     id
                 }
@@ -662,7 +651,7 @@ class OrderController {
 
             await Promise.all([
                 _storeLog(responsible, "pedido de livro", `${responsible} deletou o pedido de livro em nome de ${name}`, ""),
-                prisma.order.delete({
+                prisma.orders.delete({
                     where: {
                         id
                     }
