@@ -108,49 +108,22 @@ class PostController {
             const [type, id] = name.split("+")
 
             if (type.includes("reciboMd")) {
-                const orders = await prisma.weekOrder.findFirst({
-                    where: {
-                        id: {
-                            contains: id.split("_")[0]
-                        }
-                    },
-                    include: {
-                        orders: true
-                    }
-                })
-
                 const ordersIds = id.split("_")
 
                 for (let index = 0; index < ordersIds.length; index++) {
                     const element = ordersIds[index];
-                    const orderFound = orders.find(t => t.id.includes(element))
 
-                    if (index === 0 || !orderFound) continue
-
-
-                    await prisma.$transaction([
-
-                        prisma.books.update({
-                            where: {
-                                id: {
-                                    contains: element
-                                }
-                            },
-                            data: {
-                                assinado: true
+                    prisma.orders.update({
+                        where: {
+                            id: {
+                                contains: element
                             }
-                        }),
-                        prisma.order.update({
-                            where: {
-                                id: {
-                                    contains: element
-                                }
-                            },
-                            data: {
-                                assinado: true
-                            }
-                        }),
-                    ])
+                        },
+                        data: {
+                            signed: true
+                        }
+                    })
+
 
                     console.log("Assinado")
                 }
