@@ -67,7 +67,7 @@ routes.delete("/servicos/:id", ServicesController.delete)
 
 routes.post("/produtos", ProductsController.store)
 routes.get("/produtos", ProductsController.index)
-routes.get("/produtos-totais", ProductsController.index)
+routes.get("/produtos-totais", ProductsController.indexFilter)
 routes.put("/produtos/:id", ProductsController.update)
 routes.delete("/produtos/:id", ProductsController.delete)
 
