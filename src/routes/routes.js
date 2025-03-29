@@ -21,6 +21,8 @@ import SupliersController from '../app/controllers/internal/supliersController.j
 import UmblerWebhook from '../app/webhooks/umbler.js';
 import { storage } from '../config/multer.js';
 import auth from "../middleware/auth.js";
+
+import RequestsController from '../app/controllers/internal/requestsController.js';
 import webhookToken from '../middleware/webhooks.js';
 
 const routes = Router();
@@ -77,6 +79,15 @@ routes.get("/fornecedor-totais", SupliersController.indexFilter)
 routes.put("/fornecedor/:id", SupliersController.update)
 routes.delete("/fornecedor/:id", SupliersController.delete)
 
+
+routes.post("/nova-requisicao", RequestsController.store)
+routes.post("/requisicao", RequestsController.index)
+routes.post('/requisicao-query', RequestsController.query)
+
+// routes.get("/fornecedor-totais", RequestsController.indexFilter)
+// routes.put("/fornecedor/:id", RequestsController.update)
+routes.delete("/fornecedor/:id", RequestsController.delete)
+
 ///////////////////////////
 
 
@@ -113,7 +124,7 @@ routes.delete('/pedidos/:id', OrdersController.delete)
 routes.put('/pedidos', OrdersController.update)
 routes.put('/multi-pedidos', OrdersController.updateManyOrders)
 
-routes.post('/pedidos', OrdersController.store)
+routes.post('/pedidos', OrdersController.storeMany)
 
 
 // routes.put('/pedidos', OrdersController.edit)

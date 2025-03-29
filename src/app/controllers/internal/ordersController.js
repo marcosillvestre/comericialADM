@@ -262,35 +262,44 @@ class OrderController {
     }
 
 
-    async store(req, res) {
+    async storeMany(req, res) {
         const schema = yup.object().shape({
-            orders: yup.array().required().of(
-                yup.object().shape({
-                    sku: yup.string().required(),
-                    nome: yup.string().required(),
-                    materialDidatico: yup.string().required(),
-                    valor: yup.number().required(),
-                    data: yup.string().required(),
-                    assinado: yup.boolean().required(),
-                    dataRetirada: yup.string(),
-                    link: yup.string(),
-                    retiradoPor: yup.string(),
-                    aluno: yup.string(),
-                    tel: yup.string(),
-                })
-            ),
+            orders: yup.array().required(),
             unity: yup.string().required()
 
         })
 
         try {
             await schema.validateSync(req.body, { abortEarly: false })
-
-
             const { orders, unity } = req.body
 
             const date = new Date()
             const code = await getLastMondayCode(date);
+
+            orders.map(async r => {
+                await prisma.orders.create({
+                    data: {
+                        ...r,
+                        unity,
+                        logistic: [
+                            {
+                                name: "REVISAR",
+                                active: true
+                            }
+                        ]
+                    }
+                })
+                    .then(t => console.log(t.name + " foi adicionado ao sistema de livros"))
+                    .catch(t => {
+                        if (t.meta?.target[0] === 'id') return
+                        console.log(t)
+                    })
+
+            })
+
+
+
+            return
 
 
             const update = async (id, data) => {
@@ -334,8 +343,8 @@ class OrderController {
                         console.log("Pedido criado com sucesso")
                     })
                     .catch((err) => {
-                        // console.log(err)
-                        if (res) return res.status(400).json({ err })
+                        console.log(err)
+                        // if (res) return res.status(400).json({ err })
                     })
             }
 
@@ -374,32 +383,7 @@ class OrderController {
                         }
                     })
 
-                    orders.map(async data => {
 
-                        await prisma.orders.create({
-                            data: {
-                                unity,
-                                id: data.id,
-                                sku: data.sku,
-                                name: data.nome,
-                                value: data.valor,
-                                student: data.aluno,
-                                phone: data.tel,
-                                book: data.materialDidatico,
-                                link: "",
-                                removedBy: "",
-                                logistic: [
-                                    {
-                                        name: "REVISAR",
-                                        active: true
-                                    }
-                                ]
-                            }
-
-                        })
-                            .then(t => console.log(t.name + " foi adicionado ao sistema de livros"))
-                            .catch(t => console.log(data.nome + " ja está cadastrada"))
-                    })
                     weekOrder ?
                         await update(weekOrder.id, orders) :
                         await creation(code, orders)
@@ -570,7 +554,8 @@ class OrderController {
                             logs: {
                                 push: {
                                     responsible: responsible,
-                                    description: `alterou o campo ${where} para ${JSON.stringify(what)}`
+                                    description: `alterou o campo ${where} para ${JSON.stringify(what)}`,
+                                    date: new Date()
                                 }
                             }
                         }
