@@ -80,12 +80,14 @@ Professor: *${response.customFields["Professor"]}*
         messages[where],
         chat
     )
+    console.log({ where })
 
     if (where === "materialDidaticoStatus") {
 
         const rdPhoneData = await getContactsWithId(response.id)
 
-        if (!(response.customFields["Material didático"].find(r => r === "Outros" || r === "Office"))) {
+        if (!(response.customFields["Material didático"]
+            .find(r => r === "Outros" || r === "Office"))) {
 
             let bodyOrder = {
                 body: {
@@ -100,7 +102,7 @@ Professor: *${response.customFields["Professor"]}*
                     unity: idList[response.customFields["Unidade"]]
                 }
             }
-            await ordersController.store(bodyOrder)
+            await ordersController.storeMany(bodyOrder)
 
         }
     }
@@ -130,17 +132,20 @@ Professor: *${response.customFields["Professor"]}*
 
 async function updateOnDatabaseRegister(params) {
     const date = new Date().toISOString()
+
     const registerDates = {
         "pagamentoPrimeiraParcelaStatus": "dataPagamentoPrimeiraParcela",
         "taxaMatriculaStatus": "dataPagamentoTaxaMatricula",
         "materialDidaticoStatus": "dataPagamentoMaterialDidatico",
     }
 
-
     for (let index = 0; index < params.length; index++) {
         const element = params[index];
 
         const keys = Object.keys(element.sales)
+
+
+        console.log(keys)
 
         keys.map(async (res) => {
 
@@ -200,23 +205,20 @@ const orderRegisterForContaAzulSales = async (sale, products, unity) => {
 
     const { id: idSale, customer } = sale
 
+    // console.log(sale)
 
     for (let index = 0; index < products.length; index++) {
         const element = products[index];
 
-
         const body = {
             id: idSale.concat(`-${index}`),
+            name: customer.name,
             sku: element.code,
-            materialDidatico: element.name.concat(" / ").concat(element.code),
-            nome: customer.name,
-            valor: element.value,
-            data: new Date().toLocaleDateString("pt-BR"),
-            type: "manual",
-            assinado: false,
-            retiradoPor: "",
-            dataRetirada: "",
             link: "",
+            value: element.value,
+            removedBy: "",
+            // phone,
+            book: element.name.concat(" / ").concat(element.code),
         }
 
         data.push(body)
@@ -232,11 +234,11 @@ const orderRegisterForContaAzulSales = async (sale, products, unity) => {
     }
 
     data.length > 0 &&
-        await ordersController.store(bodyOrder)
+        await ordersController.storeMany(bodyOrder)
 
 }
 ////provenientes do banco de dados
-const orderRegisterForDatabaseSales = async (idSale, name, material, unity, tel, aluno) => {
+const orderRegisterForDatabaseSales = async (idSale, name, material, unity, phone, student) => {
 
     const header = {
         "Authorization": `Bearer ${await getToken(unity)}`
@@ -254,22 +256,23 @@ const orderRegisterForDatabaseSales = async (idSale, name, material, unity, tel,
         if (pdFiltered.length > 0) return {
             id,
             sku: splited[1],
-            nome: name,
-            materialDidatico: splited[0],
-            valor: pdFiltered[0].value,
-            data: new Date().toLocaleDateString("pt-BR"),
-            assinado: false,
-            dataRetirada: "",
+            name,
+            phone,
+            student,
             link: "",
-            retiradoPor: "",
-            aluno,
-            tel,
-            type: "auto"
+            value: pdFiltered[0].value,
+            removedBy: "",
+            book: splited[0],
         }
 
     })
     /////analisar essa validação daqui 
-    if (body.some(res => res === null || res === undefined)) await SendSimpleWpp("marcos", process.env.MARCOS, `um desses materiais não foi encontrado :${material}`)
+    if (body.some(res => res ?? res)) await SendSimpleWpp(
+        "marcos",
+        process.env.MARCOS,
+        `um desses materiais não foi encontrado :${material}`
+    )
+
     return body.filter(res => res)
 
 }
@@ -284,10 +287,11 @@ async function gatheringSaleAndProducts(unity) {
 
         let allSales = await getAllSales(header)
 
-        console.log(allSales.length + " allSales")
+        console.log(`${allSales.length} allSales`)
 
         const data = [];
 
+        // const allSaless = allSales.slice(0, 50)
 
         for (let index = 0; index < allSales.length; index++) {
             const eachSale = allSales[index];
@@ -297,14 +301,15 @@ async function gatheringSaleAndProducts(unity) {
             const products = await getSaleProducts(header, id)
 
 
-            if (notes === "" &&
-                (payment.method === "WITHOUT_PAYMENT" || payment.installments[0] &&
-                    payment.installments[0]?.status === "ACQUITTED")
+            if (
+                notes === "" &&
+                payment.installments[0] ||
+                payment.installments[0]?.status === "ACQUITTED" ||
+                payment.method === "WITHOUT_PAYMENT"
             ) {
                 orderRegisterForContaAzulSales(eachSale, products, unity)
                 continue
             }
-
 
             let parsed = () => {
                 try {
@@ -325,7 +330,8 @@ async function gatheringSaleAndProducts(unity) {
 
             let { service, rdId } = await parsed()
 
-            if (payment.installments[0] &&
+            if (payment.method === "WITHOUT_PAYMENT" ||
+                payment.installments[0] &&
                 payment.installments[0].status === "ACQUITTED") data.push({
                     id,
                     // rdId,
@@ -390,7 +396,10 @@ async function reorganizingDatabaseData(params) {
 
 
         const pendentes = Object.keys(register)
-            .filter(key => register[key] === 'pendente' || register[key] === "Pendente");
+            .filter(key =>
+                register[key] === 'pendente' ||
+                register[key] === "Pendente"
+            );
 
         return {
             id,
@@ -465,7 +474,10 @@ async function SearchPendentsRegister(unity) {
 
 const syncContaAzulRegister = async () => {
 
-    for (const realToken of ["PTB", "Centro"]) {
+    for (const realToken of [
+        "PTB",
+        "Centro"
+    ]) {
         console.log(`[PAYMENTS CA UPDATES: ${realToken}]`)
 
         await Promise.all([
@@ -475,7 +487,7 @@ const syncContaAzulRegister = async () => {
 
     }
 }
-// syncContaAzulRegister()
+
 export default syncContaAzulRegister
 /*
 const data = {
