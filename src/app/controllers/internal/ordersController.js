@@ -482,52 +482,54 @@ class OrderController {
             const { ids, responsible, where, what } = req.body
 
             const dateTypes = {
-                delivery: "withdraw",
-                arrived: "arrivingDate",
-                type: "arrivingDate"
-            }
-
-            const logisticTypes = {
                 delivery: {
-                    stage: "ENTREGUE",
-                    active: true
+                    status: 'ENTREGUE',
+                    "withdraw": new Date(),
+                    logistic: {
+                        push: {
+                            stage: "ENTREGUE",
+                            active: true,
+                            date: new Date()
+                        }
+                    }
                 },
                 arrived: {
-                    stage: "CHEGOU",
-                    active: true
+                    status: 'CHEGOU',
+                    "arrivingDate": new Date(),
+                    logistic: {
+                        push: {
+                            stage: "CHEGOU",
+                            active: true,
+                            date: new Date()
+                        }
+                    }
                 },
                 available: {
-                    stage: "DISPONIVEL",
-                    active: true
+                    status: 'DISPONIVEL',
+                    logistic: {
+                        push: {
+                            stage: "DISPONIVEL",
+                            active: true,
+                            date: new Date()
+                        }
+                    }
                 },
                 status: {
-                    stage: what,
-                    active: true
-                }
+                    [where]: what,
+                    logistic: {
+                        push: {
+                            stage: what,
+                            active: true,
+                            date: new Date()
+                        }
+                    }
+                },
+                signed: {
+                    signed: true,
+                },
             }
 
-            const dateType = dateTypes[where]
-
-            const data = dateType ?
-                {
-                    [where]: what,
-                    [dateType]: new Date(),
-                    logistic: {
-                        push:
-                            logisticTypes[where]
-
-                    },
-
-                } :
-                {
-                    [where]: what,
-                    logistic: {
-                        push:
-                            logisticTypes[where]
-
-                    },
-                }
-
+            const data = dateTypes[where]
 
             for (let index = 0; index < ids.length; index++) {
                 const id = ids[index];

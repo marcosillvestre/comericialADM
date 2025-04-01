@@ -39,7 +39,6 @@ const functionsArray = [
 
 ]
 
-// syncContaAzulRegister()
 
 functionsArray.forEach(res => {
     return new CronJob(res.time,

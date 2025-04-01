@@ -1,8 +1,9 @@
-import { DateTransformer, HandleUTCDate } from "../../../config/DateTransformer.js";
+import { HandleUTCDate } from "../../../config/DateTransformer.js";
 import { PastCodes } from "../../../config/getLastMonday.js";
 
 import prisma from "../../../database/database.js";
 import { Historic } from '../../../database/historic/properties.js';
+import { SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
 
 const { _storeLog, _store } = new Historic()
 const { getLastMondayCode } = new PastCodes()
@@ -30,7 +31,6 @@ class RequestsController {
             await schema.validateSync(req.body, { abortEarly: false })
 
             const { take, skip, orderBy, typeFilter, dates, orderFor } = req.body
-
             const [initial, final] = dates.split("~")
 
             const skipParsed = parseInt(skip)
@@ -70,13 +70,18 @@ class RequestsController {
                 }
             })
 
-            const [order, count] = await prisma.$transaction([
+            const [request, total] = await prisma.$transaction([
                 prisma.requests.findMany({
                     orderBy: {
                         [orderBy]: orderFor
                     },
                     take: takeParsed,
                     skip: skipParsed,
+                    include: {
+                        unity: true,
+                        suplier: true,
+                        orders: true
+                    },
                     where: {
                         AND: [
                             {
@@ -86,7 +91,7 @@ class RequestsController {
                                 },
                             },
                             {
-                                OR: filters
+                                AND: filters
                             }
                         ]
                     }
@@ -101,7 +106,7 @@ class RequestsController {
                                 },
                             },
                             {
-                                OR: filters
+                                AND: filters
                             }
                         ]
                     }
@@ -110,8 +115,8 @@ class RequestsController {
 
 
             return res.status(200).json({
-                order,
-                count
+                request,
+                total
             })
 
         } catch (error) {
@@ -276,155 +281,121 @@ class RequestsController {
             orders: yup.array().required().of(
                 yup.object().shape({
                     sku: yup.string().required(),
-                    nome: yup.string().required(),
-                    materialDidatico: yup.string().required(),
-                    valor: yup.number().required(),
-                    data: yup.string().required(),
-                    assinado: yup.boolean().required(),
-                    dataRetirada: yup.string(),
+                    id: yup.string().required(),
+                    phone: yup.string().nullable(),
+                    student: yup.string().nullable(),
                     link: yup.string(),
-                    retiradoPor: yup.string(),
-                    aluno: yup.string(),
-                    tel: yup.string(),
+                    name: yup.string().required(),
+                    unity: yup.string().required(),
+                    value: yup.number().required(),
+                    arrived: yup.bool().required(),
+                    signed: yup.bool().required(),
+                    delivery: yup.bool().required(),
+                    arrivingDate: yup.string().nullable(),
+                    withdraw: yup.string().nullable(),
+                    requestId: yup.string().nullable(),
+                    available: yup.bool().required(),
+                    removedBy: yup.string(),
+                    book: yup.string().required(),
+                    status: yup.string().required(),
+                    type: yup.string().required(),
+                    tags: yup.array().required(),
+                    logistic: yup.array().required(),
+                    logs: yup.array().required(),
+                    observations: yup.array().required(),
+
                 })
             ),
-            unity: yup.string().required()
-
+            message: yup.string().required("A mensagem é a forma que o fornecedor tem de saber qual seu pedido, é obrigatório!"),
+            prevision: yup.number().required("Tempo de previsão de entrega é obrigatótio para a criação de pedidos"),
+            wppPermission: yup.bool.required,
+            emailPermission: yup.bool.required,
         })
 
         try {
             await schema.validateSync(req.body, { abortEarly: false })
 
+            const { orders, message, prevision, suplier, responsible, wppPermission, emailPermission } = req.body
 
-            const { orders, unity } = req.body
-
-
-
-            const date = new Date()
-            const code = await getLastMondayCode(date);
+            const { contacts, name } = suplier
 
 
-            const update = async (id, data) => {
 
-                await prisma.weekOrder.update({
+            const relatedUnity = await prisma.unities.findFirst({
+                where: {
+                    name: orders[0].unity
+                }
+            })
+            const code = await getLastMondayCode(new Date());
+
+            const ordersIds = orders.map(res => res.id)
+
+            await prisma.$transaction([
+
+                prisma.orders.updateMany({
                     where: {
-                        id
+                        id: {
+                            in: ordersIds
+                        }
                     },
                     data: {
-                        orders: {
-                            create: data
+                        status: 'ENVIADO',
+                        logistic: {
+                            push: {
+                                active: true,
+                                stage: 'ENVIADO',
+                                date: new Date(),
+
+                            }
                         }
                     }
-                })
-                    .then(() => {
-                        if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
-                        console.log("Pedido agregado")
-                    })
-                    .catch((err) => {
-                        console.log(err)
-                        if (res) return res.status(400).json({ err })
-                    })
-
-
-            }
-
-            const creation = async (code, data) => {
-
-
-                prisma.weekOrder.create({
+                }),
+                prisma.requests.create({
                     data: {
-                        code,
+                        messageSent: message,
+                        price: orders.reduce((acc, curr) => curr.value + acc, 0),
+                        user: responsible,
                         orders: {
-                            create: data
-                        },
-                        unity
-                    }
-                })
-                    .then(() => {
-                        if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
-                        console.log("Pedido criado com sucesso")
-                    })
-                    .catch((err) => {
-                        // console.log(err)
-                        if (res) return res.status(400).json({ err })
-                    })
-            }
 
-
-
-            for (let index = 0; index < orders.length; index++) {
-                const order = orders[index]
-
-                const searchOnDb = await prisma.requests.findFirst({
-                    where: {
-                        OR: [
-                            {
-                                id: {
-                                    contains: order.id
+                            connect: ordersIds.map(res => {
+                                return {
+                                    id: res
                                 }
-                            },
-                            {
-                                aluno: order.aluno,
-                                book: order.materialDidatico,
+                            })
+                        },
+                        codeRequest: code,
+                        prevision: parseInt(prevision),
+                        unity: {
+                            connect: {
+                                id: relatedUnity.id
                             }
-                        ]
-
+                        },
+                        suplier: {
+                            connect: {
+                                id: suplier.id
+                            }
+                        },
                     }
                 })
+            ])
 
 
+            if (wppPermission) await SendSimpleWpp(
+                name,
+                contacts?.whatsapp,
+                message
+            )
 
-                if (!searchOnDb) {
+            // if (emailPermission) 
 
-                    let twin = await getLastMondayCode(await DateTransformer(orders[0].data))
-
-                    const weekOrder = await prisma.weekOrder.findFirst({
-                        where: {
-                            code: twin,
-                            unity
-                        }
-                    })
-
-                    orders.map(async data => {
-
-                        await prisma.requests.create({
-                            data: {
-                                unity,
-                                id: data.id,
-                                sku: data.sku,
-                                name: data.nome,
-                                value: data.valor,
-                                student: data.aluno,
-                                phone: data.tel,
-                                book: data.materialDidatico,
-                                link: "",
-                                removedBy: "",
-                                logistic: [
-                                    {
-                                        name: "REVISAR",
-                                        active: true
-                                    }
-                                ]
-                            }
-
-                        })
-                            .then(t => console.log(t.name + " foi adicionado ao sistema de livros"))
-                            .catch(t => console.log(data.nome + " ja está cadastrada"))
-                    })
-                    weekOrder ?
-                        await update(weekOrder.id, orders) :
-                        await creation(code, orders)
-
-
-                }
-            }
-
+            return res.status(200).send()
 
         } catch (error) {
-            console.log(error)
-            throw new Error(error);
-
-            // return res.status(400).json({ message: error })
+            console.log({
+                where: "[REQUEST.CREATE]",
+                error
+            })
+            return res.status(400).json({ message: error.errors })
         }
     }
 
@@ -470,3 +441,74 @@ class RequestsController {
 }
 
 export default new RequestsController
+
+
+// import { PrismaClient } from "@prisma/client";
+
+// const prisma = new PrismaClient();
+
+// const requestSchema = yup.object().shape({
+//     suplierID: yup.string().required(),
+//     codeRequest: yup.string().required(),
+//     price: yup.number().required(),
+//     unityId: yup.string().required(),
+//     messageSent: yup.string().required(),
+//     user: yup.string().required()
+// });
+
+// class RequestsController {
+//     static async create(req, res) {
+//         try {
+//             await requestSchema.validate(req.body);
+//             const request = await prisma.requests.create({ data: req.body });
+//             res.status(201).json(request);
+//         } catch (error) {
+//             res.status(400).json({ error: error.message });
+//         }
+//     }
+
+//     static async getAll(req, res) {
+//         try {
+//             const requests = await prisma.requests.findMany();
+//             res.json(requests);
+//         } catch (error) {
+//             res.status(500).json({ error: error.message });
+//         }
+//     }
+
+//     static async getById(req, res) {
+//         try {
+//             const request = await prisma.requests.findUnique({
+//                 where: { id: req.params.id }
+//             });
+//             if (!request) return res.status(404).json({ error: "Request not found" });
+//             res.json(request);
+//         } catch (error) {
+//             res.status(500).json({ error: error.message });
+//         }
+//     }
+
+//     static async update(req, res) {
+//         try {
+//             await requestSchema.validate(req.body);
+//             const request = await prisma.requests.update({
+//                 where: { id: req.params.id },
+//                 data: req.body
+//             });
+//             res.json(request);
+//         } catch (error) {
+//             res.status(400).json({ error: error.message });
+//         }
+//     }
+
+//     static async delete(req, res) {
+//         try {
+//             await prisma.requests.delete({ where: { id: req.params.id } });
+//             res.status(204).send();
+//         } catch (error) {
+//             res.status(500).json({ error: error.message });
+//         }
+//     }
+// }
+
+// export default RequestsController;

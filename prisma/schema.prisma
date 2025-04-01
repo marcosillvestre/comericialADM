@@ -388,21 +388,18 @@ model supliers {
 
 model requests {
   id         String   @id  @default(uuid())
-
   orders     orders[]
-
   suplier     supliers  @relation(fields: [suplierID], references: [id])
+  messageSent  String
+  user        String
   suplierID   String
   codeRequest String
-  price       Float
-
   unityId     String
+
+  prevision   Int
+  price       Float
+  
   unity       unities @relation(fields: [unityId], references: [id])
-
-  messageSent  String
-
-  user        String
-
   created_at   DateTime  @default(now())
   updated_at   DateTime  @updatedAt
 }
@@ -410,36 +407,29 @@ model requests {
 
 model orders {
   id         String   @id  @default(uuid())
+  sku      String
+  name     String
   phone      String?
   student    String?
   
-  sku      String
   link     String
-  name     String
   unity    String
   value    Float
-
   arrived          Boolean     @default(false) // chegada
   arrivingDate     DateTime?     // data que foi entregue
-  
   signed     Boolean           @default(false) //assinado
   available  Boolean           @default(true) //disponivel
-
   delivery    Boolean          @default(false) //entregue
   withdraw     DateTime? // data que foi entregue
-
   removedBy    String // quem entregou
   book         String 
-
   status       situation       @default(REVISAR)
   type         logisticType    @default(ENCOMENDA)
-
   tags            String[]
   logistic        Json[]
   logs            Json[]
   observations    Json[]
   
-
   request     requests?  @relation(fields: [requestId], references: [id])
   requestId   String?
 
