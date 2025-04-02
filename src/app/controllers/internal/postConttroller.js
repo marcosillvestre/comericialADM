@@ -201,29 +201,30 @@ class PostController {
                 return register
             }
 
-            await prisma.registers.findUnique({
+            await prisma.registers.findFirst({
                 where: {
                     id: id
                 }
-            }).then(async register => {
-                if (register) await update(data.user.name, register)
+            })
+                .then(async register => {
+                    if (register) await update(data.user.name, register)
 
-                if (data.user.name === "Victor Souza") return res.status(200).send("ok")
+                    if (data.user.name === "Victor Souza") return res.status(200).send("ok")
 
-                const dealWin = await winADeal(id)
+                    const dealWin = await winADeal(id)
 
-                const [deal] = await gatheringDataForDatabase([dealWin])
+                    const [deal] = await gatheringDataForDatabase([dealWin])
 
-                const newUser = await create(deal)
+                    const newUser = await create(deal)
 
-                const unityNumber = {
-                    "Golfinho Azul": "31 8713-7018",
-                    'PTB': "31 8713-7018",
-                    'Centro': "31 8284-0590"
-                }
+                    const unityNumber = {
+                        "Golfinho Azul": "31 8713-7018",
+                        'PTB': "31 8713-7018",
+                        'Centro': "31 8284-0590"
+                    }
 
-                const curseMessages = {
-                    "Inglês": `Hello, ${newUser.name}. Tudo bem com você? 😊
+                    const curseMessages = {
+                        "Inglês": `Hello, ${newUser.name}. Tudo bem com você? 😊
 Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar 
 boas-vindas ao nosso curso de Inglês. 
 Está pronto para deixar o verbo to be para trás? 🏃💨
@@ -233,7 +234,7 @@ Se tiver alguma dúvida ou precisar de qualquer coisa,
 envie uma mensagem para o número pedagógico ${unityNumber[newUser.customFields["Unidade"]]} . 
 I’ll see you in class`,
 
-                    "Espanhol": `Hola, ${newUser.name}. Tudo bem com você? 😊
+                        "Espanhol": `Hola, ${newUser.name}. Tudo bem com você? 😊
 Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar boas-vindas ao nosso curso de Espanhol. Está pronto para deixar o portunhol para trás? 🏃💨
 Sua jornada rumo à fluência está prestes a começar, e eu vou estar aqui para te ajudar em cada passo do caminho. 
 
@@ -241,58 +242,58 @@ Se tiver alguma dúvida ou precisar de qualquer coisa,
 envie uma mensagem para o número pedagógico ${unityNumber[newUser.customFields["Unidade"]]}.
 Te veo en la clase 🇪🇸`,
 
-                    "Tecnologia": `Hello, ${newUser.name}. Tudo bem com você? 😊
+                        "Tecnologia": `Hello, ${newUser.name}. Tudo bem com você? 😊
 Aqui é a Lúcia, consultora digital da American Way. Vim aqui para te desejar boas-vindas ao nosso curso de informática. Está pronto para aprender a montar documentos e planilhas completas? 😎
 Em poucos meses você vai estar dominando o Pacote Office, e eu vou estar aqui para te ajudar em cada passo do caminho.
 
 Se tiver alguma dúvida ou precisar de qualquer coisa,
 envie uma mensagem para o número pedagógico ${unityNumber[newUser.customFields["Unidade"]]}.
 Te esperamos na aula 👩‍💻`,
-                }
+                    }
 
 
-                if (newUser.customFields['Background do Aluno'] !== "Rematrícula") {
+                    if (newUser.customFields['Background do Aluno'] !== "Rematrícula") {
 
-                    await Promise.all([
+                        await Promise.all([
 
-                        ScheduleBotMessages(
-                            newUser.name, newUser.customFields["Phone"],
-                            newUser.customFields["Data da primeira aula"],
-                            "Lembrete da primeira aula"),
+                            ScheduleBotMessages(
+                                newUser.name, newUser.customFields["Phone"],
+                                newUser.customFields["Data da primeira aula"],
+                                "Lembrete da primeira aula"),
 
-                        SendSimpleWpp(
-                            newUser.name,
-                            newUser.customFields["Phone"],
-                            curseMessages[newUser.customFields["Curso"]]),
-                    ])
+                            SendSimpleWpp(
+                                newUser.name,
+                                newUser.customFields["Phone"],
+                                curseMessages[newUser.customFields["Curso"]]),
+                        ])
 
 
-                }
+                    }
 
-                let chatAdm = newUser.customFields["Unidade"] === "Centro" ?
-                    process.env.UMBLER_CHAT_PAYS_CENTRO :
-                    process.env.UMBLER_CHAT_PAYS_PTB
+                    let chatAdm = newUser.customFields["Unidade"] === "Centro" ?
+                        process.env.UMBLER_CHAT_PAYS_CENTRO :
+                        process.env.UMBLER_CHAT_PAYS_PTB
 
-                let chatProf = newUser.customFields["Unidade"] === "Centro" ?
-                    process.env.UMBLER_CHAT_REM_ID_CENTRO :
-                    process.env.UMBLER_CHAT_REM_ID_PTB
+                    let chatProf = newUser.customFields["Unidade"] === "Centro" ?
+                        process.env.UMBLER_CHAT_REM_ID_CENTRO :
+                        process.env.UMBLER_CHAT_REM_ID_PTB
 
-                const message = `> *${data.user.name}*
+                    const message = `> *${data.user.name}*
 
 acabou de assinar o contrato de ${newUser.customFields['Background do Aluno']}`
 
-                await Promise.all([
-                    CreateCommentOnTrello(
-                        newUser.name,
-                        newUser.customFields["Unidade"],
-                        `${data.user.name} assinou contrato de ${newUser.
-                            customFields['Background do Aluno']} via autentique no dia ${new Date().toLocaleDateString()}`),
+                    await Promise.all([
+                        CreateCommentOnTrello(
+                            newUser.name,
+                            newUser.customFields["Unidade"],
+                            `${data.user.name} assinou contrato de ${newUser.
+                                customFields['Background do Aluno']} via autentique no dia ${new Date().toLocaleDateString()}`),
 
-                    SendGroupAlerts(message, chatAdm),
-                    SendGroupAlerts(message, chatProf)
-                ])
-                return res.status(200).json({ message: "Success" })
-            })
+                        SendGroupAlerts(message, chatAdm),
+                        SendGroupAlerts(message, chatProf)
+                    ])
+                    return res.status(200).json({ message: "Success" })
+                })
 
         } catch (error) {
             await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[SENDER:CONTRACTS]: ${error}`, null, 2))
