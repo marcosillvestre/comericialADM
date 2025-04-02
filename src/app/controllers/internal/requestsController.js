@@ -173,14 +173,16 @@ class RequestsController {
             })
 
 
-            const [order, count] = await prisma.$transaction([
-                prisma.order.findMany({
+            const [request, total] = await prisma.$transaction([
+                prisma.requests.findMany({
                     orderBy: {
                         [orderBy]: orderFor
                     },
                     take: takeParsed,
                     skip: skipParsed,
-
+                    include: {
+                        orders: true,
+                    },
                     where: {
                         AND: [
                             {
@@ -190,37 +192,19 @@ class RequestsController {
                                 }
                             },
                             {
-                                AND: [
-                                    {
-                                        OR: [
-                                            {
-                                                name: {
-                                                    contains: query,
-                                                    mode: "insensitive"
-                                                }
-                                            },
-                                            {
-                                                student: {
-                                                    contains: query,
-                                                    mode: "insensitive"
-                                                }
-                                            },
-                                            {
-                                                book: {
-                                                    contains: query,
-                                                    mode: "insensitive"
-                                                }
-                                            },
-                                        ]
-                                    },
-                                    ...filters
-                                ]
-                            },
-
+                                orders: {
+                                    some: {
+                                        name: {
+                                            contains: query,
+                                            mode: 'insensitive'
+                                        }
+                                    }
+                                }
+                            }
                         ]
                     }
                 }),
-                prisma.order.count({
+                prisma.requests.count({
                     where: {
                         AND: [
                             {
@@ -230,43 +214,26 @@ class RequestsController {
                                 }
                             },
                             {
-                                AND: [
-                                    {
-                                        OR: [
-
-                                            {
-                                                name: {
-                                                    contains: query,
-                                                    mode: "insensitive"
-                                                }
-                                            },
-                                            {
-                                                student: {
-                                                    contains: query,
-                                                    mode: "insensitive"
-                                                }
-                                            },
-                                            {
-                                                book: {
-                                                    contains: query,
-                                                    mode: "insensitive"
-                                                }
-                                            },
-                                        ]
-                                    },
-                                    ...filters
-                                ]
-                            },
-
+                                orders: {
+                                    some: {
+                                        name: {
+                                            contains: query,
+                                            mode: 'insensitive'
+                                        }
+                                    }
+                                }
+                            }
                         ]
 
                     }
                 })
             ])
 
+
+
             return res.status(200).json({
-                order,
-                count
+                request,
+                total
             })
 
         } catch (error) {

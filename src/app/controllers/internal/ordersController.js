@@ -1,4 +1,4 @@
-import { DateTransformer, HandleUTCDate } from "../../../config/DateTransformer.js";
+import { HandleUTCDate } from "../../../config/DateTransformer.js";
 import { PastCodes } from "../../../config/getLastMonday.js";
 
 import prisma from "../../../database/database.js";
@@ -116,7 +116,10 @@ class OrderController {
             })
 
         } catch (error) {
-            console.log({ error })
+            console.log({
+                where: '[ORDERS.GET]',
+                error
+            })
             return res.status(400).json({ message: error })
         }
     }
@@ -167,7 +170,6 @@ class OrderController {
                     }
                 }
             })
-            console.log(query)
 
 
             const [order, count] = await prisma.$transaction([
@@ -256,7 +258,10 @@ class OrderController {
             })
 
         } catch (error) {
-            console.log({ error })
+            console.log({
+                where: '[ORDERS.QUERY]',
+                error
+            })
             return res.status(400).json({ message: error })
         }
     }
@@ -298,103 +303,11 @@ class OrderController {
             })
 
 
-
-            return
-
-
-            const update = async (id, data) => {
-
-                await prisma.weekOrder.update({
-                    where: {
-                        id
-                    },
-                    data: {
-                        orders: {
-                            create: data
-                        }
-                    }
-                })
-                    .then(() => {
-                        if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
-                        console.log("Pedido agregado")
-                    })
-                    .catch((err) => {
-                        console.log(err)
-                        if (res) return res.status(400).json({ err })
-                    })
-
-
-            }
-
-            const creation = async (code, data) => {
-
-
-                prisma.weekOrder.create({
-                    data: {
-                        code,
-                        orders: {
-                            create: data
-                        },
-                        unity
-                    }
-                })
-                    .then(() => {
-                        if (res) return res.status(201).json({ message: "Pedido criado com sucesso" })
-                        console.log("Pedido criado com sucesso")
-                    })
-                    .catch((err) => {
-                        console.log(err)
-                        // if (res) return res.status(400).json({ err })
-                    })
-            }
-
-
-
-            for (let index = 0; index < orders.length; index++) {
-                const order = orders[index]
-
-                const searchOnDb = await prisma.orders.findFirst({
-                    where: {
-                        OR: [
-                            {
-                                id: {
-                                    contains: order.id
-                                }
-                            },
-                            {
-                                aluno: order.aluno,
-                                book: order.materialDidatico,
-                            }
-                        ]
-
-                    }
-                })
-
-
-
-                if (!searchOnDb) {
-
-                    let twin = await getLastMondayCode(await DateTransformer(orders[0].data))
-
-                    const weekOrder = await prisma.weekOrder.findFirst({
-                        where: {
-                            code: twin,
-                            unity
-                        }
-                    })
-
-
-                    weekOrder ?
-                        await update(weekOrder.id, orders) :
-                        await creation(code, orders)
-
-
-                }
-            }
-
-
         } catch (error) {
-            console.log(error)
+            console.log({
+                where: '[ORDERS.STOREMANY]',
+                error
+            })
             throw new Error(error);
 
             // return res.status(400).json({ message: error })
@@ -461,7 +374,10 @@ class OrderController {
             return res.status(201).json(response)
 
         } catch (error) {
-            console.log({ message: error })
+            console.log({
+                where: '[ORDERS.UPDATE]',
+                error
+            })
             return res.status(500).json({ message: error.errors })
         }
     }
@@ -570,7 +486,10 @@ class OrderController {
 
             return res.status(201).send()
         } catch (error) {
-            console.log(error)
+            console.log({
+                where: '[ORDERS.UPDATEMANY]',
+                error
+            })
             return res.status(500).json(error)
         }
     }
@@ -609,7 +528,10 @@ class OrderController {
 
             return res.status(200).send()
         } catch (error) {
-            console.log(error)
+            console.log({
+                where: '[ORDERS.DELETE]',
+                error
+            })
             return res.status(500).json(error)
         }
     }
@@ -648,7 +570,10 @@ class OrderController {
 
             return res.status(200).send()
         } catch (error) {
-            console.log(error)
+            console.log({
+                where: '[ORDERS.DELETEMANY]',
+                error
+            })
             return res.status(500).json(error)
         }
     }

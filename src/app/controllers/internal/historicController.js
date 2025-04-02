@@ -32,7 +32,10 @@ class Historic {
             return res.status(200).json(data)
 
         } catch (error) {
-            console.log({ error })
+            console.log({
+                where: '[HISTORIC.GET]',
+                error
+            })
             if (error) return res.status(400).json({ message: "Somenthing went wrong" })
         }
 

@@ -124,9 +124,7 @@ class PostController {
 
                     await prisma.orders.update({
                         where: {
-                            id: {
-                                contains: founded.id
-                            }
+                            id: founded.id
                         },
                         data: {
                             signed: true,

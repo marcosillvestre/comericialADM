@@ -57,7 +57,10 @@ class CampaignController {
             return res.status(201).json("Criado com sucesso")
 
         } catch (error) {
-            console.log(error.ValidationError)
+            console.log({
+                where: '[CAMPAIGN.CREATE]',
+                error
+            })
             return res.status(401).json(error)
         }
 
@@ -75,7 +78,10 @@ class CampaignController {
 
             return res.status(200).json(campaigns)
         } catch (error) {
-            console.log(error)
+            console.log({
+                where: '[CAMPAIGN.GET]',
+                error
+            })
             return res.status(401).json(error)
 
         }
@@ -140,7 +146,10 @@ class CampaignController {
             return res.status(200).json("Editado com successo")
 
         } catch (error) {
-            console.log({ error })
+            console.log({
+                where: '[CAMPAIGN.UPDATE]',
+                error
+            })
             return res.status(401).json(error)
         }
     }
@@ -176,7 +185,10 @@ class CampaignController {
                 return res.status(201).json("Deletado com sucesso")
 
             } catch (error) {
-                console.log(error)
+                console.log({
+                    where: '[CAMPAIGN.DELETE]',
+                    error
+                })
                 return res.status(401).json(error)
             }
         }

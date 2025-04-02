@@ -33,7 +33,6 @@ class SupliersControllers {
     async index(req, res) {
         const { take, skip, orderBy, orderFor, query } = req.body
 
-        console.log(take)
         try {
             const withQuery = async () => {
                 const [supliers, total] = await prisma.$transaction([

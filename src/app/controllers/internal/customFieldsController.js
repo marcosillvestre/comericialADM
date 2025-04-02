@@ -63,7 +63,10 @@ class CustomFieldsController {
 
             return res.status(200).json({ message: "Success" })
         } catch (error) {
-            console.log(error)
+            console.log({
+                where: '[CUSTOMFIELD.UPDATE]',
+                error
+            })
 
             return res.status(401).json(error)
         }
@@ -109,7 +112,10 @@ class CustomFieldsController {
                 })
 
         } catch (error) {
-            console.log(error)
+            console.log({
+                where: '[CUSTOMFIELD.DELETE]',
+                error
+            })
             return res.status(400).json({ message: "Something went wrong" })
         }
     }
