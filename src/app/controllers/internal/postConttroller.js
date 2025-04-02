@@ -110,23 +110,40 @@ class PostController {
             if (type.includes("reciboMd")) {
                 const ordersIds = id.split("_")
 
-                for (let index = 0; index < ordersIds.length; index++) {
-                    const element = ordersIds[index];
+                ordersIds.forEach(async (element) => {
 
-                    prisma.orders.update({
+                    const founded = await prisma.orders.findFirst({
                         where: {
                             id: {
-                                contains: element
+                                endsWith: element
+                            }
+                        }
+                    })
+
+                    if (!founded) return
+
+                    await prisma.orders.update({
+                        where: {
+                            id: {
+                                contains: founded.id
                             }
                         },
                         data: {
-                            signed: true
+                            signed: true,
+                            logs: {
+                                push: {
+                                    date: new Date(),
+                                    description: "Assinou o contrato",
+                                    responsible: data.user.name
+                                }
+                            }
                         }
                     })
 
 
                     console.log("Assinado")
-                }
+
+                });
 
                 return res.status(201).json({ message: "link atribuido com sucesso" })
             }
