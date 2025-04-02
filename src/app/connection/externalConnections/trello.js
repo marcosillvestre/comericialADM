@@ -357,16 +357,10 @@ Responsável pela venda: *${customFields["Vendedor"]}*
 
 ${url}`
 
-
-                let conference = `> *${body.name}* 
-
-Foi cadastrado no sistema de comissão.
-`
                 let chat = customFields["Unidade"] === "Centro" ?
                     process.env.UMBLER_CHAT_REM_ID_CENTRO : process.env.UMBLER_CHAT_REM_ID_PTB
                 await Promise.all([
                     SendGroupAlerts(message, chat),
-                    SendSimpleWpp("Carolina", process.env.CAROLINA, conference),
                 ])
 
             })

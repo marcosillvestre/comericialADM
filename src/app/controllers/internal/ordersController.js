@@ -529,7 +529,7 @@ class OrderController {
                 },
             }
 
-            const data = dateTypes[where]
+            const data = dateTypes[where] ?? { [where]: what }
 
             for (let index = 0; index < ids.length; index++) {
                 const id = ids[index];
