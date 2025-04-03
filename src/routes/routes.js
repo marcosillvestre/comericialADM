@@ -75,6 +75,7 @@ routes.delete("/produtos/:id", ProductsController.delete)
 
 routes.post("/novo-fornecedor", SupliersController.store)
 routes.post("/fornecedor", SupliersController.index)
+routes.post("/fornecedor-query", SupliersController.query)
 routes.get("/fornecedor-totais", SupliersController.indexFilter)
 routes.put("/fornecedor/:id", SupliersController.update)
 routes.delete("/fornecedor/:id", SupliersController.delete)

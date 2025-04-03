@@ -30,84 +30,126 @@ class SupliersControllers {
             return res.status(500).json({ error: 'Failed to fetch supliers' });
         }
     }
+
     async index(req, res) {
-        const { take, skip, orderBy, orderFor, query } = req.body
+        const schema = yup.object().shape({
+
+            take: yup.string().required(),
+            skip: yup.string().required(),
+
+            orderFor: yup.string().required(),
+            orderBy: yup.string().required(),
+            typeFilter: yup.array().required(),
+        })
 
         try {
-            const withQuery = async () => {
-                const [supliers, total] = await prisma.$transaction([
-                    prisma.supliers.findMany({
-                        where: {
-                            OR: [
-                                {
-                                    name: {
-                                        contains: query,
-                                        mode: "insensitive"
-                                    }
-                                },
-                                {
-                                    sku: {
-                                        contains: query,
-                                        mode: "insensitive"
-                                    }
-                                }
-                            ]
-                        },
-                        take: parseInt(take),
-                        skip: parseInt(skip),
-                        orderBy: {
-                            [orderBy]: orderFor
-                        }
-                    }),
-                    prisma.supliers.count({
-                        where: {
-                            OR: [
-                                {
-                                    name: {
-                                        contains: query,
-                                        mode: "insensitive"
-                                    }
-                                },
-                                {
-                                    docment: {
-                                        contains: query,
-                                        mode: "insensitive"
-                                    }
-                                }
-                            ]
-                        },
-                    })
+            await schema.validateSync(req.body, { abortEarly: false })
 
-                ])
-                return { supliers, total }
-            }
-            const withoutQuery = async () => {
-                const [supliers, count] = await prisma.$transaction([
-                    prisma.supliers.findMany({
-                        take: parseInt(take),
-                        skip: parseInt(skip),
-                        orderBy: {
-                            [orderBy]: orderFor
-                        }
-                    }),
-                    prisma.supliers.count()
-
-                ])
-                return { supliers, count }
-            }
+            const { take, skip, orderBy, orderFor } = req.body
 
 
 
-            const { supliers, count } = query ? await withQuery() :
-                await withoutQuery()
+            const [supliers, total] = await prisma.$transaction([
+                prisma.supliers.findMany({
+                    take: parseInt(take),
+                    skip: parseInt(skip),
+                    orderBy: {
+                        [orderBy]: orderFor
+                    }
+                }),
+                prisma.supliers.count()
+
+            ])
+
+
+
 
             return res.status(200).json({
                 supliers,
-                total: count
+                total
             });
 
         } catch (error) {
             console.log({ error })
+            return res.status(500).json({ error: 'Failed to fetch supliers' });
+        }
+    }
+    async query(req, res) {
+        const schema = yup.object().shape({
+
+            take: yup.string().required(),
+            skip: yup.string().required(),
+            query: yup.string().required(),
+
+            orderFor: yup.string().required(),
+            orderBy: yup.string().required(),
+            typeFilter: yup.array().required(),
+
+        })
+
+        try {
+            await schema.validateSync(req.body, { abortEarly: false })
+
+            const { take, skip, orderBy, orderFor, query } = req.body
+
+            const [supliers, total] = await prisma.$transaction([
+                prisma.supliers.findMany({
+                    take: parseInt(take),
+                    skip: parseInt(skip),
+                    orderBy: {
+                        [orderBy]: orderFor
+                    },
+                    where: {
+                        OR: [
+                            {
+                                name: {
+                                    contains: query,
+                                    mode: "insensitive"
+                                }
+                            },
+                            {
+                                docment: {
+                                    contains: query,
+                                    mode: "insensitive"
+                                }
+                            }
+                        ]
+                    },
+
+                }),
+                prisma.supliers.count({
+                    where: {
+                        OR: [
+                            {
+                                name: {
+                                    contains: query,
+                                    mode: "insensitive"
+                                }
+                            },
+                            {
+                                docment: {
+                                    contains: query,
+                                    mode: "insensitive"
+                                }
+                            }
+                        ]
+                    },
+                })
+
+            ])
+
+
+
+            return res.status(200).json({
+                supliers,
+                total
+            });
+
+        } catch (error) {
+            console.log({
+                where: "[SUPLIER.QUERY]",
+                error
+            })
             return res.status(500).json({ error: 'Failed to fetch supliers' });
         }
     }
@@ -134,10 +176,10 @@ class SupliersControllers {
             address: yup.object().shape({
                 numero: yup.string().transform(nonNullable),
                 cep: yup.string().transform(nonNullable),
-                Rua: yup.string().transform(nonNullable),
-                Bairro: yup.string().transform(nonNullable),
-                Cidade: yup.string().transform(nonNullable),
-                UF: yup.string().transform(nonNullable),
+                rua: yup.string().transform(nonNullable),
+                bairro: yup.string().transform(nonNullable),
+                cidade: yup.string().transform(nonNullable),
+                uf: yup.string().transform(nonNullable),
                 complemento: yup.string(),
             }).required()
         })
@@ -157,26 +199,13 @@ class SupliersControllers {
 
             if (isThere) return res.status(400).json({ message: "Já existe um fornecedor com esse Documento cadastrado" })
 
-            const { comercialPhone, descricao,
-                email, telefone, whatsapp, orderEmail } = contacts;
-
-            const { complemento, numero,
-                Rua, Bairro, Cidade, UF, cep } = address;
-
             const newsuplier = await prisma.supliers.create({
                 data: {
                     name,
                     docment,
                     type,
-                    contacts: {
-                        comercialPhone,
-                        descricao,
-                        email, telefone, whatsapp, orderEmail
-                    },
-                    address: {
-                        complemento, numero,
-                        Rua, Bairro, Cidade, UF, cep
-                    }
+                    contacts,
+                    address
 
                 },
             });
@@ -190,9 +219,7 @@ class SupliersControllers {
 
     async update(req, res) {
 
-        const nonNullable = (value) => {
-            return value ? value : ''
-        }
+
         const schema = yup.object().shape({
             type: yup.string().required("Tipo de fornecedor é obrigatório"),
             name: yup.string().required("O campo nome é obrigatório"),
@@ -200,57 +227,50 @@ class SupliersControllers {
 
             contacts: yup.object().shape({
                 descricao: yup.string(),
-                email: yup.string().transform(nonNullable),
-                telefone: yup.string().transform(nonNullable),
+                email: yup.string().required("O campo email é obrigatório"),
+                telefone: yup.string().required("O campo telefone é obrigatório"),
 
-                comercialPhone: yup.string().transform(nonNullable),
-                whatsapp: yup.string().transform(nonNullable),
-                orderEmail: yup.string().transform(nonNullable),
+                comercialPhone: yup.string().required("O campo telefone comercial é obrigatório"),
+                whatsapp: yup.string().required("O campo whatsapp é obrigatório"),
+                orderEmail: yup.string().required("O campo email para pedido é obrigatório"),
 
             }),
 
             address: yup.object().shape({
-                numero: yup.string().transform(nonNullable),
-                cep: yup.string().transform(nonNullable),
-                Rua: yup.string().transform(nonNullable),
-                Bairro: yup.string().transform(nonNullable),
-                Cidade: yup.string().transform(nonNullable),
-                UF: yup.string().transform(nonNullable),
+                numero: yup.string().required("O campo número é obrigatório"),
+                cep: yup.string().required("O campo cep é obrigatório"),
+                rua: yup.string().required("O campo rua é obrigatório"),
+                bairro: yup.string().required("O campo bairro é obrigatório"),
+                cidade: yup.string().required("O campo cidade é obrigatório"),
+                uf: yup.string().required("O campo estado é obrigatório"),
                 complemento: yup.string(),
             })
 
-
         })
 
-        const { id } = req.params;
+        const schemaParam = yup.object().shape({
+            id: yup.string().required("Tipo de fornecedor é obrigatório"),
+        })
 
         try {
 
             await schema.validateSync(req.body, { abortEarly: false })
+            await schemaParam.validateSync(req.params, { abortEarly: false })
 
-            const { name, type, document, numero,
-                ['telefone comercial']: comercialPhone,
-                ['email para pedido']: orderEmail,
-                descricao, complemento, email, telefone, whatsapp, Rua,
-                Bairro, Cidade, UF, cep
-            } = req.body;
+            const { id } = req.params;
+            const { name, type, docment, contacts, address } = req.body;
+
+
+
 
             const updatedsuplier = await prisma.supliers.update({
                 where: { id: id },
                 data: {
                     name,
-                    docment: document,
+                    docment,
                     type,
-                    contacts: {
-                        comercialPhone,
-                        descricao,
-                        email, telefone, whatsapp, orderEmail
-                    },
-                    address: {
-                        complemento, numero,
-                        Rua, Bairro, Cidade, UF, cep
-                    }
-
+                    contacts,
+                    address
                 },
             })
 
@@ -258,14 +278,16 @@ class SupliersControllers {
 
             return res.status(200).json(updatedsuplier);
         } catch (error) {
-            console.log("error")
+            console.log({
+                where: "[EDIT.SUPLIER]",
+                error
+            })
             return res.status(500).json({ message: error.errors });
         }
     }
 
     async delete(req, res) {
         const { id } = req.params;
-
 
         try {
 
@@ -276,7 +298,9 @@ class SupliersControllers {
             return res.status(200).json({ message: 'suplier deleted successfully' });
         } catch (error) {
 
-            return res.status(500).json({ error: 'Failed to delete suplier' });
+            if (error.meta.field_name === 'requests_suplierID_fkey (index)') return res.status(500).json({ message: 'Não é permitido apagar um vendedor que possui vendas associadas a ele!' });
+            console.log(error)
+            return res.status(500).json({ message: error });
         }
     }
 }

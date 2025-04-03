@@ -3,6 +3,7 @@ import { PastCodes } from "../../../config/getLastMonday.js";
 
 import prisma from "../../../database/database.js";
 import { Historic } from '../../../database/historic/properties.js';
+import { SendMail } from "../../connection/externalConnections/emailService.js";
 import { SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
 
 const { _storeLog, _store } = new Historic()
@@ -353,7 +354,11 @@ class RequestsController {
                 message
             )
 
-            // if (emailPermission) 
+            if (emailPermission) await SendMail({
+                to: contacts?.orderEmail,
+                subject: 'Pedido de Produtos',
+                text: message
+            })
 
             return res.status(200).send()
 

@@ -456,11 +456,32 @@ class OrderController {
                     }
                 })
 
+                const translate = {
+                    link: "Link",
+                    unity: "Unidade",
+                    value: "Valor",
+                    arrived: "Chegada",
+                    arrivingDate: "Data de chegada",
+                    signed: "Assinatura",
+                    available: "Disponível",
+                    delivery: "Entregue",
+                    withdraw: "Data de retirada",
+                    removedBy: "Retirado por",
+                    book: "Produto",
+                    status: "Status",
+                    type: "Tipo",
+                    tags: "Tag",
+                    logistic: "Sequência logística",
+                    logs: "Sequência de logs",
+                    observations: "Observações",
+                    true: "Sim",
+                    false: "Não"
+                }
 
                 await Promise.all([
                     _store(responsible,
                         "pedido de livro",
-                        `${responsible} alterou o campo ${where} para ${what} referente ao pedido de livro em nome de ${name}`,
+                        `${responsible} alterou o campo de ${translate[where]} para ${translate[what] ?? what} referente ao pedido de livro em nome de ${name}`,
                         ""
                     ),
                     prisma.orders.update({
@@ -472,7 +493,7 @@ class OrderController {
                             logs: {
                                 push: {
                                     responsible: responsible,
-                                    description: `alterou o campo ${where} para ${JSON.stringify(what)}`,
+                                    description: `alterou o campo de ${translate[where]} para ${translate[what] ?? what}`,
                                     date: new Date()
                                 }
                             }
