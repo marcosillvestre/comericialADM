@@ -227,22 +227,22 @@ class SupliersControllers {
 
             contacts: yup.object().shape({
                 descricao: yup.string(),
-                email: yup.string().required("O campo email é obrigatório"),
-                telefone: yup.string().required("O campo telefone é obrigatório"),
+                email: yup.string(),
+                telefone: yup.string(),
 
-                comercialPhone: yup.string().required("O campo telefone comercial é obrigatório"),
-                whatsapp: yup.string().required("O campo whatsapp é obrigatório"),
-                orderEmail: yup.string().required("O campo email para pedido é obrigatório"),
+                comercialPhone: yup.string(),
+                whatsapp: yup.string(),
+                orderEmail: yup.string(),
 
             }),
 
             address: yup.object().shape({
-                numero: yup.string().required("O campo número é obrigatório"),
-                cep: yup.string().required("O campo cep é obrigatório"),
-                rua: yup.string().required("O campo rua é obrigatório"),
-                bairro: yup.string().required("O campo bairro é obrigatório"),
-                cidade: yup.string().required("O campo cidade é obrigatório"),
-                uf: yup.string().required("O campo estado é obrigatório"),
+                numero: yup.string(),
+                cep: yup.string(),
+                rua: yup.string(),
+                bairro: yup.string(),
+                cidade: yup.string(),
+                uf: yup.string(),
                 complemento: yup.string(),
             })
 
