@@ -39,7 +39,7 @@ class RegistersController {
                     return {
                         customFields: {
                             path: [res.key],
-                            string_contains: res.value
+                            string_contains: res.value,
                         },
                     }
                 }
@@ -331,182 +331,6 @@ class RegistersController {
 
 
     async query(req, res) {
-        const { param, value, dates, name, role, orderBy, path } = req.query
-
-        const schema = yup.object().shape({
-            role: yup.string().required(),
-            name: yup.string().required(),
-            dates: yup.string().required(),
-            orderBy: yup.string().required(),
-            param: yup.string().required(),
-            value: yup.string().required(),
-            path: yup.string()
-
-        })
-
-        try {
-            await schema.validateSync(req.query, { abortEarly: false })
-
-        } catch (error) {
-            return res.status(400).json({ message: error })
-        }
-
-
-        const [initial, final] = dates.split("~")
-
-        try {
-            const comercial = async () => {
-                const [result, total] = await prisma.$transaction([
-
-
-                    prisma.registers.findMany({
-                        where: {
-                            created_at: {
-                                gte: new Date(initial),
-                                lte: new Date(final)
-                            },
-                            owner: {
-                                contains: name,
-                                mode: "insensitive"
-                            },
-                            OR: [
-                                {
-                                    [param]: {
-                                        contains: value,
-                                        mode: "insensitive"
-                                    }
-                                },
-                                {
-                                    customFields: {
-                                        path: [path],
-                                        string_contains: value,
-
-                                    }
-                                }
-
-                            ]
-                        },
-                        include: {
-                            historic: true
-                        },
-                        orderBy: {
-                            [orderBy]: 'asc'
-                        },
-
-                    }),
-                    prisma.registers.count({
-                        where: {
-                            created_at: {
-                                gte: initial,
-                                lte: final
-                            },
-                            owner: {
-                                contains: name,
-                                mode: "insensitive"
-                            },
-                            OR: [
-                                {
-                                    [param]: {
-                                        contains: value,
-                                        mode: "insensitive"
-                                    }
-                                },
-                                {
-                                    customFields: {
-                                        path: [path],
-                                        string_contains: value,
-
-                                    }
-                                }
-
-                            ]
-                        }
-                    }
-                    )
-                ])
-                return await { result, count }
-            }
-
-            const admiministrative = async () => {
-                const [result, total] = await prisma.$transaction([
-
-                    prisma.registers.findMany({
-                        where: {
-                            created_at: {
-                                gte: new Date(initial),
-                                lte: new Date(final)
-                            },
-                            OR: [
-                                {
-                                    [param]: {
-                                        contains: value,
-                                        mode: "insensitive"
-                                    }
-                                },
-                                {
-                                    customFields: {
-                                        path: [path],
-                                        string_contains: value,
-
-                                    }
-                                }
-
-                            ]
-                        },
-                        include: {
-                            historic: true
-                        },
-                        orderBy: {
-                            [orderBy]: 'asc'
-                        },
-
-                    }),
-
-                    prisma.registers.count({
-                        where: {
-                            created_at: {
-                                gte: new Date(initial),
-                                lte: new Date(final)
-                            },
-                            OR: [
-                                {
-                                    [param]: {
-                                        contains: value,
-                                        mode: "insensitive"
-                                    }
-                                },
-                                {
-                                    customFields: {
-                                        path: [path],
-                                        string_contains: value,
-
-                                    }
-                                }
-
-                            ]
-                        }
-                    })
-
-                ])
-                return await { result, count }
-            }
-
-            const { result, count } = role === "comercial" ?
-                await comercial() : await admiministrative()
-
-
-
-            return res.status(200).json({
-                total: count,
-                deals: result
-            })
-        } catch (error) {
-            console.log(error)
-            return res.status(200).json(error)
-        }
-    }
-
-    async query(req, res) {
         const schema = yup.object().shape({
             dates: yup.string().required(),
             role: yup.string().required(),
@@ -516,6 +340,7 @@ class RegistersController {
 
             orderFor: yup.string().required(),
             orderBy: yup.string().required(),
+            query: yup.string().required(),
 
             dateType: yup.string(),
             typeFilter: yup.array(),
@@ -524,7 +349,7 @@ class RegistersController {
         try {
             await schema.validateSync(req.body, { abortEarly: false })
 
-            const { role, name, dates, skip, take, orderBy, orderFor, typeFilter } = req.body
+            const { role, name, dates, skip, take, orderBy, orderFor, typeFilter, query } = req.body
 
             const skipParsed = parseInt(skip)
             const takeParsed = parseInt(take)
@@ -541,7 +366,7 @@ class RegistersController {
                     return {
                         customFields: {
                             path: [res.key],
-                            string_contains: res.value
+                            string_contains: res.value,
                         },
                     }
                 }
@@ -594,6 +419,22 @@ class RegistersController {
                                     },
                                 },
                                 ...filters
+
+                            ],
+                            OR: [
+                                {
+                                    name: {
+                                        contains: query,
+                                        mode: "insensitive"
+                                    }
+                                },
+                                {
+                                    customFields: {
+                                        path: ['Nome do aluno'],
+                                        string_contains: query,
+                                    }
+                                },
+
                             ]
                         },
 
@@ -615,6 +456,22 @@ class RegistersController {
                                     },
                                 },
                                 ...filters
+
+                            ],
+                            OR: [
+                                {
+                                    name: {
+                                        contains: query,
+                                        mode: "insensitive"
+                                    }
+                                },
+                                {
+                                    customFields: {
+                                        path: ['Nome do aluno'],
+                                        string_contains: query,
+                                    }
+                                },
+
                             ]
                         },
                     }
@@ -644,8 +501,23 @@ class RegistersController {
                                         lte: HandleUTCDate(final)
                                     },
                                 },
-
                                 ...filters
+
+                            ],
+                            OR: [
+                                {
+                                    name: {
+                                        contains: query,
+                                        mode: "insensitive"
+                                    }
+                                },
+                                {
+                                    customFields: {
+                                        path: ['Nome do aluno'],
+                                        string_contains: query,
+                                    }
+                                },
+
                             ]
                         },
                     }),
@@ -661,6 +533,22 @@ class RegistersController {
                                     },
                                 },
                                 ...filters
+
+                            ],
+                            OR: [
+                                {
+                                    name: {
+                                        contains: query,
+                                        mode: "insensitive"
+                                    }
+                                },
+                                {
+                                    customFields: {
+                                        path: ['Nome do aluno'],
+                                        string_contains: query,
+                                    }
+                                },
+
                             ]
                         },
                     })
