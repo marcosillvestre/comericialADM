@@ -151,12 +151,12 @@ routes.get('/unidades', UnityController.unities)
 routes.post('/unidades', UnityController.storeUnities)
 routes.delete('/unidades/:id', UnityController.deleteUnities)
 
-
-routes.get('/registro', RegistersController.index)
-
 routes.put('/registro/:id', RegistersController.update)
+
+routes.post('/registro', RegistersController.index)
+routes.post('/registro-query', RegistersController.query)
+
 //////////////////
-routes.get('/query', RegistersController.query)
 // routes.get('/query', PostConttroller.query)
 
 

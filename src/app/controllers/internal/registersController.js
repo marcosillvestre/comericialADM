@@ -1,86 +1,135 @@
 
 import * as yup from 'yup'
+import { HandleUTCDate } from '../../../config/DateTransformer.js'
 import prisma from "../../../database/database.js"
 class RegistersController {
     async index(req, res) {
 
-        const { range, role, name, dates, skip, take, orderBy } = req.query
-
         const schema = yup.object().shape({
-            range: yup.string().required(),
-            role: yup.string().required(),
-            name: yup.string().required(),
             dates: yup.string().required(),
+            role: yup.string().required(),
+
             skip: yup.string().required(),
             take: yup.string().required(),
+
+            orderFor: yup.string().required(),
             orderBy: yup.string().required(),
+
+            dateType: yup.string(),
+            typeFilter: yup.array(),
+            path: yup.string()
 
         })
 
         try {
-            await schema.validateSync(req.query, { abortEarly: false })
+            await schema.validateSync(req.body, { abortEarly: false })
 
-        } catch (error) {
-            return res.status(400).json({ message: error })
-        }
+            const { role, name, dates, skip, take, orderBy, orderFor, typeFilter } = req.body
 
-        const skipParsed = parseInt(skip)
-        const takeParsed = parseInt(take)
+            const skipParsed = parseInt(skip)
+            const takeParsed = parseInt(take)
 
-        const [initial, final] = dates.split("~")
+            const filters = typeFilter.map(res => {
+                const bools = {
+                    "Sim": true,
+                    "Não": false
+                }
 
-        try {
+                if (res.customField) {
+                    return {
+                        customFields: {
+                            path: [res.key],
+                            string_contains: res.value
+                        },
+                    }
+                }
+
+                if (res.label.includes("DATA")) {
+                    const [initialValue, finalValue] = res.value.split("~")
+
+                    return {
+                        [res.key]: {
+                            gte: HandleUTCDate(initialValue),
+                            lte: HandleUTCDate(finalValue)
+                        }
+                    }
+                }
+
+                return {
+                    [res.key]: {
+                        equals: !bools[res.value] ? res.value : bools[res.value],
+
+                    }
+                }
+            })
+
+
+            const [initial, final] = dates.split("~")
+
             const comercial = async () => {
-                const [result, count] = await prisma.$transaction([
-
+                const [deals, total] = await prisma.$transaction([
 
                     prisma.registers.findMany({
-                        where: {
-                            created_at: {
-                                gte: initial,
-                                lte: final
-                            },
-                            owner: {
-                                contains: name,
-                                mode: "insensitive"
-                            }
-                        },
                         include: {
                             historic: true
                         },
                         orderBy: {
-                            [orderBy]: 'asc'
+                            [orderBy]: orderFor
                         },
                         take: takeParsed,
                         skip: skipParsed,
+                        where: {
+                            AND: [
+                                {
+                                    created_at: {
+                                        gte: HandleUTCDate(initial),
+                                        lte: HandleUTCDate(final)
+                                    },
+
+                                },
+                                {
+                                    owner: {
+                                        contains: name,
+                                        mode: "insensitive"
+                                    }
+
+                                },
+                                ...filters
+                            ],
+                        },
+
                     }),
                     prisma.registers.count({
                         where: {
-                            created_at: {
-                                gte: initial,
-                                lte: final
-                            },
-                            owner: {
-                                contains: name,
-                                mode: "insensitive"
-                            }
-                        }
+                            AND: [
+                                {
+                                    created_at: {
+                                        gte: HandleUTCDate(initial),
+                                        lte: HandleUTCDate(final)
+                                    },
+
+                                },
+                                {
+                                    owner: {
+                                        contains: name,
+                                        mode: "insensitive"
+                                    }
+
+                                },
+                                ...filters
+                            ],
+                        },
                     }
                     )
                 ])
-                return await { result, count }
+                return await { deals, total }
             }
 
             const admiministrative = async () => {
-                const [result, count] = await prisma.$transaction([
+                const [deals, total] = await prisma.$transaction([
 
                     prisma.registers.findMany({
-                        where: {
-                            created_at: {
-                                gte: new Date(initial),
-                                lte: new Date(final)
-                            }
-                        },
+
                         include: {
                             historic: true
                         },
@@ -89,35 +138,50 @@ class RegistersController {
                         },
                         take: takeParsed,
                         skip: skipParsed,
+                        where: {
+                            AND: [
+                                {
+                                    created_at: {
+                                        gte: HandleUTCDate(initial),
+                                        lte: HandleUTCDate(final)
+                                    },
+
+                                },
+                                ...filters
+                            ],
+                        },
                     }),
 
                     prisma.registers.count({
                         where: {
-                            created_at: {
-                                gte: new Date(initial),
-                                lte: new Date(final)
-                            }
-                        }
+                            AND: [
+                                {
+                                    created_at: {
+                                        gte: HandleUTCDate(initial),
+                                        lte: HandleUTCDate(final)
+                                    },
+
+                                },
+                                ...filters
+                            ],
+                        },
                     })
 
                 ])
-                return await { result, count }
+                return await { deals, total }
             }
 
-            const { result, count } = role === "comercial" ?
+            const { deals, total } = role === "comercial" ?
                 await comercial() :
                 await admiministrative()
 
-
-
             return res.status(200).json({
-                period: range,
-                total: count,
-                deals: result
+                deals,
+                total
             })
         } catch (error) {
             console.log({ error })
-            return res.status(400).json(error)
+            return res.status(400).json(error.errors)
         }
     }
 
@@ -292,7 +356,7 @@ class RegistersController {
 
         try {
             const comercial = async () => {
-                const [result, count] = await prisma.$transaction([
+                const [result, total] = await prisma.$transaction([
 
 
                     prisma.registers.findMany({
@@ -364,7 +428,7 @@ class RegistersController {
             }
 
             const admiministrative = async () => {
-                const [result, count] = await prisma.$transaction([
+                const [result, total] = await prisma.$transaction([
 
                     prisma.registers.findMany({
                         where: {
@@ -439,6 +503,183 @@ class RegistersController {
         } catch (error) {
             console.log(error)
             return res.status(200).json(error)
+        }
+    }
+
+    async query(req, res) {
+        const schema = yup.object().shape({
+            dates: yup.string().required(),
+            role: yup.string().required(),
+
+            skip: yup.string().required(),
+            take: yup.string().required(),
+
+            orderFor: yup.string().required(),
+            orderBy: yup.string().required(),
+
+            dateType: yup.string(),
+            typeFilter: yup.array(),
+        })
+
+        try {
+            await schema.validateSync(req.body, { abortEarly: false })
+
+            const { role, name, dates, skip, take, orderBy, orderFor, typeFilter } = req.body
+
+            const skipParsed = parseInt(skip)
+            const takeParsed = parseInt(take)
+
+            const [initial, final] = dates.split("~")
+
+            const filters = typeFilter.map(res => {
+                const bools = {
+                    "Sim": true,
+                    "Não": false
+                }
+
+                if (res.customField) {
+                    return {
+                        customFields: {
+                            path: [res.key],
+                            string_contains: res.value
+                        },
+                    }
+                }
+
+                if (res.label.includes("DATA")) {
+                    const [initialValue, finalValue] = res.value.split("~")
+
+                    return {
+                        [res.key]: {
+                            gte: HandleUTCDate(initialValue),
+                            lte: HandleUTCDate(finalValue)
+                        }
+                    }
+                }
+
+                return {
+                    [res.key]: {
+                        equals: !bools[res.value] ? res.value : bools[res.value],
+
+                    }
+                }
+            })
+
+
+            const comercial = async () => {
+                const [deals, total] = await prisma.$transaction([
+
+                    prisma.registers.findMany({
+                        include: {
+                            historic: true
+                        },
+                        orderBy: {
+                            [orderBy]: orderFor
+                        },
+                        take: takeParsed,
+                        skip: skipParsed,
+                        where: {
+                            AND: [
+
+                                {
+                                    created_at: {
+                                        gte: HandleUTCDate(initial),
+                                        lte: HandleUTCDate(final)
+                                    },
+                                },
+                                {
+                                    owner: {
+                                        contains: name,
+                                        mode: "insensitive"
+                                    },
+                                },
+                                ...filters
+                            ]
+                        },
+
+                    }),
+                    prisma.registers.count({
+                        where: {
+                            AND: [
+
+                                {
+                                    created_at: {
+                                        gte: HandleUTCDate(initial),
+                                        lte: HandleUTCDate(final)
+                                    },
+                                },
+                                {
+                                    owner: {
+                                        contains: name,
+                                        mode: "insensitive"
+                                    },
+                                },
+                                ...filters
+                            ]
+                        },
+                    }
+                    )
+                ])
+                return await { deals, total }
+            }
+
+            const admiministrative = async () => {
+                const [deals, total] = await prisma.$transaction([
+
+                    prisma.registers.findMany({
+                        include: {
+                            historic: true
+                        },
+                        orderBy: {
+                            [orderBy]: 'asc'
+                        },
+                        take: takeParsed,
+                        skip: skipParsed,
+                        where: {
+                            AND: [
+
+                                {
+                                    created_at: {
+                                        gte: HandleUTCDate(initial),
+                                        lte: HandleUTCDate(final)
+                                    },
+                                },
+
+                                ...filters
+                            ]
+                        },
+                    }),
+
+                    prisma.registers.count({
+                        where: {
+                            AND: [
+
+                                {
+                                    created_at: {
+                                        gte: HandleUTCDate(initial),
+                                        lte: HandleUTCDate(final)
+                                    },
+                                },
+                                ...filters
+                            ]
+                        },
+                    })
+
+                ])
+                return await { deals, total }
+            }
+
+            const { deals, total } = role === "comercial" ?
+                await comercial() :
+                await admiministrative()
+
+            return res.status(200).json({
+                deals,
+                total
+            })
+        } catch (error) {
+            console.log({ error })
+            return res.status(400).json(error.errors)
         }
     }
 }
