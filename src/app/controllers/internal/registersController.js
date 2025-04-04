@@ -134,7 +134,7 @@ class RegistersController {
                             historic: true
                         },
                         orderBy: {
-                            [orderBy]: 'asc'
+                            [orderBy]: orderFor
                         },
                         take: takeParsed,
                         skip: skipParsed,
@@ -488,7 +488,7 @@ class RegistersController {
                             historic: true
                         },
                         orderBy: {
-                            [orderBy]: 'asc'
+                            [orderBy]: orderFor
                         },
                         take: takeParsed,
                         skip: skipParsed,
