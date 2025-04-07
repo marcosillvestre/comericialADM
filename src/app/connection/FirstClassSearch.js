@@ -132,7 +132,7 @@ export const firstClassSearch = async () => {
         for (const element of list) {
 
             await SendGroupAlerts(
-                JSON.stringify(element, null, 2).replace(/[{}]/g, ''),
+                element.text.replace(/[{}]/g, ''),
                 chat
             )
         }

@@ -1,27 +1,31 @@
 import axios from "axios"
 
 
-export const getAllSales = async (headers) => {
+export const getAllSales = async (headers, page) => {
 
     const start = new Date()
     start.setDate(start.getDate() - 90)
+    start.setUTCHours(0, 0, 0, 0)
 
     const end = new Date()
     end.setDate(end.getDate() + 6)
+    end.setUTCHours(23, 59, 59, 59)
 
     try {
         const { data } = await axios
-            .get(`https://api.contaazul.com/v1/sales?emission_start=${start.toISOString()}&emission_end=${end.toISOString()}&size=2000`,
+            .get(`https://api.contaazul.com/v1/sales?emission_start=${start.toISOString()}&emission_end=${end.toISOString()}&size=300&page=${page}`,
                 { headers: headers })
 
-        return data
+        return {
+            data,
+            has_more: data.length === 300
+        }
+
     } catch (error) {
         console.log(error)
         return null
     }
 }
-
-
 
 const getItemId = async (item, headers) => {
     const { data } = await axios.get(`https://api.contaazul.com/v1/sales/${item}/items?Type=Product`, { headers: headers })

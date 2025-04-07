@@ -144,7 +144,6 @@ async function updateOnDatabaseRegister(params) {
 
         const keys = Object.keys(element.sales)
 
-
         console.log(keys)
 
         keys.map(async (res) => {
@@ -206,7 +205,7 @@ const orderRegisterForContaAzulSales = async (sale, products, unity, headers) =>
     const { id: idSale, customer } = sale
 
     const { data: customerData } = await axios.get(`https://api.contaazul.com/v1/customers/${customer.id}/contacts`, { headers })
-    const { business_phone } = customerData[0]
+
 
     for (let index = 0; index < products.length; index++) {
         const element = products[index];
@@ -218,7 +217,7 @@ const orderRegisterForContaAzulSales = async (sale, products, unity, headers) =>
             link: "",
             value: element.value,
             removedBy: "",
-            phone: business_phone,
+            phone: customerData[0]?.business_phone || '',
             book: element.name.concat(" / ").concat(element.code),
         }
 
@@ -278,75 +277,98 @@ const orderRegisterForDatabaseSales = async (idSale, name, material, unity, phon
 
 }
 
-//esse cara vai substituir o getSalesByCustomerId
-async function gatheringSaleAndProducts(unity) {
-    try {
+const filterAcquitedData = async (header, data, unity) => {
+    const newData = [];
 
-        const header = {
-            "Authorization": `Bearer ${await getToken(unity, 'refresh')}`
+    for (let index = 0; index < data.length; index++) {
+        const eachSale = data[index];
+
+        const { notes, payment, customer, id } = eachSale;
+
+        const products = await getSaleProducts(header, id)
+
+        if (notes === "" && payment.method === "WITHOUT_PAYMENT") {
+
+            orderRegisterForContaAzulSales(eachSale, products, unity, header)
+            continue
         }
 
-        let allSales = await getAllSales(header)
+        if (notes === "" &&
+            payment.installments[0] ||
+            payment.installments[0]?.status === "ACQUITTED") {
 
-        console.log(`${allSales.length} allSales`)
-
-        const data = [];
-
-        // const allSaless = allSales.slice(0, 50)
-
-        for (let index = 0; index < allSales.length; index++) {
-            const eachSale = allSales[index];
-
-            const { notes, payment, customer, id } = eachSale;
-
-            const products = await getSaleProducts(header, id)
+            orderRegisterForContaAzulSales(eachSale, products, unity, header)
+            continue
+        }
 
 
-            if (
-                notes === "" &&
-                payment.installments[0] ||
-                payment.installments[0]?.status === "ACQUITTED" ||
-                payment.method === "WITHOUT_PAYMENT"
-            ) {
-                orderRegisterForContaAzulSales(eachSale, products, unity, header)
-                continue
-            }
+        let parsed = () => {
+            try {
 
-            let parsed = () => {
-                try {
+                let cleanData = notes.replace(/\\n/g, "")
+                cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
 
-                    let cleanData = notes.replace(/\\n/g, "")
-                    cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
-
-                    const json = JSON.parse(cleanData)
-                    return {
-                        service: json["serviço"],
-                        rdId: json["id"]
-                    }
-                } catch (error) {
-
-                    return "error aqui"
+                const json = JSON.parse(cleanData)
+                return {
+                    service: json["serviço"],
+                    rdId: json["id"]
                 }
+            } catch (error) {
+
+                return "error aqui"
             }
+        }
 
-            let { service, rdId } = await parsed()
+        let { service, rdId } = await parsed()
 
-            if (payment.method === "WITHOUT_PAYMENT" ||
-                payment.installments[0] &&
-                payment.installments[0].status === "ACQUITTED") data.push({
-                    id,
-                    // rdId,
-                    customer,
-                    service,
-                    payment: payment.installments[0],
-                    products
-                })
+        if (payment.method === "WITHOUT_PAYMENT" ||
+            payment.installments[0] &&
+            payment.installments[0].status === "ACQUITTED") {
+            newData.push({
+                id,
+                customer,
+                service,
+                payment: payment.installments[0] ?? payment.method,
+                products
+            })
 
         }
 
-        return await data
 
 
+    }
+
+    return newData
+}
+
+
+const deliverData = async (header, page) => {
+
+    let allSales = await getAllSales(header, page)
+
+    return allSales;
+}
+
+async function gatheringSaleAndProducts(unity, page) {
+    try {
+        const header = {
+            "Authorization": `Bearer ${await getToken(unity, page === 0 && 'refresh')}`
+        }
+
+
+        let { data, has_more } = await deliverData(header, page)
+        const acquittedData = [];
+
+        console.log({ page, has_more })
+
+        const filteredData = await filterAcquitedData(header, data, unity)
+
+
+        acquittedData.concat(filteredData)
+
+        if (has_more) await gatheringSaleAndProducts(unity, page + 1)
+
+        return acquittedData
     } catch (error) {
         console.log(error)
 
@@ -354,7 +376,6 @@ async function gatheringSaleAndProducts(unity) {
     }
 
 }
-
 
 
 async function associationDatabaseAndCa(params) {
@@ -456,11 +477,11 @@ async function SearchPendentsRegister(unity) {
 
             console.log(`[${response.length} PENDINGS]`)
 
+
             const databaseSynchronizedWithContaAzul = await associationDatabaseAndCa({
                 database: await reorganizingDatabaseData(response),
-                sales: await gatheringSaleAndProducts(unity)
+                sales: await gatheringSaleAndProducts(unity, 0)
             })
-
 
             console.log(`${databaseSynchronizedWithContaAzul.length} sales sinc`)
 
@@ -489,9 +510,9 @@ const syncContaAzulRegister = async () => {
     }
 }
 
+
 export default syncContaAzulRegister
 /*
-
 
 await prisma.orders.create({
     data: {
