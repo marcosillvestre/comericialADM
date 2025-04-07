@@ -142,7 +142,7 @@ export const gatheringDataForDatabase = async (deals) => {
                     0
                 )
 
-                const endDate = await installment[installment.length - 1].due_date
+                const endDate = await installment[installment.length - 1]?.due_date
                 const { course, workLoad, modality } = await getServiceByName(service.name)
 
                 return await {
@@ -162,7 +162,7 @@ export const gatheringDataForDatabase = async (deals) => {
                     "Carga horário do curso": workLoad,
                     "Nome do responsável": contacts?.name ? contacts.name : undefined,
                     "Profissão": contacts?.title ? contacts.title : undefined,
-                    "Data de vencimento da última parcela": new Date(endDate).toLocaleDateString('pt-BR'),
+                    "Data de vencimento da última parcela": endDate ? new Date(endDate).toLocaleDateString('pt-BR') : 'Erro para calcular data de fim',
                     "Nº do contrato": code,
                     "Idade do Aluno": studentAge,
                     "Background do Aluno": pipeName.includes("Rematrícula") ? "Rematrícula" : "Novo aluno",
@@ -182,8 +182,8 @@ export const gatheringDataForDatabase = async (deals) => {
         }
         return data
     } catch (error) {
-        await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[GATHERINGDATAFORDATABASE]: ${error}`, null, 2))
         console.log(error)
+        await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[GATHERINGDATAFORDATABASE]: ${error}`, null, 2))
         return []
     }
 }
@@ -236,7 +236,7 @@ async function NewSearchSync() {
 }
 
 export default NewSearchSync
-// NewSearchSync()
+NewSearchSync()
 
 // const t = [
 
