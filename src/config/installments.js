@@ -1,6 +1,8 @@
 import { DateTransformer } from "./DateTransformer.js";
 
 export const installments = async (dataPagamento, length, valor) => {
+    if (!dataPagamento) return []
+
     const data = [];
 
     for (let index = 0; index < length; index++) {
