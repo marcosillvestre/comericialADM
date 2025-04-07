@@ -14,8 +14,6 @@ class WhatsappController {
             await schema.validateSync(req.body, { abortEarly: false })
 
             const { name, phone, message } = req.body;
-            console.log({ name, phone, message })
-
 
             new Promise((resolve, reject) => {
                 SendSimpleWpp(
