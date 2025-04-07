@@ -34,7 +34,6 @@ export async function SendGroupAlerts(message, chat) {
 
 
 export async function SendSimpleWpp(name, phone, message) {
-    let resend = ""
     const messageBody = {
         "toPhone": phone,
         "fromPhone": process.env.FROM,
@@ -44,14 +43,17 @@ export async function SendSimpleWpp(name, phone, message) {
         "skipReassign": false,
         "contactName": name
     }
+    try {
 
-    if (name + message !== resend) {
-        await axios.post("https://app-utalk.umbler.com/api/v1/messages/simplified", messageBody, { headers })
-            .then(() => {
-                console.log(`enviado para ${name} com sucesso`)
-                resend = `${name}+${message}`
-            })
-            .catch(err => console.log(err.response.data))
+
+        const response = await axios.post("https://app-utalk.umbler.com/api/v1/messages/simplified", messageBody, { headers })
+
+        return response
+
+    } catch (error) {
+
+        return new Error(error)
+
     }
 
 }

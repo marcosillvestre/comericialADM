@@ -16,13 +16,13 @@ import CustomFieldsController from '../app/controllers/internal/customFieldsCont
 import OrdersController from '../app/controllers/internal/ordersController.js';
 import ProductsController from '../app/controllers/internal/productsController.js';
 import RegistersController from '../app/controllers/internal/registersController.js';
+import RequestsController from '../app/controllers/internal/requestsController.js';
 import ServicesController from '../app/controllers/internal/servicesController.js';
 import SupliersController from '../app/controllers/internal/supliersController.js';
+import WhatsappController from '../app/controllers/internal/whatsappController.js';
 import UmblerWebhook from '../app/webhooks/umbler.js';
 import { storage } from '../config/multer.js';
 import auth from "../middleware/auth.js";
-
-import RequestsController from '../app/controllers/internal/requestsController.js';
 import webhookToken from '../middleware/webhooks.js';
 
 const routes = Router();
@@ -50,6 +50,10 @@ routes.post('/nova-senha', SessionController.redefinePassword)
 
 
 routes.use(auth) // autenticated routes
+
+routes.post('/mensagem', WhatsappController.store)
+
+
 routes.get('/funis', PostConttroller.funnels)
 
 routes.get('/contrato/:unity', PostConttroller.getRecent)
