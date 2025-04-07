@@ -236,7 +236,6 @@ async function NewSearchSync() {
 }
 
 export default NewSearchSync
-NewSearchSync()
 
 // const t = [
 
