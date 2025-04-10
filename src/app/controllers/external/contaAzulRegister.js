@@ -226,9 +226,11 @@ class RegisterContaAzulController {
                                 resolve(
                                     axios.post('https://api.contaazul.com/v1/contracts', body,
                                         { headers: header })
-                                        .then(data => {
+                                        .then(async data => {
                                             if (data.status === 201 || data.status === 200) {
                                                 console.log("O contrato foi lançado")
+
+                                                await axios.post("https://hook.us1.make.com/waleff5wdtt69n7posu6tg5gth23b8k6", body)
                                                 return res.status(200).json({ message: "Success" })
                                             }
                                         }).catch((err) => {
@@ -268,6 +270,8 @@ class RegisterContaAzulController {
             CPF,
             Curso,
             Unidade,
+            CelularResponsavel,
+            Email,
 
             material,
             parcel,
@@ -387,6 +391,114 @@ class RegisterContaAzulController {
                         "promoção": promocao === "Sim" ? promo : "Sem promoção"
                     }
 
+                    //                     const notes = `
+                    // Responsável: ${nomeResponsavel} 
+
+                    // Aluno: ${nomeAluno}
+                    // Idade: 
+                    // Telefone para contato financeiro: ${CelularResponsavel}
+                    // Email do responsável financeiro: ${Email}
+                    // contrato: ${contrato}
+                    // Vendedor: ${vendedor}
+
+                    // Informações do plano financeiro:
+
+
+                    // VALOR DO CURSO/MENSALIDADES:
+
+
+                    // CAMPANHA: ${material?.campaign?.name ?? 'sem campanha'}
+
+                    // “DESCRIÇÃO DA CAMPANHA”:
+                    // ${material?.campaign?.description ?? 'sem campanha'}
+
+
+
+
+                    // Valor total: ${material.total}
+                    // “Desconto total: ${material.descount}
+                    // “Forma de pagamento: ${formaPagamentoMaterialDidatico}
+
+                    // DETALHAMENTO DAS PARCELAS:
+
+                    // Quantidade de parcelas: ${parcelas}
+
+                    // Número de parcelas afetadas: ${parcel?.campaign?.affectedParcels ?? 'sem campanha'}
+                    // Valor total da(s) parcelas(s) afetadas: ${parcel?.campaign ? parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.valor, 0) : 'sem campanha'}
+                    // Desconto da(s) parcela(s) afetadas: ${parcel?.campaign ? parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.descount, 0) : 'sem campanha'}
+
+                    // Número de parcelas restantes: ${parcelas - parcel?.campaign?.affectedParcels}
+                    // Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.valor, 0) : 'sem campanha'}
+                    // Desconto da(s) parcela(s) restantes: ${parcel?.campaign ? parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0) : 'sem campanha'}
+                    // Valor líquido da(s) parcela(s) restantes: ""
+
+                    // Dia de vencimento: ${vencimentoPrimeiraParcela.split("/")[0]}
+                    // Data de vencimento da primeira parcela: ${vencimentoPrimeiraParcela}
+                    // Data de vencimento da última parcela: ${vencimentoUltimaParcela}
+
+
+                    // TAXA DE MATRÍCULA:
+
+                    // CAMPANHA: ""
+                    // “DESCRIÇÃO DA CAMPANHA” (DE TM)
+
+                    // VALOR TOTAL: ""
+                    // VALOR DO DESCONTO: ""
+                    // VALOR LÍQUIDO: ""
+                    // FORMA DE PAGAMENTO: ""
+                    // Vencimento:
+
+                    // DETALHAMENTO DAS PARCELAS:
+
+                    // Número de parcelas: ""
+                    // Valor da parcela: ""
+                    // Desconto por parcela:0
+                    // Valor líquido por parcela:350
+
+
+
+                    // MATERIAL DIDÁTICO/PRODUTOS:
+
+
+                    // CAMPANHA: ""
+
+                    // “DESCRIÇÃO DA CAMPANHA” (DE MD)
+
+
+                    // MATERIAL DIDÁTICO:
+                    // (NOMES DOS PRODUTOS)
+
+                    // VALOR TOTAL: ""
+                    // VALOR DO DESCONTO:0
+                    // VALOR LÍQUIDO 630
+                    // FORMA DE PAGAMENTO: ""
+                    // PRIMEIRO VENCIMENTO:15/03/2025
+
+                    // DETALHAMENTO DAS PARCELAS:
+
+                    // Número de parcelas: ""
+                    // Valor da parcela: ""
+                    // Desconto por parcela: ""
+                    // Valor líquido por parcela: ""
+
+                    // Informações pedagógicas:
+
+                    // Data de início das aulas:05/04/2025
+                    // Turma: ""
+                    // Professor: ""
+                    // Carga horária:
+                    // Unidade: ""
+
+                    // Observações pedagógicas:
+
+                    // Observações financeiras:
+
+                    // id: ""
+
+                    //                     `
+                    // console.log(notes)
+
+
 
                     const saleNotes = JSON.stringify(salesNotesString, null, 2)
 
@@ -417,27 +529,33 @@ class RegisterContaAzulController {
                     await Promise.all(product)
 
                     async function ContaAzulSender(cell) {
-                        return await new Promise(resolve => {
-                            resolve(
-                                axios.post('https://api.contaazul.com/v1/sales', cell, { headers: header })
-                                    .then(data => {
-                                        if (data.status === 201 || data.status === 200) {
-                                            console.log("O md foi lançado")
-                                            return res.status(200).json({ message: "O md foi lançado" })
-                                        }
+                        return await new Promise((resolve, reject) => {
 
-                                    }).catch((err) => {
-                                        console.log(err.response.data)
-                                        if (err.response.data.message === "The sale product's value cannot be null") {
-                                            // console.log("produto nao encontrado")
-                                            return res.status(400).json({ message: "Material didático não cadastrado no conta azul!" })
-                                        }
-                                        if (err.response.data.message !== "The sale product's value cannot be null") {
-                                            return res.status(400).json({ message: err.response.data.message })
-                                        }
-                                    })
+                            axios.post('https://api.contaazul.com/v1/sales', cell, { headers: header })
+                                .then(async data => {
+                                    resolve(data)
+                                    if (data.status === 201 || data.status === 200) {
+                                        console.log("O md foi lançado")
 
-                            )
+
+                                        await axios.post("https://hook.us1.make.com/waleff5wdtt69n7posu6tg5gth23b8k6", cell)
+
+                                        return res.status(200).json({ message: "O md foi lançado" })
+                                    }
+
+                                }).catch((err) => {
+                                    reject(err)
+                                    console.log(err.response.data)
+                                    if (err.response.data.message === "The sale product's value cannot be null") {
+                                        // console.log("produto nao encontrado")
+                                        return res.status(400).json({ message: "Material didático não cadastrado no conta azul!" })
+                                    }
+                                    if (err.response.data.message !== "The sale product's value cannot be null") {
+                                        return res.status(400).json({ message: err.response.data.message })
+                                    }
+                                })
+
+
                         })
 
 
@@ -529,6 +647,7 @@ class RegisterContaAzulController {
                         }
 
                         await ContaAzulSender(teachingmaterial)
+                        // await console.log(teachingmaterial)
                     }
 
                     if (productsSale.length !== materialDidatico.length) {
@@ -543,7 +662,8 @@ class RegisterContaAzulController {
             })
 
         } catch (error) {
-            console.log(error.response.data)
+            console.log(error)
+
             await SendSimpleWpp(
                 "marcos", process.env.MARCOS,
                 JSON.stringify(`[CA:FEE]: ${error}`, null, 2))
@@ -551,7 +671,6 @@ class RegisterContaAzulController {
             return res.status(400).json({ message: error })
         }
     }
-
 
     async storeEnrollmentFee(req, res) {
         const { id,
@@ -617,9 +736,11 @@ class RegisterContaAzulController {
                         return await new Promise(resolve => {
                             resolve(
                                 axios.post('https://api.contaazul.com/v1/sales', cell, { headers: header })
-                                    .then(data => {
+                                    .then(async data => {
                                         if (data.status === 201 || data.status === 200) {
                                             console.log("A tm foi lançada")
+                                            await axios.post("https://hook.us1.make.com/waleff5wdtt69n7posu6tg5gth23b8k6", cell)
+
                                             return res.status(200).json({ message: "A tm foi lançada" })
 
                                         }
