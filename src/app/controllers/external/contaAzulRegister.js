@@ -193,7 +193,7 @@ class RegisterContaAzulController {
 
 
                             let venc = await DateTransformer(vencimentoPrimeiraParcela)
-                            venc.setDate(venc.getDate() - 20)
+                            venc.setDate(venc.getDate() - 25)
 
                             let less20Days = venc.toISOString()
 
