@@ -32,7 +32,7 @@ const functionsArray = [
         fn: firstClassSearch
     },
     {
-        time: "0 7 * * *",
+        time: "0 2 * * *",
         fn: chargingBillingRules
     },
     {

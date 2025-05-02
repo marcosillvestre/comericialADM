@@ -12,11 +12,12 @@ const messages = ({ nameCustomer, payment, idSale, message, product_or_service_r
 
     const possibilities = {
         "nome-cliente": nameCustomer,
+        "valor-cheio": product_or_service_related.value.toLocaleString("pt-BR", { style: 'currency', currency: 'brl' }),
         "data-vencimento": new Date(payment.installment.due_date).toLocaleDateString('pt-BR'),
         "link-pagamento": " https://app.contaazul.com/pub/#/invoice/v2/" + idSale + "  ",
         "produto-servico-relacionado": product_or_service_related.name,
         "quebra-linha": "\n",
-        "pula-linha": "\n\n"
+        "pula-linha": "\n\n",
     };
     const keys = Object.keys(possibilities);
 
@@ -65,7 +66,7 @@ const findDates = async (data, dateToFind) => {
 
 const dispatchReminders = async ({ billingAplied, reminderMethod, message, where, date }) => {
 
-    console.log({ billingAplied, reminderMethod, where, date })
+    billingAplied.length > 0 && console.log({ billingAplied, reminderMethod, where, date })
 
 
     for (let index = 0; index < billingAplied.length; index++) {
@@ -91,7 +92,7 @@ const dispatchReminders = async ({ billingAplied, reminderMethod, message, where
         if (emailReminder) await SendMail({
             subject: "Lembrete de pagamento",
             to: email,
-            text: message
+            text: messageCustomized
         });
 
         await delay(2000);
@@ -110,6 +111,7 @@ class BillingRulesExec {
     async filterForServiceOrProductSelected(data, rulesProducts) {
         const ruleAplied = []
 
+
         for (let index = 0; index < data.length; index++) {
             const eachSale = data[index];
 
@@ -123,9 +125,15 @@ class BillingRulesExec {
 
             ])
 
+
             const related = rulesProducts.find(
                 res => res.name === relatedItemToSale[0]?.item.name
             )
+
+            const { value } = relatedItemToSale.find(res =>
+                res => res.name === related.name
+            )
+
 
             if (!customerData || !related) continue
 
@@ -141,7 +149,10 @@ class BillingRulesExec {
                     product_discount,
                     business_phone,
                     email,
-                    product_or_service_related: related,
+                    product_or_service_related: {
+                        ...related,
+                        value
+                    },
                     payment: {
                         method,
                         installment: installments[0],
@@ -314,7 +325,7 @@ const chargingBillingRules = () => {
 
     [
         "PTB",
-        // "Centro"
+        "Centro"
     ].forEach(async unity => {
 
         try {
