@@ -28,6 +28,9 @@ model login {
   admin    Boolean  @default(false)
   role     String
   unity    String[]
+
+  created_at                       DateTime  @default(now())
+  updated_at                       DateTime  @updatedAt 
 }
 ////////////////////
 model registers {
@@ -72,95 +75,25 @@ model registers {
 model logHistoric {
   id             String    @id @default(uuid())
   responsible    String
-  created_at     DateTime  @default(now())
   information    Json
 
   registerId     String
   register       registers @relation(fields: [registerId], references: [id])
+
+  created_at     DateTime  @default(now())
+  updated_at                       DateTime  @updatedAt 
 }
 ////////////////////
 
-model person {
-  // intrínseco
-  name                String
-  owner               String
-
-  // independem
-  aprovacaoADM        String
-  ppStatus            String
-  tmStatus            String
-  mdStatus            String
-  responsavelADM      String
-  aprovacaoDirecao    String
-  diretorResponsavel  String
-  comissaoStatus      String
-  paStatus            String
-  acStatus            String
-  // * Status da matricula 
-  
-  // campos personalizados
-  aluno               String
-  unidade             String
-  contrato            String   @id
-  background          String
-  classe              String
-  subclasse           String
-  tmVencimento        String
-  tmValor             String
-  ppVencimento        String
-  mdValor             String
-  acFormato           String
-  tipoMatricula       String
-  tipoComissao        String
-  comissaoValor       String
-  paDATA              String
-  inicioContrato      String
-  fimContrato         String
-  tel                 String
-  email               String
-  Valor               Float
-  id                  Int
-  situMatric          String
-  alunoNascimento     String
-  cargaHoraria        String
-  contratoStatus      String
-  dataComissionamento String
-  dataMatricula       String
-  dataValidacao       String
-  formatoAula         String
-  horarioFim          String
-  horarioInicio       String
-  idadeAluno          String
-  materialDidatico    String[]
-  mdData              String
-  mdDesconto          String
-  mdFormaPg           String
-  mdParcelas          String
-  mdVencimento        String
-  nivelamento         String
-  observacao          Json[]
-  ppData              String
-  ppDesconto          String
-  ppFormaPg           String
-  ppParcelas          String
-  ppValor             String
-  tempoContrato       String
-  tipoModalidade      String
-  tmData              String
-  tmDesconto          String
-  tmFormaPg           String
-  tmParcelas          String
-  dataAC              Json[]
-  diaAula             String[]
-  professor           String[]
-  curso               String
-}
 
 
 model unities {
   id         String    @id @default(uuid())
   name       String
   requests   requests[]
+
+  created_at                       DateTime  @default(now())
+  updated_at                       DateTime  @updatedAt 
 }
 
 model historic {
@@ -168,35 +101,6 @@ model historic {
   responsible    String
   date           DateTime  @default(now())
   information    Json
-}
-
-model weekOrder {
-  id          String   @id  @default(uuid())
-  code        String
-  unity       String
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @updatedAt
-  
-  orders      books[]
-}
-model books {
-  id      String   @id  @default(uuid())
-  sku    String
-  tel    String?
-  data    String
-  link    String
-  nome    String
-  aluno    String?
-  valor    Float
-  chegada    Boolean  @default(false)
-  assinado    Boolean  @default(false)
-  retiradoPor    String
-  dataRetirada    String
-  materialDidatico    String
-  type     String
-  
-  orderRelated weekOrder @relation(fields: [orderId], references: [id])
-  orderId   String
 }
 
 enum situation {
@@ -212,42 +116,6 @@ enum logisticType {
   ENCOMENDA
   REPOSICAO
 }
-model order {
-  id         String   @id  @default(uuid())
-  phone      String?
-  student    String?
-  
-  sku      String
-  link     String
-  name     String
-  unity    String
-  value    Float
-
-  arrived          Boolean     @default(false) // chegada
-  arrivingDate     String     // data que foi entregue
-  
-  signed     Boolean           @default(false) //assinado
-  available  Boolean           @default(true) //disponivel
-
-  delivery    Boolean          @default(false) //entregue
-  withdraw     String // data que foi entregue
-
-  removedBy    String // quem entregou
-  book         String 
-
-  status       situation       @default(REVISAR)
-  type         logisticType    @default(ENCOMENDA)
-
-  tags         String[]
-  logistic     Json[]
-  logs         Json[]
-
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @updatedAt
-}
-
-
-
 
 model files {
   id            String    @id  @default(cuid())
@@ -255,7 +123,8 @@ model files {
   key           String
   contentType   String
   contract      String
-  createdAt     DateTime  @default(now())
+  created_at                       DateTime  @default(now())
+  updated_at                       DateTime  @updatedAt 
 }
 
 enum TYPE {
@@ -288,7 +157,9 @@ model customFields {
   category    CATEGORY @default(Outros)
 
   required    Boolean  @default(false)
-  created_at  DateTime @default(now())
+
+  created_at                       DateTime  @default(now())
+  updated_at                       DateTime  @updatedAt 
 }
 
 enum descountType {
@@ -312,6 +183,7 @@ model campaign {
   descountType      descountType  @default(Percentage)
   for               destiny
   status            Boolean       @default(true)
+
   created_at        DateTime      @default(now())
   updated_at        DateTime      @updatedAt
 }
@@ -326,6 +198,7 @@ model contract {
   id                String   @id  @default(cuid())
   name              String
   text              String
+
   created_at        DateTime      @default(now())
   updated_at        DateTime      @updatedAt
 }
@@ -344,6 +217,9 @@ model products {
   price_cash        Float
   price_link        Float
   category          typeInsume 
+  rules             billingRules[]
+
+  
   created_at        DateTime      @default(now())
   updated_at        DateTime      @updatedAt
 }
@@ -364,6 +240,9 @@ model services {
   course            String
   modality          String
   duration          String        @default("0")
+  rules             billingRules[]
+
+
   created_at        DateTime      @default(now())
   updated_at        DateTime      @updatedAt
 }
@@ -381,6 +260,8 @@ model supliers {
   address           Json
 
   orders            requests[]
+
+
   created_at        DateTime      @default(now())
   updated_at        DateTime      @updatedAt
 }
@@ -389,51 +270,78 @@ model supliers {
 model requests {
   id         String   @id  @default(uuid())
   orders     orders[]
+  
+  suplierID   String
   suplier     supliers  @relation(fields: [suplierID], references: [id])
+  
   messageSent  String
   user        String
-  suplierID   String
   codeRequest String
-  unityId     String
 
   prevision   Int
   price       Float
   
+  unityId     String
   unity       unities @relation(fields: [unityId], references: [id])
+
   created_at   DateTime  @default(now())
   updated_at   DateTime  @updatedAt
 }
 
 
 model orders {
-  id         String   @id  @default(uuid())
-  sku      String
-  name     String
-  phone      String?
-  student    String?
+  id           String   @id  @default(uuid())
+  sku          String
+  name         String
+  phone        String?
+  student      String?
   
-  link     String
-  unity    String
-  value    Float
-  arrived          Boolean     @default(false) // chegada
-  arrivingDate     DateTime?     // data que foi entregue
-  signed     Boolean           @default(false) //assinado
-  available  Boolean           @default(true) //disponivel
-  delivery    Boolean          @default(false) //entregue
+  link         String?
+  unity        String
+  value        Float
+  arrived      Boolean     @default(false) // chegada
+  arrivingDate DateTime?     // data que foi entregue
+  signed       Boolean           @default(false) //assinado
+  available    Boolean           @default(true) //disponivel
+  delivery     Boolean          @default(false) //entregue
   withdraw     DateTime? // data que foi entregue
-  removedBy    String // quem entregou
+  removedBy    String? // quem entregou
   book         String 
   status       situation       @default(REVISAR)
   type         logisticType    @default(ENCOMENDA)
-  tags            String[]
-  logistic        Json[]
-  logs            Json[]
-  observations    Json[]
+
+  tags         String[]
+  logistic     Json[]
+  logs         Json[]
+  observations Json[]
   
-  request     requests?  @relation(fields: [requestId], references: [id])
-  requestId   String?
+  requestId    String?
+  request      requests?  @relation(fields: [requestId], references: [id])
 
   created_at   DateTime  @default(now())
   updated_at   DateTime  @updatedAt
 
+}
+
+enum TriggerMoment   {
+BEFORE
+AT
+AFTER
+}
+
+model billingRules {
+  id               String   @id  @default(uuid())
+  name             String
+  description      String
+  reminderMethod    Json
+  daysToAction     Int
+  message          String
+  typeTrigger      TriggerMoment  
+  category         typeInsume
+  productsRelated  products[]
+  servicesRelated  services[]  
+  status           Boolean    @default(true)
+
+  created_at                       DateTime  @default(now())
+  updated_at                       DateTime  @updatedAt 
 }

@@ -21,6 +21,7 @@ async function refreshToken(id, token) {
 
         const { access_token } = data.data;
 
+
         await prisma.conec.update({
             where: { id: id },
             data: {
@@ -32,8 +33,8 @@ async function refreshToken(id, token) {
         return access_token
 
     } catch (error) {
-        console.log(error.response)
-        // return error
+        console.log(error.response.data)
+        return error
     }
 }
 
@@ -47,9 +48,11 @@ export const getToken = async (unity, action) => {
                 id: unity === "Centro" ? 1 : 2
             }
         })
+
     if (action === 'refresh') {
         const refreshed = await refreshToken(id, refresh_token)
         return refreshed
     }
+
     return access_token
 }

@@ -1,6 +1,7 @@
 import { CronJob } from "cron";
 
 
+import chargingBillingRules from '../connection/billingRule.js';
 import syncContaAzulRegister from "../connection/contaAzul.js";
 import { firstClassDaily, firstClassSearch } from '../connection/FirstClassSearch.js';
 import orderBooks from "../connection/orderingBooks.js";
@@ -17,8 +18,6 @@ const functionsArray = [
         time: "0 */3 * * *",
         fn: syncContaAzulRegister
     },
-
-
     {
         time: "0 0 8 * * tue",
         fn: renewContracts
@@ -33,12 +32,15 @@ const functionsArray = [
         fn: firstClassSearch
     },
     {
+        time: "0 7 * * *",
+        fn: chargingBillingRules
+    },
+    {
         time: "0 4 * * *",
         fn: firstClassDaily
     },
 
 ]
-
 
 functionsArray.forEach(res => {
     return new CronJob(res.time,

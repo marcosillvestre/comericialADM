@@ -29,8 +29,10 @@ class ProductsController {
             return res.status(500).json({ error: 'Failed to fetch Products' });
         }
     }
+
     async index(req, res) {
-        const { take, skip, orderBy, query } = req.query
+        const { take, skip, orderBy, query, orderFor } = req.body;
+
         try {
             const withQuery = async () => {
                 const [products, count] = await prisma.$transaction([
@@ -54,7 +56,7 @@ class ProductsController {
                         take: parseInt(take),
                         skip: parseInt(skip),
                         orderBy: {
-                            [orderBy]: "asc"
+                            [orderBy]: orderFor
                         }
                     }),
                     prisma.products.count({
@@ -78,14 +80,15 @@ class ProductsController {
 
                 ])
                 return { products, count }
-            }
+            };
+
             const withoutQuery = async () => {
                 const [products, count] = await prisma.$transaction([
                     prisma.products.findMany({
                         take: parseInt(take),
                         skip: parseInt(skip),
                         orderBy: {
-                            [orderBy]: "asc"
+                            [orderBy]: orderFor
                         }
                     }),
                     prisma.products.count()

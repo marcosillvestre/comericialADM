@@ -344,7 +344,7 @@ const filterAcquitedData = async (header, data, unity) => {
 
 const deliverData = async (header, page) => {
 
-    let allSales = await getAllSales(header, page)
+    let allSales = await getAllSales(header, page, 90, 10)
 
     return allSales;
 }
@@ -359,7 +359,6 @@ async function gatheringSaleAndProducts(unity, page) {
         let { data, has_more } = await deliverData(header, page)
         const acquittedData = [];
 
-        console.log({ page, has_more })
 
         const filteredData = await filterAcquitedData(header, data, unity)
 

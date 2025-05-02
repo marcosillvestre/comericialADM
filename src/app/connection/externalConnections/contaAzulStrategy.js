@@ -1,14 +1,14 @@
 import axios from "axios"
 
 
-export const getAllSales = async (headers, page) => {
+export const getAllSales = async (headers, page, daysBackward, daysForward) => {
 
     const start = new Date()
-    start.setDate(start.getDate() - 90)
+    start.setDate(start.getDate() - daysBackward)
     start.setUTCHours(0, 0, 0, 0)
 
     const end = new Date()
-    end.setDate(end.getDate() + 6)
+    end.setDate(end.getDate() + daysForward)
     end.setUTCHours(23, 59, 59, 59)
 
     try {
@@ -22,12 +22,28 @@ export const getAllSales = async (headers, page) => {
         }
 
     } catch (error) {
-        console.log(error)
+        console.log(error.response.data)
         return null
+
     }
 }
 
-const getItemId = async (item, headers) => {
+export const getCustomerData = async (header, id) => {
+
+    try {
+        const { data } = await axios.get(
+            `https://api.contaazul.com/v1/customers/${id}/contacts`, { headers: header })
+
+        return data[0]
+    } catch (error) {
+        console.log(error)
+        throw new Error("Error looking for customer");
+
+    }
+}
+
+
+export const getItemId = async (item, headers) => {
     const { data } = await axios.get(`https://api.contaazul.com/v1/sales/${item}/items?Type=Product`, { headers: headers })
 
     return data

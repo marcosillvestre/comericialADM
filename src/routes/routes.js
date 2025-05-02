@@ -11,6 +11,7 @@ import TrelloWebhook from '../app/webhooks/trello.js';
 import multer from 'multer';
 import AutentiqueController from '../app/controllers/external/autentiqueController.js';
 import FilesController from '../app/controllers/external/filesController.js';
+import BillingRulesController from '../app/controllers/internal/billingRulesController.js';
 import CampaignController from '../app/controllers/internal/campaignController.js';
 import CustomFieldsController from '../app/controllers/internal/customFieldsController.js';
 import OrdersController from '../app/controllers/internal/ordersController.js';
@@ -21,6 +22,7 @@ import ServicesController from '../app/controllers/internal/servicesController.j
 import SupliersController from '../app/controllers/internal/supliersController.js';
 import WhatsappController from '../app/controllers/internal/whatsappController.js';
 import UmblerWebhook from '../app/webhooks/umbler.js';
+
 import { storage } from '../config/multer.js';
 import auth from "../middleware/auth.js";
 import webhookToken from '../middleware/webhooks.js';
@@ -59,20 +61,24 @@ routes.get('/funis', PostConttroller.funnels)
 routes.get('/contrato/:unity', PostConttroller.getRecent)
 routes.get('/matricula/:id', PostConttroller.returnContract)
 
-////////////////////////////
 routes.post("/campanha", CampaignController.store)
 routes.get("/campanha", CampaignController.index)
 routes.put("/campanha/:id", CampaignController.update)
 routes.delete("/campanha/:id", CampaignController.delete)
 
-
-routes.post("/servicos", ServicesController.store)
-routes.get("/servicos", ServicesController.index)
+routes.get("/servicos-totais", ServicesController.indexFilter)
+routes.post("/servico", ServicesController.store)
+routes.post("/servicos", ServicesController.index)
 routes.put("/servicos/:id", ServicesController.update)
 routes.delete("/servicos/:id", ServicesController.delete)
 
-routes.post("/produtos", ProductsController.store)
-routes.get("/produtos", ProductsController.index)
+routes.post("/regua", BillingRulesController.store)
+routes.post("/reguas", BillingRulesController.index)
+routes.put("/reguas/:id", BillingRulesController.update)
+routes.delete("/reguas/:id", BillingRulesController.delete)
+
+routes.post("/produto", ProductsController.store)
+routes.post("/produtos", ProductsController.index)
 routes.get("/produtos-totais", ProductsController.indexFilter)
 routes.put("/produtos/:id", ProductsController.update)
 routes.delete("/produtos/:id", ProductsController.delete)
@@ -89,11 +95,7 @@ routes.post("/nova-requisicao", RequestsController.store)
 routes.post("/requisicao", RequestsController.index)
 routes.post('/requisicao-query', RequestsController.query)
 
-// routes.get("/fornecedor-totais", RequestsController.indexFilter)
-// routes.put("/fornecedor/:id", RequestsController.update)
 routes.delete("/fornecedor/:id", RequestsController.delete)
-
-///////////////////////////
 
 
 routes.post('/files', FilesController.store)
@@ -106,19 +108,12 @@ routes.delete("/file", FilesController.deleteFiles)
 
 routes.post('/uploads', upload.single('file'), AutentiqueController.store)
 routes.post('/uploads-recibos', upload.single('file'), AutentiqueController.storeRecipe)
-///////////////////
+
 
 routes.get('/campos-personalizados', CustomFieldsController.index)
 routes.post('/campos-personalizados', CustomFieldsController.store)
 routes.delete('/campos-personalizados/:id', CustomFieldsController.delete)
 routes.put('/campos-personalizados', CustomFieldsController.update)
-
-///////////////////
-
-
-// routes.post('/novos-contratos', ContractsController.store)
-// routes.delete('/novos-contratos/:id', ContractsController.delete)
-// routes.put('/novos-contratos', ContractsController.update)
 
 
 routes.post('/pedidos', OrdersController.index)
@@ -132,17 +127,12 @@ routes.put('/multi-pedidos', OrdersController.updateManyOrders)
 routes.post('/pedidos', OrdersController.storeMany)
 
 
-// routes.put('/pedidos', OrdersController.edit)
-// routes.put('/linkpedido', OrdersController.putDataOrders)
-
-
 routes.post('/cliente', RegisterContaAzulController.storeCostumer)
 routes.post('/registro-conta-azul', RegisterContaAzulController.storeContract)
 routes.post('/venda', RegisterContaAzulController.storeSale)
 routes.post('/taxa', RegisterContaAzulController.storeEnrollmentFee)
 
 
-routes.post('/cadastro', UserController.store)
 
 
 routes.get('/pessoal', HistoricController.indexPersonalHistoric)
@@ -160,18 +150,13 @@ routes.put('/registro/:id', RegistersController.update)
 routes.post('/registro', RegistersController.index)
 routes.post('/registro-query', RegistersController.query)
 
-//////////////////
-// routes.get('/query', PostConttroller.query)
 
 
+routes.post('/cadastro', UserController.store)
+routes.post('/usuarios', UserController.index)
+routes.put('/usuarios', UserController.update)
 
-routes.get('/users', UserController.index)
-
-routes.delete('/users/:id', UserController.delete)
-
-
-
-// routes.put('/controle/:id', PostConttroller.update) //
+routes.delete('/usuarios/:id', UserController.delete)
 
 routes.delete('/controle/:id', RegistersController.delete)//
 

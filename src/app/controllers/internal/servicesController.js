@@ -3,9 +3,36 @@ import prisma from '../../../database/database.js';
 import { CreateServicesAtRD, EditServicesAtRD, ReturnServiceAtRD } from '../../connection/externalConnections/rdStation.js';
 class ServicesController {
 
+    async indexFilter(req, res) {
+        try {
+
+
+            const [services, count] = await prisma.$transaction([
+                prisma.services.findMany({
+
+                    orderBy: {
+                        name: "asc"
+                    }
+                }),
+                prisma.services.count()
+
+            ])
+
+
+            return res.status(200).json({
+                services,
+                total: count
+            });
+
+        } catch (error) {
+            console.log({ error })
+            return res.status(500).json({ error: 'Failed to fetch services' });
+        }
+    }
+
     async index(req, res) {
 
-        const { take, skip, orderBy, query } = req.query
+        const { take, skip, orderBy, query, orderFor } = req.body
 
         try {
             const withQuery = async () => {
@@ -30,7 +57,7 @@ class ServicesController {
                         take: parseInt(take),
                         skip: parseInt(skip),
                         orderBy: {
-                            [orderBy]: "asc"
+                            [orderBy]: orderFor
                         }
                     }),
                     prisma.services.count({
@@ -61,7 +88,7 @@ class ServicesController {
                         take: parseInt(take),
                         skip: parseInt(skip),
                         orderBy: {
-                            [orderBy]: "asc"
+                            [orderBy]: orderFor
                         }
                     }),
                     prisma.services.count()
