@@ -13,6 +13,7 @@ import AutentiqueController from '../app/controllers/external/autentiqueControll
 import FilesController from '../app/controllers/external/filesController.js';
 import BillingRulesController from '../app/controllers/internal/billingRulesController.js';
 import CampaignController from '../app/controllers/internal/campaignController.js';
+import ContractsController from '../app/controllers/internal/crmContractsController.js';
 import CustomFieldsController from '../app/controllers/internal/customFieldsController.js';
 import OrdersController from '../app/controllers/internal/ordersController.js';
 import ProductsController from '../app/controllers/internal/productsController.js';
@@ -58,7 +59,11 @@ routes.post('/mensagem', WhatsappController.store)
 
 routes.get('/funis', PostConttroller.funnels)
 
-routes.get('/contrato/:unity', PostConttroller.getRecent)
+routes.get('/contrato/:unity', ContractsController.getContracts)
+routes.get('/contrato-query/:unity', ContractsController.queryContracts)
+
+
+
 routes.get('/matricula/:id', PostConttroller.returnContract)
 
 routes.post("/campanha", CampaignController.store)
