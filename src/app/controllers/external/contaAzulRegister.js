@@ -3,6 +3,7 @@ import 'dotenv/config';
 import * as yup from 'yup';
 import { DateTransformer } from '../../../config/DateTransformer.js';
 import { installments } from '../../../config/installments.js';
+import { parseCurrency } from '../../../config/serializeNumbers.js';
 import { SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
 import { getToken } from '../../core/getToken.js';
 
@@ -96,35 +97,37 @@ class RegisterContaAzulController {
 
     async storeContract(req, res) {
 
-        const { id,
-            promocao,
-            vendedor,
-            valorCurso,
-            service,
-            CPF,
-            Curso,
-            Unidade,
-            material,
-            parcel,
-            tax,
+        const { id, promocao, valorCurso, service,
+            CPF, Curso, Unidade, material, parcel, tax,
 
-            ['Nome do responsável']: nomeResponsavel,
-            ['Data de pagamento TM']: dataPagamentoTaxaMatricula,
-            ['Quantidade de parcelas TM ']: parcelasTaxaMatricula,
-            ['Forma de pagamento TM']: formaPagamentoTaxaMatricula,
-            ['Número de parcelas do curso']: parcelas,
-            ['Forma de pagamento da parcela']: formaPagamentoParcelas,
-            ['Data de vencimento da primeira parcela']: vencimentoPrimeiraParcela,
-            ['Data de vencimento da última parcela']: vencimentoUltimaParcela,
             ['Material didático']: materialDidatico,
             ['Valor do desconto material didático']: valorDescontoMaterialDidatico,
-            ['Data de pagamento MD']: vencimentoMaterialDidatico,
-            ['Forma de pagamento do MD']: formaPagamentoMaterialDidatico,
+
+            Email,
+            Professor,
+            CelularResponsavel,
+            vendedor,
+            ['Nome do responsável']: nomeResponsavel,
             ['Nome do aluno']: nomeAluno,
             ['Nº do contrato']: contrato,
+            ['Forma de pagamento da parcela']: formaPagamentoParcelas,
+            ['Número de parcelas do curso']: parcelas,
+            ['Data de vencimento da primeira parcela']: vencimentoPrimeiraParcela,
+            ['Data de vencimento da última parcela']: vencimentoUltimaParcela,
+            ['Forma de pagamento TM']: formaPagamentoTaxaMatricula,
+            ['Data de pagamento TM']: dataPagamentoTaxaMatricula,
+            ['Quantidade de parcelas TM ']: parcelasTaxaMatricula,
+            ['Forma de pagamento do MD']: formaPagamentoMaterialDidatico,
+            ['Data de pagamento MD']: vencimentoMaterialDidatico,
             ['Carga horário do curso']: cargaHoraria,
             ['Observações importantes para o financeiro:']: observacaoFinanceiro,
             ['Observações importantes para o pedagógico:']: observacaoPedagogico,
+
+            ['Idade do Aluno']: idadeAluno,
+            ['Quantidade de parcelas MD']: parcelasMaterial,
+            ['Data da primeira aula']: dataPrimeiraAula,
+            ['Horário de Inicio']: horarioInicio,
+            ['Horário de fim']: horarioFim,
         } = req.body
 
 
@@ -144,47 +147,90 @@ class RegisterContaAzulController {
                 if (data.data[0]) {
 
 
-                    let promo = {
-                        "parcelas afetadas": parcel?.campaign?.affectedParcels,
-                        "tipo de desconto": parcel?.campaign?.descountType === "Value" ? "Valor Cheio" : "Porcentagem",
-                        "desconto nas primeiras parcelas": parcel?.campaign?.value,
-                        "descrição da campanha": parcel?.campaign?.description
-                    }
-                    const salesNotesString = {
-                        "id": id,
-                        "Valor total": valorCurso,
-                        "Valor da Parcela": parcel.parcels[parcel.parcels.length - 1].valor,
-                        "PP Forma PG": formaPagamentoParcelas,
-                        "Parcela dia de vencimento": vencimentoPrimeiraParcela.split("/")[0],
-                        "Data de vencimento da primeira parcela": vencimentoPrimeiraParcela,
-                        "Data de vencimento da última parcela": vencimentoUltimaParcela,
-                        "N° de Parcelas": parcelas,
-                        "Desconto total": parcel.descount,
-                        "MD": materialDidatico.map(res => res),
-                        "MD Valor": material.total,
-                        "MD vencimento": vencimentoMaterialDidatico,
-                        "MD forma pg": formaPagamentoMaterialDidatico,
-                        "TM Valor": tax.total,
-                        "TM forma de pg": formaPagamentoTaxaMatricula,
-                        "TM Venc": dataPagamentoTaxaMatricula,
-                        "TM parcelas": parcelasTaxaMatricula,
-                        "Carga Horária do Curso": cargaHoraria,
-                        "Unidade": Unidade,
-                        "Curso": Curso,
-                        "Aluno": nomeAluno,
-                        "Responsável": nomeResponsavel,
-                        "contrato": contrato,
-                        "serviço": "parcela",
-                        "vendedor": vendedor,
-                        "observacao do rd": observacaoPedagogico,
-                        "observacao para o financeiro": observacaoFinanceiro,
+                    const saleNotes = `
+Responsável: ${nomeResponsavel} 
+Aluno: ${nomeAluno}
+Idade: ${idadeAluno}
+Telefone para contato financeiro: ${CelularResponsavel}
+Email do responsável financeiro: ${Email}
+contrato: ${contrato}
+Vendedor: ${vendedor}
 
-                        "Desconto no material didatico": valorDescontoMaterialDidatico,
-                        "Desconto por pontualidade": parcel.descountForPontuality,
-                        "promoção": promocao === "Sim" ? promo : "Sem promoção"
-                    }
 
-                    const saleNotes = JSON.stringify(salesNotesString, null, 2)
+Informações do plano financeiro:
+
+
+VALOR DO CURSO/MENSALIDADES:
+
+CAMPANHA: ${parcel?.campaign?.name ?? 'sem campanha'}
+DESCRIÇÃO DA CAMPANHA: ${parcel?.campaign?.description ?? 'sem campanha'}
+Valor total: ${parseCurrency(parcel.total)}
+Desconto total: ${parseCurrency(parcel.descount)}
+Forma de pagamento: ${formaPagamentoParcelas}
+
+DETALHAMENTO DAS PARCELAS: 
+
+Quantidade de parcelas: ${parcelas}
+Número de parcelas afetadas: ${parcel?.campaign?.affectedParcels ?? 'sem campanha'}
+Valor total da(s) parcelas(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Desconto da(s) parcela(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
+Número de parcelas restantes: ${parcel?.campaign?.affectedParcels ? parseInt(parcelas) - parseInt(parcel?.campaign?.affectedParcels) : 'sem campanha'}
+Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Desconto da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
+Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Dia de vencimento: ${vencimentoPrimeiraParcela.split("/")[0]}
+Data de vencimento da primeira parcela: ${vencimentoPrimeiraParcela}
+Data de vencimento da última parcela: ${vencimentoUltimaParcela}
+
+
+TAXA DE MATRÍCULA: 
+
+CAMPANHA: ${tax?.campaign?.name ?? 'sem campanha'}
+DESCRIÇÃO DA CAMPANHA: ${tax?.campaign?.description ?? 'sem campanha'}
+VALOR TOTAL: ${parseCurrency(350)}
+VALOR DO DESCONTO: ${parseCurrency(tax.descount)}
+VALOR LÍQUIDO: ${parseCurrency(tax.total)}
+FORMA DE PAGAMENTO: ${formaPagamentoTaxaMatricula}
+Vencimento: ${dataPagamentoTaxaMatricula}
+
+DETALHAMENTO DAS PARCELAS:
+
+Número de parcelas: ${parcelasTaxaMatricula}
+Valor da parcela: ${parseCurrency(tax.taxes[0].valor)}
+Desconto por parcela: ${parseCurrency(tax.total / tax.taxes.length)}
+
+
+MATERIAL DIDÁTICO/PRODUTOS:
+
+CAMPANHA: ${material?.campaign?.name ?? 'sem campanha'}
+DESCRIÇÃO DA CAMPANHA : ${material?.campaign?.description ?? 'sem campanha'}
+MATERIAL DIDÁTICO: ${materialDidatico}
+VALOR TOTAL: ${parseCurrency(material?.total) ?? 'sem campanha'}
+VALOR DO DESCONTO:${parseCurrency(material?.descount) ?? 'sem campanha'}
+VALOR LÍQUIDO: ${parseCurrency(material?.total)}
+FORMA DE PAGAMENTO: ${formaPagamentoMaterialDidatico}
+PRIMEIRO VENCIMENTO: ${vencimentoMaterialDidatico}
+
+DETALHAMENTO DAS PARCELAS:
+
+Número de parcelas: ${parcelasMaterial}
+Valor da parcela: ${parseCurrency(material.materials[0]?.valor) ?? "Sem material"}
+Desconto por parcela: ${parseCurrency(material.descount / material.materials.length)}
+Valor líquido por parcela: ${parseCurrency(material.materials[0]?.valor) ?? "Sem material"}
+
+
+Informações pedagógicas: 
+
+Data de início das aulas: ${dataPrimeiraAula} 
+Turma: ${dataPrimeiraAula} de ${horarioInicio} às ${horarioFim}
+Professor: ${Professor}
+Carga horária: ${cargaHoraria} 
+Unidade: ${Unidade}
+Observações pedagógicas: ${observacaoFinanceiro}
+Observações financeiras:${observacaoPedagogico}
+id: ${id}
+serviço: parcela
+`
 
                     await axios.get(`https://api.contaazul.com/v1/services`, { headers: header })
 
@@ -263,39 +309,42 @@ class RegisterContaAzulController {
 
     async storeSale(req, res) {
 
-        const { id,
-            promocao,
-            vendedor,
-            valorCurso,
-            CPF,
-            Curso,
-            Unidade,
-            CelularResponsavel,
-            Email,
+        const {
+            id, promocao, valorCurso, CPF, Curso, Unidade,
 
             material,
             parcel,
             tax,
 
+            Email,
+            Professor,
+            CelularResponsavel,
+            vendedor,
             ['Nome do responsável']: nomeResponsavel,
-            ['Valor do Desconto na Taxa de Matrícula']: descontoTaxaMatricula,
-            ['Data de pagamento TM']: dataPagamentoTaxaMatricula,
-            ['Quantidade de parcelas TM ']: parcelasTaxaMatricula,
-            ['Forma de pagamento TM']: formaPagamentoTaxaMatricula,
-            ['Número de parcelas do curso']: parcelas,
+            ['Nome do aluno']: nomeAluno,
+            ['Idade do Aluno']: idadeAluno,
+            ['Nº do contrato']: contrato,
             ['Forma de pagamento da parcela']: formaPagamentoParcelas,
+            ['Número de parcelas do curso']: parcelas,
             ['Data de vencimento da primeira parcela']: vencimentoPrimeiraParcela,
             ['Data de vencimento da última parcela']: vencimentoUltimaParcela,
-            ['Desconto total']: descontoTotal,
-            ['Material didático']: materialDidatico,
-            ['Valor do desconto material didático']: valorDescontoMaterialDidatico,
-            ['Data de pagamento MD']: vencimentoMaterialDidatico,
+            ['Forma de pagamento TM']: formaPagamentoTaxaMatricula,
+            ['Data de pagamento TM']: dataPagamentoTaxaMatricula,
+            ['Quantidade de parcelas TM ']: parcelasTaxaMatricula,
             ['Forma de pagamento do MD']: formaPagamentoMaterialDidatico,
-            ['Nome do aluno']: nomeAluno,
-            ['Nº do contrato']: contrato,
+            ['Data de pagamento MD']: vencimentoMaterialDidatico,
+            ['Quantidade de parcelas MD']: parcelasMaterial,
+            ['Data da primeira aula']: dataPrimeiraAula,
             ['Carga horário do curso']: cargaHoraria,
             ['Observações importantes para o financeiro:']: observacaoFinanceiro,
             ['Observações importantes para o pedagógico:']: observacaoPedagogico,
+            ['Horário de Inicio']: horarioInicio,
+            ['Horário de fim']: horarioFim,
+
+            ['Valor do Desconto na Taxa de Matrícula']: descontoTaxaMatricula,
+            ['Desconto total']: descontoTotal,
+            ['Material didático']: materialDidatico,
+            ['Valor do desconto material didático']: valorDescontoMaterialDidatico,
 
         } = req.body
 
@@ -310,7 +359,9 @@ class RegisterContaAzulController {
                 resolve(axios.get(`https://api.contaazul.com/v1/customers?document=${CPF}`,
                     { headers: header }))
             }).then(async data => {
+
                 if (data.data[0]) {
+
                     const [products, sellers, sales, paymentMethods] = await Promise.all([
                         axios.get("https://api.contaazul.com/v1/products?size=10000",
                             { headers: header }),
@@ -352,156 +403,92 @@ class RegisterContaAzulController {
                     let related = sellers.data.filter(res => res.name.includes(seller[0]))
 
 
-                    let promo = {
-                        "parcelas afetadas": parcel?.campaign?.affectedParcels,
-                        "tipo de desconto": parcel?.campaign?.descountType === "Value" ? "Valor Cheio" : "Porcentagem",
-                        "desconto nas primeiras parcelas": parcel?.campaign?.value,
-                        "descrição da campanha": parcel?.campaign?.description
-                    }
-                    const salesNotesString = {
-                        "id": id,
-                        "Valor total": valorCurso,
-                        "Valor da Parcela": parseFloat(valorCurso) / parseInt(parcelas),
-                        "PP Forma PG": formaPagamentoParcelas,
-                        "Parcela dia de vencimento": vencimentoPrimeiraParcela.split("/")[0],
-                        "Data de vencimento da primeira parcela": vencimentoPrimeiraParcela,
-                        "Data de vencimento da última parcela": vencimentoUltimaParcela,
-                        "N° de Parcelas": parcelas,
-                        "Desconto total": descontoTotal,
-                        "MD": materialDidatico.map(res => res),
-                        "MD Valor": material.total,
-                        "MD vencimento": vencimentoMaterialDidatico,
-                        "MD forma pg": formaPagamentoMaterialDidatico,
-                        "TM Valor": tax.total,
-                        "TM forma de pg": formaPagamentoTaxaMatricula,
-                        "TM Venc": dataPagamentoTaxaMatricula,
-                        "TM parcelas": parcelasTaxaMatricula,
-                        "Carga Horária do Curso": cargaHoraria,
-                        "Unidade": Unidade,
-                        "Curso": Curso,
-                        "Aluno": nomeAluno,
-                        "Responsável": nomeResponsavel,
-                        "contrato": contrato,
-                        "serviço": "material didatico",
-                        "vendedor": vendedor,
-                        "observacao do rd": observacaoPedagogico,
-                        "observacao para o financeiro": observacaoFinanceiro,
-
-                        "desconto no material didatico": valorDescontoMaterialDidatico,
-                        "promoção": promocao === "Sim" ? promo : "Sem promoção"
-                    }
-
-                    //                     const notes = `
-                    // Responsável: ${nomeResponsavel} 
-
-                    // Aluno: ${nomeAluno}
-                    // Idade: 
-                    // Telefone para contato financeiro: ${CelularResponsavel}
-                    // Email do responsável financeiro: ${Email}
-                    // contrato: ${contrato}
-                    // Vendedor: ${vendedor}
-
-                    // Informações do plano financeiro:
+                    const saleNotes = `
+Responsável: ${nomeResponsavel} 
+Aluno: ${nomeAluno}
+Idade: ${idadeAluno}
+Telefone para contato financeiro: ${CelularResponsavel}
+Email do responsável financeiro: ${Email}
+contrato: ${contrato}
+Vendedor: ${vendedor}
 
 
-                    // VALOR DO CURSO/MENSALIDADES:
+Informações do plano financeiro:
 
 
-                    // CAMPANHA: ${material?.campaign?.name ?? 'sem campanha'}
+VALOR DO CURSO/MENSALIDADES:
 
-                    // “DESCRIÇÃO DA CAMPANHA”:
-                    // ${material?.campaign?.description ?? 'sem campanha'}
+CAMPANHA: ${parcel?.campaign?.name ?? 'sem campanha'}
+DESCRIÇÃO DA CAMPANHA: ${parcel?.campaign?.description ?? 'sem campanha'}
+Valor total: ${parseCurrency(parcel.total)}
+Desconto total: ${parseCurrency(parcel.descount)}
+Forma de pagamento: ${formaPagamentoParcelas}
 
+DETALHAMENTO DAS PARCELAS: 
 
-
-
-                    // Valor total: ${material.total}
-                    // “Desconto total: ${material.descount}
-                    // “Forma de pagamento: ${formaPagamentoMaterialDidatico}
-
-                    // DETALHAMENTO DAS PARCELAS:
-
-                    // Quantidade de parcelas: ${parcelas}
-
-                    // Número de parcelas afetadas: ${parcel?.campaign?.affectedParcels ?? 'sem campanha'}
-                    // Valor total da(s) parcelas(s) afetadas: ${parcel?.campaign ? parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.valor, 0) : 'sem campanha'}
-                    // Desconto da(s) parcela(s) afetadas: ${parcel?.campaign ? parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.descount, 0) : 'sem campanha'}
-
-                    // Número de parcelas restantes: ${parcelas - parcel?.campaign?.affectedParcels}
-                    // Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.valor, 0) : 'sem campanha'}
-                    // Desconto da(s) parcela(s) restantes: ${parcel?.campaign ? parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0) : 'sem campanha'}
-                    // Valor líquido da(s) parcela(s) restantes: ""
-
-                    // Dia de vencimento: ${vencimentoPrimeiraParcela.split("/")[0]}
-                    // Data de vencimento da primeira parcela: ${vencimentoPrimeiraParcela}
-                    // Data de vencimento da última parcela: ${vencimentoUltimaParcela}
+Quantidade de parcelas: ${parcelas}
+Número de parcelas afetadas: ${parcel?.campaign?.affectedParcels ?? 'sem campanha'}
+Valor total da(s) parcelas(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Desconto da(s) parcela(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
+Número de parcelas restantes: ${parcel?.campaign?.affectedParcels ? parseInt(parcelas) - parseInt(parcel?.campaign?.affectedParcels) : 'sem campanha'}
+Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Desconto da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
+Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Dia de vencimento: ${vencimentoPrimeiraParcela.split("/")[0]}
+Data de vencimento da primeira parcela: ${vencimentoPrimeiraParcela}
+Data de vencimento da última parcela: ${vencimentoUltimaParcela}
 
 
-                    // TAXA DE MATRÍCULA:
+TAXA DE MATRÍCULA: 
 
-                    // CAMPANHA: ""
-                    // “DESCRIÇÃO DA CAMPANHA” (DE TM)
+CAMPANHA: ${tax?.campaign?.name ?? 'sem campanha'}
+DESCRIÇÃO DA CAMPANHA: ${tax?.campaign?.description ?? 'sem campanha'}
+VALOR TOTAL: ${parseCurrency(350)}
+VALOR DO DESCONTO: ${parseCurrency(tax.descount)}
+VALOR LÍQUIDO: ${parseCurrency(tax.total)}
+FORMA DE PAGAMENTO: ${formaPagamentoTaxaMatricula}
+Vencimento: ${dataPagamentoTaxaMatricula}
 
-                    // VALOR TOTAL: ""
-                    // VALOR DO DESCONTO: ""
-                    // VALOR LÍQUIDO: ""
-                    // FORMA DE PAGAMENTO: ""
-                    // Vencimento:
+DETALHAMENTO DAS PARCELAS:
 
-                    // DETALHAMENTO DAS PARCELAS:
-
-                    // Número de parcelas: ""
-                    // Valor da parcela: ""
-                    // Desconto por parcela:0
-                    // Valor líquido por parcela:350
+Número de parcelas: ${parcelasTaxaMatricula}
+Valor da parcela: ${parseCurrency(tax.taxes[0].valor)}
+Desconto por parcela: ${parseCurrency(tax.total / tax.taxes.length)}
 
 
+MATERIAL DIDÁTICO/PRODUTOS:
 
-                    // MATERIAL DIDÁTICO/PRODUTOS:
+CAMPANHA: ${material?.campaign?.name ?? 'sem campanha'}
+DESCRIÇÃO DA CAMPANHA : ${material?.campaign?.description ?? 'sem campanha'}
+MATERIAL DIDÁTICO: ${materialDidatico}
+VALOR TOTAL: ${parseCurrency(material?.total) ?? 'sem campanha'}
+VALOR DO DESCONTO:${parseCurrency(material?.descount) ?? 'sem campanha'}
+VALOR LÍQUIDO: ${parseCurrency(material?.total)}
+FORMA DE PAGAMENTO: ${formaPagamentoMaterialDidatico}
+PRIMEIRO VENCIMENTO: ${vencimentoMaterialDidatico}
 
+DETALHAMENTO DAS PARCELAS:
 
-                    // CAMPANHA: ""
-
-                    // “DESCRIÇÃO DA CAMPANHA” (DE MD)
-
-
-                    // MATERIAL DIDÁTICO:
-                    // (NOMES DOS PRODUTOS)
-
-                    // VALOR TOTAL: ""
-                    // VALOR DO DESCONTO:0
-                    // VALOR LÍQUIDO 630
-                    // FORMA DE PAGAMENTO: ""
-                    // PRIMEIRO VENCIMENTO:15/03/2025
-
-                    // DETALHAMENTO DAS PARCELAS:
-
-                    // Número de parcelas: ""
-                    // Valor da parcela: ""
-                    // Desconto por parcela: ""
-                    // Valor líquido por parcela: ""
-
-                    // Informações pedagógicas:
-
-                    // Data de início das aulas:05/04/2025
-                    // Turma: ""
-                    // Professor: ""
-                    // Carga horária:
-                    // Unidade: ""
-
-                    // Observações pedagógicas:
-
-                    // Observações financeiras:
-
-                    // id: ""
-
-                    //                     `
-                    // console.log(notes)
+Número de parcelas: ${parcelasMaterial}
+Valor da parcela: ${parseCurrency(material.materials[0]?.valor) ?? "Sem material"}
+Desconto por parcela: ${parseCurrency(material.descount / material.materials.length)}
+Valor líquido por parcela: ${parseCurrency(material.materials[0]?.valor) ?? "Sem material"}
 
 
+Informações pedagógicas: 
 
-                    const saleNotes = JSON.stringify(salesNotesString, null, 2)
+Data de início das aulas: ${dataPrimeiraAula} 
+Turma: ${dataPrimeiraAula} de ${horarioInicio} às ${horarioFim}
+Professor: ${Professor}
+Carga horária: ${cargaHoraria} 
+Unidade: ${Unidade}
+Observações pedagógicas: ${observacaoFinanceiro}
+Observações financeiras:${observacaoPedagogico}
+id: ${id}
+serviço: material didatico
 
+
+`
                     let productsSale = []
 
                     const product = materialDidatico.map(teachMaterial => {
@@ -673,36 +660,39 @@ class RegisterContaAzulController {
     }
 
     async storeEnrollmentFee(req, res) {
-        const { id,
-            promocao,
-            vendedor,
-            valorCurso,
-            CPF,
-            Curso,
-            Unidade,
-            tax,
-            material,
-            parcel,
+        const { id, promocao, valorCurso, CPF, Curso,
+            Unidade, tax, material, parcel,
 
-            ['Nome do responsável']: nomeResponsavel,
             ['Valor do Desconto na Taxa de Matrícula']: descontoTaxaMatricula,
-            ['Data de pagamento TM']: dataPagamentoTaxaMatricula,
-            ['Quantidade de parcelas TM ']: parcelasTaxaMatricula,
-            ['Forma de pagamento TM']: formaPagamentoTaxaMatricula,
-            ['Número de parcelas do curso']: parcelas,
-            ['Forma de pagamento da parcela']: formaPagamentoParcelas,
-            ['Data de vencimento da primeira parcela']: vencimentoPrimeiraParcela,
-            ['Data de vencimento da última parcela']: vencimentoUltimaParcela,
+
             ['Desconto total']: descontoTotal,
             ['Material didático']: materialDidatico,
             ['Valor do desconto material didático']: valorDescontoMaterialDidatico,
-            ['Data de pagamento MD']: vencimentoMaterialDidatico,
-            ['Forma de pagamento do MD']: formaPagamentoMaterialDidatico,
+
+            Email,
+            Professor,
+            CelularResponsavel,
+            vendedor,
+            ['Nome do responsável']: nomeResponsavel,
             ['Nome do aluno']: nomeAluno,
+            ['Idade do Aluno']: idadeAluno,
             ['Nº do contrato']: contrato,
+            ['Forma de pagamento da parcela']: formaPagamentoParcelas,
+            ['Número de parcelas do curso']: parcelas,
+            ['Data de vencimento da primeira parcela']: vencimentoPrimeiraParcela,
+            ['Data de vencimento da última parcela']: vencimentoUltimaParcela,
+            ['Forma de pagamento TM']: formaPagamentoTaxaMatricula,
+            ['Data de pagamento TM']: dataPagamentoTaxaMatricula,
+            ['Quantidade de parcelas TM ']: parcelasTaxaMatricula,
+            ['Forma de pagamento do MD']: formaPagamentoMaterialDidatico,
+            ['Data de pagamento MD']: vencimentoMaterialDidatico,
+            ['Quantidade de parcelas MD']: parcelasMaterial,
+            ['Data da primeira aula']: dataPrimeiraAula,
             ['Carga horário do curso']: cargaHoraria,
             ['Observações importantes para o financeiro:']: observacaoFinanceiro,
             ['Observações importantes para o pedagógico:']: observacaoPedagogico,
+            ['Horário de Inicio']: horarioInicio,
+            ['Horário de fim']: horarioFim,
 
         } = req.body
 
@@ -777,47 +767,90 @@ class RegisterContaAzulController {
                         }
                     })
 
-                    let promo = {
-                        "parcelas afetadas": parcel?.campaign?.affectedParcels,
-                        "tipo de desconto": parcel?.campaign?.descountType === "Value" ? "Valor Cheio" : "Porcentagem",
-                        "desconto nas primeiras parcelas": parcel?.campaign?.value,
-                        "descrição da campanha": parcel?.campaign?.description
-                    }
-                    const salesNotesString = {
-                        "id": id,
-                        "Valor total": valorCurso,
-                        "Valor da Parcela": parseFloat(valorCurso) / parseInt(parcelas),
-                        "PP Forma PG": formaPagamentoParcelas,
-                        "Parcela dia de vencimento": vencimentoPrimeiraParcela.split("/")[0],
-                        "Data de vencimento da primeira parcela": vencimentoPrimeiraParcela,
-                        "Data de vencimento da última parcela": vencimentoUltimaParcela,
-                        "N° de Parcelas": parcelas,
-                        "Desconto total": descontoTotal,
-                        "MD": materialDidatico.map(res => res),
-                        "MD Valor": material?.total,
-                        "MD vencimento": vencimentoMaterialDidatico,
-                        "MD forma pg": formaPagamentoMaterialDidatico,
-                        "TM Valor": tax?.total,
-                        "TM forma de pg": formaPagamentoTaxaMatricula,
-                        "TM Venc": dataPagamentoTaxaMatricula,
-                        "TM parcelas": parcelasTaxaMatricula,
-                        "Carga Horária do Curso": cargaHoraria,
-                        "Unidade": Unidade,
-                        "Curso": Curso,
-                        "Aluno": nomeAluno,
-                        "Responsável": nomeResponsavel,
-                        "contrato": contrato,
-                        "serviço": "taxa de matricula",
-                        "vendedor": vendedor,
-                        "observacao do rd": observacaoPedagogico,
-                        "observacao para o financeiro": observacaoFinanceiro,
+                    const saleNotes = `
+Responsável: ${nomeResponsavel} 
+Aluno: ${nomeAluno}
+Idade: ${idadeAluno}
+Telefone para contato financeiro: ${CelularResponsavel}
+Email do responsável financeiro: ${Email}
+contrato: ${contrato}
+Vendedor: ${vendedor}
 
-                        "desconto no material didatico": valorDescontoMaterialDidatico,
-                        "promoção": promocao === "Sim" ? promo : "Sem promoção"
-                    }
 
-                    const saleNotes = JSON.stringify(salesNotesString, null, 2)
+Informações do plano financeiro:
 
+
+VALOR DO CURSO/MENSALIDADES:
+
+CAMPANHA: ${parcel?.campaign?.name ?? 'sem campanha'}
+DESCRIÇÃO DA CAMPANHA: ${parcel?.campaign?.description ?? 'sem campanha'}
+Valor total: ${parseCurrency(parcel.total)}
+Desconto total: ${parseCurrency(parcel.descount)}
+Forma de pagamento: ${formaPagamentoParcelas}
+
+DETALHAMENTO DAS PARCELAS: 
+
+Quantidade de parcelas: ${parcelas}
+Número de parcelas afetadas: ${parcel?.campaign?.affectedParcels ?? 'sem campanha'}
+Valor total da(s) parcelas(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Desconto da(s) parcela(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
+Número de parcelas restantes: ${parcel?.campaign?.affectedParcels ? parseInt(parcelas) - parseInt(parcel?.campaign?.affectedParcels) : 'sem campanha'}
+Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Desconto da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
+Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Dia de vencimento: ${vencimentoPrimeiraParcela.split("/")[0]}
+Data de vencimento da primeira parcela: ${vencimentoPrimeiraParcela}
+Data de vencimento da última parcela: ${vencimentoUltimaParcela}
+
+
+TAXA DE MATRÍCULA: 
+
+CAMPANHA: ${tax?.campaign?.name ?? 'sem campanha'}
+DESCRIÇÃO DA CAMPANHA: ${tax?.campaign?.description ?? 'sem campanha'}
+VALOR TOTAL: ${parseCurrency(350)}
+VALOR DO DESCONTO: ${parseCurrency(tax.descount)}
+VALOR LÍQUIDO: ${parseCurrency(tax.total)}
+FORMA DE PAGAMENTO: ${formaPagamentoTaxaMatricula}
+Vencimento: ${dataPagamentoTaxaMatricula}
+
+DETALHAMENTO DAS PARCELAS:
+
+Número de parcelas: ${parcelasTaxaMatricula}
+Valor da parcela: ${parseCurrency(tax.taxes[0].valor)}
+Desconto por parcela: ${parseCurrency(tax.total / tax.taxes.length)}
+
+
+MATERIAL DIDÁTICO/PRODUTOS:
+
+CAMPANHA: ${material?.campaign?.name ?? 'sem campanha'}
+DESCRIÇÃO DA CAMPANHA : ${material?.campaign?.description ?? 'sem campanha'}
+MATERIAL DIDÁTICO: ${materialDidatico}
+VALOR TOTAL: ${parseCurrency(material?.total) ?? 'sem campanha'}
+VALOR DO DESCONTO:${parseCurrency(material?.descount) ?? 'sem campanha'}
+VALOR LÍQUIDO: ${parseCurrency(material?.total)}
+FORMA DE PAGAMENTO: ${formaPagamentoMaterialDidatico}
+PRIMEIRO VENCIMENTO: ${vencimentoMaterialDidatico}
+
+DETALHAMENTO DAS PARCELAS:
+
+Número de parcelas: ${parcelasMaterial}
+Valor da parcela: ${parseCurrency(material.materials[0]?.valor) ?? "Sem material"}
+Desconto por parcela: ${parseCurrency(material.descount / material.materials.length)}
+Valor líquido por parcela: ${parseCurrency(material.materials[0]?.valor) ?? "Sem material"}
+
+
+Informações pedagógicas: 
+
+Data de início das aulas: ${dataPrimeiraAula} 
+Turma: ${dataPrimeiraAula} de ${horarioInicio} às ${horarioFim}
+Professor: ${Professor}
+Carga horária: ${cargaHoraria} 
+Unidade: ${Unidade}
+Observações pedagógicas: ${observacaoFinanceiro}
+Observações financeiras:${observacaoPedagogico}
+id: ${id}
+serviço: taxa de matricula
+`
                     let seller = vendedor.split(" ")[0]
                     let related = sellers.data.find(res => res.name.includes(seller))
 

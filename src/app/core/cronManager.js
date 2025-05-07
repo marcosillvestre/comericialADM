@@ -19,6 +19,16 @@ const functionsArray = [
         fn: syncContaAzulRegister
     },
     {
+        time: "0 2 * * *",
+        fn: chargingBillingRules
+    },
+    {
+        time: "0 4 * * *",
+        fn: firstClassDaily
+    },
+
+    //atDay
+    {
         time: "0 0 8 * * tue",
         fn: renewContracts
     },
@@ -31,15 +41,6 @@ const functionsArray = [
         time: "0 0 5 * * mon",
         fn: firstClassSearch
     },
-    {
-        time: "0 2 * * *",
-        fn: chargingBillingRules
-    },
-    {
-        time: "0 4 * * *",
-        fn: firstClassDaily
-    },
-
 ]
 
 functionsArray.forEach(res => {

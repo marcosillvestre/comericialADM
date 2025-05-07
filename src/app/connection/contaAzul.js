@@ -304,20 +304,22 @@ const filterAcquitedData = async (header, data, unity) => {
 
         let parsed = () => {
             try {
+                const match = notes.match(/["']?serviço["']?:\s*(["']?)([^\n\r"']+)\1/i)
+                const service = match ? match[2].trim() : null;
 
-                let cleanData = notes.replace(/\\n/g, "")
-                cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
-
-                const json = JSON.parse(cleanData)
                 return {
-                    service: json["serviço"],
-                    rdId: json["id"]
+                    service
                 }
+
             } catch (error) {
 
                 return "error aqui"
             }
         }
+
+        //////////////////////// aqui que ta o jogo 
+
+
 
         let { service, rdId } = await parsed()
 
