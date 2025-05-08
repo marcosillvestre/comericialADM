@@ -1,6 +1,7 @@
 import axios from "axios"
 import prisma from "../../database/database.js"
 import { Historic } from "../../database/historic/properties.js"
+import { RegisterFinder } from "../../database/registers/register.find.js"
 import { StringsMethods } from "../../utils/functions/serializerStrings.js"
 import ordersController from "../controllers/internal/ordersController.js"
 import { getToken } from "../core/getToken.js"
@@ -10,7 +11,7 @@ import { CompleteCheckPointOnTrello, CreateCommentOnTrello } from "./externalCon
 import { SendGroupAlerts, SendSimpleWpp } from "./externalConnections/wpp.js"
 const historic = new Historic()
 const { spacesAndLowerCase } = new StringsMethods()
-
+const { registerFinder } = new RegisterFinder()
 
 
 const routesRegister = {
@@ -136,30 +137,65 @@ async function updateOnDatabaseRegister(params) {
     const registerDates = {
         "pagamentoPrimeiraParcelaStatus": "dataPagamentoPrimeiraParcela",
         "taxaMatriculaStatus": "dataPagamentoTaxaMatricula",
+
         "materialDidaticoStatus": "dataPagamentoMaterialDidatico",
     }
 
     for (let index = 0; index < params.length; index++) {
         const element = params[index];
+        const keys = Object.keys(element.sales);
 
-        const keys = Object.keys(element.sales)
+
+        const validating = await registerFinder(
+            element.userData.id,
+            {
+                AND: [
+                    {
+                        assinaturaContratoStatus: "Ok"
+                    },
+                    {
+                        OR: [
+                            {
+                                pagamentoPrimeiraParcelaStatus: {
+                                    contains: "Ok",
+                                    mode: "insensitive"
+                                },
+                            },
+                            {
+                                taxaMatriculaStatus: {
+                                    contains: "Ok",
+                                    mode: "insensitive"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        )
 
         console.log(keys)
 
         keys.map(async (res) => {
 
             const where = routesRegister[res]
+            const imutable = {
+                [where]: "Ok",
+                [registerDates[where]]: date,
+            }
+            const validated = {
+                ...imutable,
+                comissaoStatus: "Pré-aprovado"
+            }
 
             await prisma.registers.update({
                 where: {
-                    id: element.userData.id
+                    id: element.userData.id,
                 },
-                data: {
-                    [where]: "Ok",
-                    [registerDates[where]]: date,
-                }
-            })
+                data: validating ?
+                    validated :
+                    imutable
 
+            })
                 .then(async (response) => {
                     console.log(`${response.name} success / ${where} / ${response.customFields["Unidade"]}`)
                     await EchoRegister(response, where, element.sales[res].id)

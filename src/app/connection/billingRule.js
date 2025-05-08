@@ -66,9 +66,6 @@ const findDates = async (data, dateToFind) => {
 
 const dispatchReminders = async ({ billingAplied, reminderMethod, message, where, date }) => {
 
-    billingAplied.length > 0 && console.log({ billingAplied, reminderMethod, where, date })
-
-
     for (let index = 0; index < billingAplied.length; index++) {
         const sale = billingAplied[index];
 
@@ -76,6 +73,9 @@ const dispatchReminders = async ({ billingAplied, reminderMethod, message, where
             idSale, nameCustomer, payment, product_or_service_related,
             business_phone, email
         } = sale
+
+
+        if (nameCustomer.includes("CANCELADO")) continue
 
         const messageCustomized = await messages({
             idSale, message, nameCustomer, payment, product_or_service_related
@@ -185,13 +185,14 @@ class BillingRulesExec {
             )
 
 
-            await dispatchReminders({
-                where: "before",
-                date: increasedDate,
-                billingAplied,
-                reminderMethod,
-                message,
-            })
+            billingAplied.length > 0 &&
+                await dispatchReminders({
+                    where: "before",
+                    date: increasedDate,
+                    billingAplied,
+                    reminderMethod,
+                    message,
+                })
         }
     }
 
@@ -212,16 +213,17 @@ class BillingRulesExec {
                 toAplie,
                 category === 'Product' ?
                     productsRelated : servicesRelated
-            )
+            );
 
 
-            await dispatchReminders({
-                where: "at",
-                date: atDay,
-                billingAplied,
-                reminderMethod,
-                message,
-            })
+            billingAplied.length > 0 &&
+                await dispatchReminders({
+                    where: "at",
+                    date: atDay,
+                    billingAplied,
+                    reminderMethod,
+                    message,
+                })
         }
     }
 
@@ -245,13 +247,14 @@ class BillingRulesExec {
             )
 
 
-            await dispatchReminders({
-                where: "after",
-                date: decreasedDate,
-                billingAplied,
-                reminderMethod,
-                message,
-            })
+            billingAplied.length > 0 &&
+                await dispatchReminders({
+                    where: "after",
+                    date: decreasedDate,
+                    billingAplied,
+                    reminderMethod,
+                    message,
+                })
         }
     }
 
@@ -324,8 +327,7 @@ class BillingRulesExec {
 const chargingBillingRules = () => {
 
     [
-        "PTB",
-        "Centro"
+        "PTB", "Centro"
     ].forEach(async unity => {
 
         try {
@@ -346,4 +348,3 @@ const chargingBillingRules = () => {
 
 
 export default chargingBillingRules
-
