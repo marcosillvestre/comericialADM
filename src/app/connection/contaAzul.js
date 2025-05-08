@@ -1,7 +1,7 @@
 import axios from "axios"
-import { StringsMethods } from "../../config/serializerStrings.js"
 import prisma from "../../database/database.js"
 import { Historic } from "../../database/historic/properties.js"
+import { StringsMethods } from "../../utils/functions/serializerStrings.js"
 import ordersController from "../controllers/internal/ordersController.js"
 import { getToken } from "../core/getToken.js"
 import { getAllSales, getSaleProducts } from "./externalConnections/contaAzulStrategy.js"
