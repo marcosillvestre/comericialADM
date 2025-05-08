@@ -1,7 +1,7 @@
 
 import * as yup from 'yup'
-import { HandleUTCDate } from '../../../config/DateTransformer.js'
 import prisma from "../../../database/database.js"
+import { HandleUTCDate } from '../../../utils/functions/DateTransformer.js'
 class RegistersController {
     async index(req, res) {
 

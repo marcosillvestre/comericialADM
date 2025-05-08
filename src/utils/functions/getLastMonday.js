@@ -1,4 +1,4 @@
-import { RegisterFinder } from "../database/registers/register.find.js";
+import { RegisterFinder } from "../../database/registers/register.find.js";
 
 const { registerFinderForCustomFields } = new RegisterFinder()
 export class PastCodes {

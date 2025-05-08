@@ -1,11 +1,11 @@
 import axios from "axios";
 import "dotenv/config";
-import { findYourValueForCustomFields } from "../../config/customFieldFinder.js";
-import { DateTransformer } from "../../config/DateTransformer.js";
-import { PastCodes } from "../../config/getLastMonday.js";
-import { installments } from '../../config/installments.js';
 import prisma from '../../database/database.js';
 import { RegisterFinder } from "../../database/registers/register.find.js";
+import { findYourValueForCustomFields } from "../../utils/functions/customFieldFinder.js";
+import { DateTransformer } from "../../utils/functions/DateTransformer.js";
+import { PastCodes } from "../../utils/functions/getLastMonday.js";
+import { installments } from '../../utils/functions/installments.js';
 import { getContactsWithId } from './externalConnections/rdStation.js';
 import { StartCicleWhenNewRegisterIsCreated } from "./externalConnections/trello.js";
 import { getDataFromCep } from "./externalConnections/viaCep.js";

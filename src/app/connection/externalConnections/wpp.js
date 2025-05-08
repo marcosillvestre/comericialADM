@@ -1,6 +1,6 @@
 import axios from 'axios'
 import 'dotenv/config'
-import { DateTransformer } from '../../../config/DateTransformer.js'
+import { DateTransformer } from '../../../utils/functions/DateTransformer.js'
 const headers = {
     accept: 'application/json',
     Authorization: `Bearer ${process.env.UMBLER_TOKEN}`,

@@ -1,8 +1,8 @@
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import * as Yup from 'yup';
-import { StringsMethods } from "../../../config/serializerStrings.js";
 import prisma from "../../../database/database.js";
+import { StringsMethods } from "../../../utils/functions/serializerStrings.js";
 import { r2 } from "../../lib/cloudFare/r2.js";
 
 import 'dotenv';

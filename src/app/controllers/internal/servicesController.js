@@ -1,5 +1,5 @@
-import { AplieDescount } from '../../../config/descountAplied.js';
 import prisma from '../../../database/database.js';
+import { AplieDescount } from '../../../utils/functions/descountAplied.js';
 import { CreateServicesAtRD, EditServicesAtRD, ReturnServiceAtRD } from '../../connection/externalConnections/rdStation.js';
 class ServicesController {
 

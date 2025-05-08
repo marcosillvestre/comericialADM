@@ -1,5 +1,5 @@
-import { HandleUTCDate } from "../../../config/DateTransformer.js";
-import { PastCodes } from "../../../config/getLastMonday.js";
+import { HandleUTCDate } from "../../../utils/functions/DateTransformer.js";
+import { PastCodes } from "../../../utils/functions/getLastMonday.js";
 
 import prisma from "../../../database/database.js";
 import { Historic } from '../../../database/historic/properties.js';

@@ -2,10 +2,16 @@ import prisma from "../database.js";
 
 
 export class RegisterFinder {
-    constructor() {
 
-    }
-    async registerFinder(where, what) {
+    async registerFinder(id, where, what) {
+        const response = await prisma.registers.findUnique({
+            where: {
+                id,
+                ...where
+            }
+        })
+
+        return response
 
     }
 

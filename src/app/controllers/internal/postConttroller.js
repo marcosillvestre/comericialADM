@@ -1,8 +1,8 @@
 import "dotenv/config";
 
-import { bodyMakerForCustomFields } from '../../../config/customFieldFinder.js';
 import prisma from '../../../database/database.js';
 import { Historic } from "../../../database/historic/properties.js";
+import { bodyMakerForCustomFields } from '../../../utils/functions/customFieldFinder.js';
 import { GetDocument } from '../../connection/externalConnections/autentique.js';
 import { Funnels, getContactsWithId, winADeal } from '../../connection/externalConnections/rdStation.js';
 import { CreateCommentOnTrello, StartCicleWhenNewRegisterIsCreated } from '../../connection/externalConnections/trello.js';

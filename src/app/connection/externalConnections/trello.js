@@ -1,6 +1,6 @@
 import axios from "axios";
 import 'dotenv';
-import { StringsMethods } from "../../../config/serializerStrings.js";
+import { StringsMethods } from "../../../utils/functions/serializerStrings.js";
 import { getContactsWithId, updateStageRd } from "./rdStation.js";
 import { SendGroupAlerts, SendSimpleWpp } from "./wpp.js";
 

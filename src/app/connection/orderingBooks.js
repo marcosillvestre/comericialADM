@@ -1,8 +1,8 @@
 import nodemailer from 'nodemailer';
 import hbs from 'nodemailer-express-handlebars';
 import path from "path";
-import { PastCodes } from '../../config/getLastMonday.js';
 import prisma from "../../database/database.js";
+import { PastCodes } from '../../utils/functions/getLastMonday.js';
 
 import 'dotenv';
 import { CompleteCheckPointOnTrello } from './externalConnections/trello.js';

@@ -1,5 +1,5 @@
-import { gatheringDataForDatabase } from "../app/connection/rdSearchSync.js"
-import prisma from "../database/database.js"
+import { gatheringDataForDatabase } from "../../app/connection/rdSearchSync.js"
+import prisma from "../../database/database.js"
 
 
 export const findYourValueForCustomFields = (customFieldLabel, deal_custom_fields) => {

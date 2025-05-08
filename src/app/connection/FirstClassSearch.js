@@ -1,6 +1,6 @@
-import { DateTransformer } from "../../config/DateTransformer.js";
-import { PastCodes } from "../../config/getLastMonday.js";
 import prisma from "../../database/database.js";
+import { DateTransformer } from "../../utils/functions/DateTransformer.js";
+import { PastCodes } from "../../utils/functions/getLastMonday.js";
 import { CreateCommentOnTrello } from "./externalConnections/trello.js";
 import { SendGroupAlerts } from "./externalConnections/wpp.js";
 

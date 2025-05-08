@@ -1,5 +1,5 @@
 import axios from "axios";
-import { bodyFilterCustomFields } from "../../../config/customFieldFinder.js";
+import { bodyFilterCustomFields } from "../../../utils/functions/customFieldFinder.js";
 import { Funnels } from "../../connection/externalConnections/rdStation.js";
 
 

@@ -1,9 +1,9 @@
 import axios from 'axios';
 import 'dotenv/config';
 import * as yup from 'yup';
-import { DateTransformer } from '../../../config/DateTransformer.js';
-import { installments } from '../../../config/installments.js';
-import { parseCurrency } from '../../../config/serializeNumbers.js';
+import { DateTransformer } from '../../../utils/functions/DateTransformer.js';
+import { installments } from '../../../utils/functions/installments.js';
+import { parseCurrency } from '../../../utils/functions/serializeNumbers.js';
 import { SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
 import { getToken } from '../../core/getToken.js';
 
@@ -196,7 +196,7 @@ Vencimento: ${dataPagamentoTaxaMatricula}
 DETALHAMENTO DAS PARCELAS:
 
 Número de parcelas: ${parcelasTaxaMatricula}
-Valor da parcela: ${parseCurrency(tax.taxes[0].valor)}
+Valor da parcela: ${parseCurrency(tax.taxes[0]?.valor)}
 Desconto por parcela: ${parseCurrency(tax.total / tax.taxes.length)}
 
 
