@@ -172,12 +172,12 @@ DETALHAMENTO DAS PARCELAS:
 
 Quantidade de parcelas: ${parcelas}
 Número de parcelas afetadas: ${parcel?.campaign?.affectedParcels ?? 'sem campanha'}
-Valor total da(s) parcelas(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Valor total da(s) parcelas(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
 Desconto da(s) parcela(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
 Número de parcelas restantes: ${parcel?.campaign?.affectedParcels ? parseInt(parcelas) - parseInt(parcel?.campaign?.affectedParcels) : 'sem campanha'}
-Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
 Desconto da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
-Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
 Dia de vencimento: ${vencimentoPrimeiraParcela.split("/")[0]}
 Data de vencimento da primeira parcela: ${vencimentoPrimeiraParcela}
 Data de vencimento da última parcela: ${vencimentoUltimaParcela}
@@ -253,7 +253,7 @@ serviço: parcela
                                         "description": filtered?.name,
                                         "quantity": 1,
                                         "service_id": filtered?.id,
-                                        "value": parcel.parcels[parcel.parcels.length - 1].valor
+                                        "value": parcel.parcels[parcel.parcels.length - 1]?.valor
                                     }
                                 ],
                                 "discount": {
@@ -428,12 +428,12 @@ DETALHAMENTO DAS PARCELAS:
 
 Quantidade de parcelas: ${parcelas}
 Número de parcelas afetadas: ${parcel?.campaign?.affectedParcels ?? 'sem campanha'}
-Valor total da(s) parcelas(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Valor total da(s) parcelas(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
 Desconto da(s) parcela(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
 Número de parcelas restantes: ${parcel?.campaign?.affectedParcels ? parseInt(parcelas) - parseInt(parcel?.campaign?.affectedParcels) : 'sem campanha'}
-Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
 Desconto da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
-Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
 Dia de vencimento: ${vencimentoPrimeiraParcela.split("/")[0]}
 Data de vencimento da primeira parcela: ${vencimentoPrimeiraParcela}
 Data de vencimento da última parcela: ${vencimentoUltimaParcela}
@@ -452,7 +452,7 @@ Vencimento: ${dataPagamentoTaxaMatricula}
 DETALHAMENTO DAS PARCELAS:
 
 Número de parcelas: ${parcelasTaxaMatricula}
-Valor da parcela: ${parseCurrency(tax.taxes[0].valor)}
+Valor da parcela: ${parseCurrency(tax.taxes[0]?.valor)}
 Desconto por parcela: ${parseCurrency(tax.total / tax.taxes.length)}
 
 
@@ -792,12 +792,12 @@ DETALHAMENTO DAS PARCELAS:
 
 Quantidade de parcelas: ${parcelas}
 Número de parcelas afetadas: ${parcel?.campaign?.affectedParcels ?? 'sem campanha'}
-Valor total da(s) parcelas(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Valor total da(s) parcelas(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
 Desconto da(s) parcela(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
 Número de parcelas restantes: ${parcel?.campaign?.affectedParcels ? parseInt(parcelas) - parseInt(parcel?.campaign?.affectedParcels) : 'sem campanha'}
-Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
 Desconto da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
-Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.valor, 0)) : 'sem campanha'}
+Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
 Dia de vencimento: ${vencimentoPrimeiraParcela.split("/")[0]}
 Data de vencimento da primeira parcela: ${vencimentoPrimeiraParcela}
 Data de vencimento da última parcela: ${vencimentoUltimaParcela}
@@ -816,7 +816,7 @@ Vencimento: ${dataPagamentoTaxaMatricula}
 DETALHAMENTO DAS PARCELAS:
 
 Número de parcelas: ${parcelasTaxaMatricula}
-Valor da parcela: ${parseCurrency(tax.taxes[0].valor)}
+Valor da parcela: ${parseCurrency(tax.taxes[0]?.valor)}
 Desconto por parcela: ${parseCurrency(tax.total / tax.taxes.length)}
 
 
