@@ -41,14 +41,15 @@ model registers {
 
   //independentes
   // 1:T
-  assinaturaContratoStatus         String  @default("pendente")
-  taxaMatriculaStatus              String  @default("pendente")
-  pagamentoPrimeiraParcelaStatus   String  @default("pendente")
-  materialDidaticoStatus           String  @default("pendente")
-  primeiraAulaStatus               String  @default("pendente")
-  comissaoStatus                   String  @default("pendente")
-  aprovacaoADM                     String  @default("pendente")
-  aprovacaoDirecao                 String  @default("pendente")
+  assinaturaContratoStatus         String  @default("Pendente")
+  taxaMatriculaStatus              String  @default("Pendente")
+  pagamentoPrimeiraParcelaStatus   String  @default("Pendente")
+  materialDidaticoStatus           String  @default("Pendente")
+  primeiraAulaStatus               String  @default("Pendente")
+  comissaoStatus                   String  @default("Pendente")
+  aprovacaoADM                     String  @default("Pendente")
+  aprovacaoDirecao                 String  @default("Pendente")
+  documentos                       String  @default("Pendente")
 
   // 2:T
   dataMatricula                    String  @default("")
@@ -59,7 +60,7 @@ model registers {
   dataPagamentoTaxaMatricula       String  @default("")
   dataPagamentoPrimeiraParcela     String  @default("")
   dataPagamentoMaterialDidatico    String  @default("")
-  observacao          Json[]
+  observacao                       Json[]
 
   //campos personalizados
   customFields                     Json
