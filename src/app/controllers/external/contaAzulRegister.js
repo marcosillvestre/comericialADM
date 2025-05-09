@@ -253,7 +253,7 @@ serviço: parcela
                                         "description": filtered?.name,
                                         "quantity": 1,
                                         "service_id": filtered?.id,
-                                        "value": parcel.parcels[parcel.parcels.length - 1]?.valor
+                                        "value": parseInt(parcel.parcels[parcel.parcels.length - 1]?.valor)
                                     }
                                 ],
                                 "discount": {
@@ -504,7 +504,7 @@ serviço: material didatico
                         const pd = {
                             "description": product[0]?.name,
                             "quantity": 1,
-                            "value": product[0]?.value === 0 ? product[0]?.value + 1 : product[0]?.value,
+                            "value": parseInt(product[0]?.value === 0) ? parseInt(product[0]?.value + 1) : parseInt(product[0]?.value),
                             "product_id": product[0]?.id,
                         }
 
