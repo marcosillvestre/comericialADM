@@ -33,6 +33,16 @@ model login {
   updated_at                       DateTime  @updatedAt 
 }
 ////////////////////
+
+enum registerStates {
+  ATIVO
+  INATIVO
+  TRANCADO
+  RESCINDIDO
+  CANCELADO
+  PREMATRICULADO
+}
+
 model registers {
   //intrínseco
   id                    String   @id  @default(uuid())
@@ -50,6 +60,7 @@ model registers {
   aprovacaoADM                     String  @default("Pendente")
   aprovacaoDirecao                 String  @default("Pendente")
   documentos                       String  @default("Pendente")
+  situacaoContrato                 registerStates  @default(ATIVO)
 
   // 2:T
   dataMatricula                    String  @default("")
