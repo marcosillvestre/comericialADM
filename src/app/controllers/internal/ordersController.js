@@ -204,6 +204,12 @@ class OrderController {
                                                     mode: "insensitive"
                                                 }
                                             },
+                                            {
+                                                book: {
+                                                    contains: query,
+                                                    mode: "insensitive"
+                                                }
+                                            },
                                         ]
                                     },
                                     ...filters
