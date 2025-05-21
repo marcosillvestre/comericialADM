@@ -150,10 +150,15 @@ routes.get('/unidades', UnityController.unities)
 routes.post('/unidades', UnityController.storeUnities)
 routes.delete('/unidades/:id', UnityController.deleteUnities)
 
+
+
+routes.put('/registros/:id', RegistersController.multiUpdates)
 routes.put('/registro/:id', RegistersController.update)
 
 routes.post('/registro', RegistersController.index)
+routes.get('/registro-unico/:id', RegistersController.getRegisterById)
 routes.post('/registro-query', RegistersController.query)
+routes.delete('/registro/:id', RegistersController.delete)//
 
 
 
@@ -163,7 +168,6 @@ routes.put('/usuarios', UserController.update)
 
 routes.delete('/usuarios/:id', UserController.delete)
 
-routes.delete('/controle/:id', RegistersController.delete)//
 
 
 

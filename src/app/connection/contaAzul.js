@@ -140,6 +140,11 @@ async function updateOnDatabaseRegister(params) {
 
         "materialDidaticoStatus": "dataPagamentoMaterialDidatico",
     }
+    const subtitle = {
+        "taxaMatriculaStatus": "Status da taxa de matrícula",
+        "pagamentoPrimeiraParcelaStatus": "Status do pagamento da primeira parcela",
+        "materialDidaticoStatus": "Status do pagamento do material didático",
+    }
 
     for (let index = 0; index < params.length; index++) {
         const element = params[index];
@@ -181,6 +186,16 @@ async function updateOnDatabaseRegister(params) {
             const imutable = {
                 [where]: "Ok",
                 [registerDates[where]]: date,
+                historic: {
+                    create: {
+                        responsible: "Automação",
+                        information: {
+                            field: where,
+                            text: `O campo ${subtitle[where]} foi alterado para Ok`,
+                            from: id,
+                        }
+                    }
+                }
             }
             const validated = {
                 ...imutable,
@@ -324,8 +339,7 @@ const filterAcquitedData = async (header, data, unity) => {
         const products = await getSaleProducts(header, id)
 
         if (notes === "" && payment.method === "WITHOUT_PAYMENT") {
-
-            orderRegisterForContaAzulSales(eachSale, products, unity, header)
+            orderRegisterForContaAzulSales(eachSale, products, unity, header);
             continue
         }
 
@@ -333,7 +347,7 @@ const filterAcquitedData = async (header, data, unity) => {
             payment.installments[0] ||
             payment.installments[0]?.status === "ACQUITTED") {
 
-            orderRegisterForContaAzulSales(eachSale, products, unity, header)
+            orderRegisterForContaAzulSales(eachSale, products, unity, header);
             continue
         }
 
@@ -355,8 +369,6 @@ const filterAcquitedData = async (header, data, unity) => {
 
         //////////////////////// aqui que ta o jogo 
 
-
-
         let { service, rdId } = await parsed()
 
         if (payment.method === "WITHOUT_PAYMENT" ||
@@ -371,8 +383,6 @@ const filterAcquitedData = async (header, data, unity) => {
             })
 
         }
-
-
 
     }
 
@@ -397,9 +407,7 @@ async function gatheringSaleAndProducts(unity, page) {
         let { data, has_more } = await deliverData(header, page)
         const acquittedData = [];
 
-
         const filteredData = await filterAcquitedData(header, data, unity)
-
 
         acquittedData.concat(filteredData)
 
@@ -546,7 +554,6 @@ const syncContaAzulRegister = async () => {
 
     }
 }
-
 
 export default syncContaAzulRegister
 /*

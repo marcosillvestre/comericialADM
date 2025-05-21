@@ -250,19 +250,21 @@ class RequestsController {
                 yup.object().shape({
                     sku: yup.string().required(),
                     id: yup.string().required(),
+
                     phone: yup.string().nullable(),
                     student: yup.string().nullable(),
                     link: yup.string().nullable(),
                     removedBy: yup.string().nullable(),
+                    arrivingDate: yup.string().nullable(),
+                    withdraw: yup.string().nullable(),
+                    requestId: yup.string().nullable(),
+
                     name: yup.string().required(),
                     unity: yup.string().required(),
                     value: yup.number().required(),
                     arrived: yup.bool().required(),
                     signed: yup.bool().required(),
                     delivery: yup.bool().required(),
-                    arrivingDate: yup.string().nullable(),
-                    withdraw: yup.string().nullable(),
-                    requestId: yup.string().nullable(),
                     available: yup.bool().required(),
                     book: yup.string().required(),
                     status: yup.string().required(),
@@ -275,9 +277,9 @@ class RequestsController {
                 })
             ),
             message: yup.string().required("A mensagem é a forma que o fornecedor tem de saber qual seu pedido, é obrigatório!"),
-            prevision: yup.number().required("Tempo de previsão de entrega é obrigatótio para a criação de pedidos"),
-            wppPermission: yup.bool.required,
-            emailPermission: yup.bool.required,
+            prevision: yup.number().required("O Tempo de previsão de entrega é obrigatótio para a criação de pedidos"),
+            wppPermission: yup.bool().required(),
+            emailPermission: yup.bool().required(),
         })
 
         try {

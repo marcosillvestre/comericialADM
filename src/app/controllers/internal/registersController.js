@@ -67,11 +67,12 @@ class RegistersController {
             const [initial, final] = dates.split("~")
 
             const comercial = async () => {
-                const [deals, total] = await prisma.$transaction([
+                const [registers, total] = await prisma.$transaction([
 
                     prisma.registers.findMany({
                         include: {
-                            historic: true
+                            historic: true,
+                            files: true
                         },
                         orderBy: {
                             [orderBy]: orderFor
@@ -122,16 +123,18 @@ class RegistersController {
                     }
                     )
                 ])
-                return await { deals, total }
+                return await { registers, total }
             }
 
             const admiministrative = async () => {
-                const [deals, total] = await prisma.$transaction([
+                const [registers, total] = await prisma.$transaction([
 
                     prisma.registers.findMany({
 
                         include: {
-                            historic: true
+                            historic: true,
+                            files: true
+
                         },
                         orderBy: {
                             [orderBy]: orderFor
@@ -168,15 +171,15 @@ class RegistersController {
                     })
 
                 ])
-                return await { deals, total }
+                return await { registers, total }
             }
 
-            const { deals, total } = role === "comercial" ?
+            const { registers, total } = role === "comercial" ?
                 await comercial() :
                 await admiministrative()
 
             return res.status(200).json({
-                deals,
+                registers,
                 total
             })
         } catch (error) {
@@ -235,6 +238,84 @@ class RegistersController {
 
     }
 
+    async multiUpdates(req, res) {
+        const { registerUpdate, responsible, updates } = req.body
+        const { id } = req.params
+
+        const schema = yup.object().shape({
+            registerUpdate: yup.object(),
+            updates: yup.object(),
+            responsible: yup.object()
+        }).required()
+
+
+        try {
+            await schema.validateSync(req.body, { abortEarly: false })
+
+            const keys = Object.keys(updates)
+            const values = Object.values(updates)
+
+
+            const register = await prisma.registers.findUnique({
+                where: {
+                    id
+                }
+            })
+
+            const text = {
+                observacao: "Foi adicionado uma nova observação"
+            }
+
+
+            const imutable = {
+                ...registerUpdate,
+                admResponsavel: responsible.name,
+                historic: {
+                    createMany: {
+                        data:
+                            keys.map((area, index) => {
+                                return {
+                                    responsible: responsible.name,
+                                    information: {
+                                        field: area,
+                                        text: text[area] ?? `O campo ${area} foi alterado para ${values[index]}`,
+                                        from: id,
+                                    }
+                                }
+                            })
+                    }
+                }
+            }
+
+            const validating = imutable['comissaoStatus'] === "Comissionado" ||
+                register['comissaoStatus'] === "Aprovado"
+
+            const automations = {
+                "Comissionado": "dataComissionamento",
+                "Aprovado": "dataValidacao",
+            }
+            const validated = {
+                ...imutable,
+                [automations[imutable['comissaoStatus']]]: new Date().toISOString()
+            }
+
+
+            const response = await prisma.registers.update({
+                where: {
+                    id
+                },
+                data: validating ?
+                    validated :
+                    imutable
+            })
+
+            return res.status(201).json(response)
+
+        } catch (error) {
+            console.log(error)
+            return res.status(400).json({ message: error })
+        }
+    }
     async update(req, res) {
         const { key, area, value, responsible } = req.body
         const { id } = req.params
@@ -247,6 +328,42 @@ class RegistersController {
             })
         }).required()
 
+        const validating = key === 'comissaoStatus' &&
+            value === "Comissionado" ||
+            value === "Aprovado"
+
+        const automations = {
+            "Comissionado": "dataComissionamento",
+            "Aprovado": "dataValidacao"
+        }
+
+        const text = {
+            observacao: "Foi adicionado uma nova observação"
+        }
+
+        const imutable = {
+            [area]: value,
+            admResponsavel: responsible.name,
+            historic: {
+
+                create: {
+                    responsible: responsible.name,
+                    information: {
+                        field: key,
+                        text: text[key] ?? `O campo ${area} foi alterado para ${value}`,
+                        from: id,
+                    }
+                }
+            }
+        }
+
+        const validated = {
+            ...imutable,
+            [automations[value]]: new Date().toISOString()
+        }
+
+
+
         try {
             await schema.validateSync(req.body, { abortEarly: false })
 
@@ -254,21 +371,9 @@ class RegistersController {
                 where: {
                     id
                 },
-                data: {
-                    [area]: value,
-                    admResponsavel: responsible.name,
-                    historic: {
-
-                        create: {
-                            responsible: responsible.name,
-                            information: {
-                                field: key,
-                                text: `O campo ${area} foi alterado para ${value}`,
-                                from: id,
-                            }
-                        }
-                    }
-                }
+                data: validating ?
+                    validated :
+                    imutable
             })
 
 
@@ -328,7 +433,6 @@ class RegistersController {
                 return res.status(400).json({ message: "Something went wrong" })
             })
     }
-
 
     async query(req, res) {
         const schema = yup.object().shape({
@@ -392,12 +496,15 @@ class RegistersController {
 
 
             const comercial = async () => {
-                const [deals, total] = await prisma.$transaction([
+                const [registers, total] = await prisma.$transaction([
 
                     prisma.registers.findMany({
                         include: {
-                            historic: true
+                            historic: true,
+                            files: true
+
                         },
+
                         orderBy: {
                             [orderBy]: orderFor
                         },
@@ -477,15 +584,17 @@ class RegistersController {
                     }
                     )
                 ])
-                return await { deals, total }
+                return await { registers, total }
             }
 
             const admiministrative = async () => {
-                const [deals, total] = await prisma.$transaction([
+                const [registers, total] = await prisma.$transaction([
 
                     prisma.registers.findMany({
                         include: {
-                            historic: true
+                            historic: true,
+                            files: true
+
                         },
                         orderBy: {
                             [orderBy]: orderFor
@@ -554,17 +663,48 @@ class RegistersController {
                     })
 
                 ])
-                return await { deals, total }
+                return await { registers, total }
             }
 
-            const { deals, total } = role === "comercial" ?
+            const { registers, total } = role === "comercial" ?
                 await comercial() :
                 await admiministrative()
 
             return res.status(200).json({
-                deals,
+                registers,
                 total
             })
+        } catch (error) {
+            console.log({ error })
+            return res.status(400).json(error.errors)
+        }
+    }
+
+    async getRegisterById(req, res) {
+        const schema = yup.object().shape({
+            id: yup.string().required(),
+        })
+
+        try {
+            await schema.validateSync(req.params, { abortEarly: false })
+            const { id } = req.params;
+
+
+            const deal = await prisma.registers.findUnique({
+                include: {
+                    historic: true,
+                    files: true
+
+                },
+                where: {
+                    id
+                }
+            })
+
+            return res.status(200).json({
+                register: deal
+            })
+
         } catch (error) {
             console.log({ error })
             return res.status(400).json(error.errors)

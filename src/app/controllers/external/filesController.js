@@ -50,33 +50,39 @@ class FilesController {
 
             if (signedUrl) {
 
-                await Promise.all([
-                    prisma.files.create({
-                        data: {
-                            name,
-                            contentType,
-                            key: fileName,
-                            contract: id
-                        }
-                    }),
-                    _storeLog(responsible, "Anexos", "Um novo arquivo foi adicionado", id)
-                ])
-
-
-
-                return res.status(200).json(signedUrl)
-            }
-
-            if (contentType.includes("pdf")) {
                 await prisma.registers.update({
                     where: {
                         id
                     },
                     data: {
-                        assinaturaContratoStatus: "Ok"
+                        files: {
+                            create: {
+                                name,
+                                contentType,
+                                key: fileName,
+                            }
+                        }
                     }
                 })
+
+
+                if (contentType.includes("pdf")) {
+                    await prisma.registers.update({
+                        where: {
+                            id
+                        },
+                        data: {
+                            assinaturaContratoStatus: "Ok"
+                        }
+                    })
+                }
+
+                return res.status(200).json({
+                    url: signedUrl,
+                    key: fileName
+                })
             }
+
 
         } catch (error) {
             console.log(error)

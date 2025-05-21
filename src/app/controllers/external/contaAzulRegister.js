@@ -98,7 +98,11 @@ class RegisterContaAzulController {
     async storeContract(req, res) {
 
         const { id, promocao, valorCurso, service,
-            CPF, Curso, Unidade, material, parcel, tax,
+            CPF, Curso, Unidade,
+
+            material,
+            parcel,
+            tax,
 
             ['Material didático']: materialDidatico,
             ['Valor do desconto material didático']: valorDescontoMaterialDidatico,
@@ -156,9 +160,7 @@ Email do responsável financeiro: ${Email}
 contrato: ${contrato}
 Vendedor: ${vendedor}
 
-
 Informações do plano financeiro:
-
 
 VALOR DO CURSO/MENSALIDADES:
 
@@ -181,7 +183,6 @@ Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(pa
 Dia de vencimento: ${vencimentoPrimeiraParcela.split("/")[0]}
 Data de vencimento da primeira parcela: ${vencimentoPrimeiraParcela}
 Data de vencimento da última parcela: ${vencimentoUltimaParcela}
-
 
 TAXA DE MATRÍCULA: 
 
@@ -233,7 +234,6 @@ serviço: parcela
 `
 
                     await axios.get(`https://api.contaazul.com/v1/services`, { headers: header })
-
                         .then(async info => {
                             const filtered = info.data?.find(services => services.name.includes(service))
 

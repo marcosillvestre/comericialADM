@@ -82,6 +82,7 @@ model registers {
 
   //relações
   historic   logHistoric[]
+  files      files[]
 }
 
 model logHistoric {
@@ -130,11 +131,13 @@ enum logisticType {
 }
 
 model files {
-  id            String    @id  @default(cuid())
-  name          String
-  key           String
-  contentType   String
-  contract      String
+  id             String    @id  @default(cuid())
+  name           String
+  key            String
+  contentType    String
+  registerId     String
+  register       registers @relation(fields: [registerId], references: [id])
+
   created_at                       DateTime  @default(now())
   updated_at                       DateTime  @updatedAt 
 }
