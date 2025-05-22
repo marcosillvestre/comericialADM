@@ -692,8 +692,16 @@ class RegistersController {
 
             const deal = await prisma.registers.findUnique({
                 include: {
-                    historic: true,
-                    files: true
+                    historic: {
+                        orderBy: {
+                            created_at: "desc"
+                        }
+                    },
+                    files: {
+                        orderBy: {
+                            created_at: "desc"
+                        }
+                    },
 
                 },
                 where: {
