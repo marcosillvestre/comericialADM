@@ -115,10 +115,12 @@ routes.post('/uploads', upload.single('file'), AutentiqueController.store)
 routes.post('/uploads-recibos', upload.single('file'), AutentiqueController.storeRecipe)
 
 
-routes.get('/campos-personalizados', CustomFieldsController.index)
-routes.post('/campos-personalizados', CustomFieldsController.store)
+routes.get('/campos-personalizados-totais', CustomFieldsController.indexFilter)
+routes.post('/campos-personalizados', CustomFieldsController.index)
+routes.post('/campo-personalizado', CustomFieldsController.store)
+
 routes.delete('/campos-personalizados/:id', CustomFieldsController.delete)
-routes.put('/campos-personalizados', CustomFieldsController.update)
+routes.put('/campos-personalizados/:id', CustomFieldsController.update)
 
 
 routes.post('/pedidos', OrdersController.index)

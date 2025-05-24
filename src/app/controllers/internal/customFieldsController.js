@@ -1,18 +1,65 @@
 
+import * as yup from 'yup'
 import prisma from "../../../database/database.js"
-
+import { createNewCustomField } from '../../connection/externalConnections/rdStation.js'
 class CustomFieldsController {
     async index(req, res) {
-        try {
-            const response = await prisma.customFields.findMany({
-                orderBy: {
-                    order: "asc"
-                }
-            })
+        const schema = yup.object().shape({
 
-            return res.status(200).json(response)
+            take: yup.string().required(),
+            skip: yup.string().required(),
+
+            orderFor: yup.string().required(),
+            orderBy: yup.string().required(),
+
+        })
+
+        try {
+            await schema.validateSync(req.body, { abortEarly: false })
+
+            const { take, skip, orderBy, orderFor } = req.body
+
+
+            const [customFields, total] = await prisma.$transaction([
+                prisma.customFields.findMany({
+                    orderBy: {
+                        [orderBy]: orderFor
+                    },
+                    take: parseInt(take),
+                    skip: parseInt(skip),
+                }),
+                prisma.customFields.count()
+            ])
+
+
+            return res.status(200).json({
+                customFields, total
+            })
         } catch (error) {
-            return res.status(400).json({ error })
+            console.log(error)
+            return res.status(500).json({ error })
+        }
+    }
+    async indexFilter(req, res) {
+
+        try {
+            const [customFields, total] = await prisma.$transaction([
+                prisma.customFields.findMany({
+                    orderBy: {
+                        order: "asc"
+                    }
+                }),
+                prisma.customFields.count()
+            ])
+
+
+            return res.status(200).json({
+                customFields, total
+            });
+
+        } catch (error) {
+            console.log(error)
+            return res.status(500).json({ error })
         }
     }
 
@@ -26,9 +73,9 @@ class CustomFieldsController {
         await createNewCustomField({
             name, type, required, options, order: index
         })
-            .then(async res => {
+            .then(async () => {
 
-                await prisma.customFields.create({
+                const response = await prisma.customFields.create({
                     data: {
                         name,
                         type,
@@ -38,9 +85,11 @@ class CustomFieldsController {
                     }
                 })
 
-                return res.status(201).json({ message: "Success" })
+                return res.status(201).json(response)
             })
             .catch(err => {
+
+                console.log(err)
                 return res.status(400).json({ error: err })
             })
 
@@ -49,19 +98,22 @@ class CustomFieldsController {
     }
 
     async update(req, res) {
-        const { id, category } = req.body
-
         try {
-            await prisma.customFields.update({
+
+            const { name, type, required, options } = req.body
+            const { id } = req.params
+
+            const response = await prisma.customFields.update({
                 where: {
                     id
                 },
                 data: {
-                    category
+                    name, type, required, options
                 }
             })
 
-            return res.status(200).json({ message: "Success" })
+            return res.status(200).json(response);
+
         } catch (error) {
             console.log({
                 where: '[CUSTOMFIELD.UPDATE]',
