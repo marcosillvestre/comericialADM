@@ -8,59 +8,59 @@ class UserController {
 
         const schema = yup.object().shape({
             name: yup.string().required(),
-            email: yup.string().email().required(),
-            password: yup.string().required().min(6),
+            email: yup.string().email().required("Insira um email válido!"),
+            password: yup.string().required("A senha deve conter no mínimo 6 dígitos!").min(6),
             role: yup.string().required(),
             unity: yup.array().required(),
             admin: yup.boolean(),
             responsible: yup.string().required(),
         })
-
         try {
+
             await schema.validateSync(req.body, { abortEarly: false })
-        } catch (err) {
-            return res.status(400).json({ message: err.errors })
-        }
 
-        const { name, email, password, admin, role, unity, responsible } = req.body
+            const { name, email, password, admin, role, unity, responsible } = req.body
 
-        const permissionTest = await prisma.login.findFirst({
-            where: {
-                name: {
-                    contains: responsible,
-                    mode: "insensitive"
+            const permissionTest = await prisma.login.findFirst({
+                where: {
+                    name: {
+                        contains: responsible,
+                        mode: "insensitive"
+                    }
                 }
-            }
-        })
+            })
+
+            if (permissionTest.role !== 'direcao') return res.status(403).json({ message: "Sem permissão para criar novos usuários" })
 
 
-        if (permissionTest.role === 'direcao') {
+
+            const userExists = await prisma.login.findMany({ where: { email } })
+            if (userExists.length > 0) return res.status(401).json({ message: "Já existe um usuário utilizando esse email, utilize outro email ou troque a senha para ter acesso!" })
 
             const password_hash = await bcrypt.hash(password, 10)
 
-            try {
-                const userExists = await prisma.login.findMany({ where: { email: email } })
-                if (userExists.length === 0) {
-                    await prisma.login.create({
-                        data: {
-                            "name": name,
-                            "email": email.toLowerCase(),
-                            "password": password_hash,
-                            "role": role,
-                            "admin": admin,
-                            "unity": unity
-                        }
-                    })
+            const newUser = await prisma.login.create({
+                data: {
+                    name,
+                    role,
+                    admin,
+                    unity,
+                    "email": email.toLowerCase(),
+                    "password": password_hash,
                 }
+            })
 
-            } catch (error) {
-                console.log(error)
-                return res.status(401).json({ error })
-            }
-            return res.status(201).json({ name, email })
+            return res.status(201).json(newUser)
+
+        } catch (error) {
+            console.log({
+                where: "[USER.CREATE]",
+                error
+            })
+            return res.status(401).json({ message: "Erro ao criar novo usuário, confira seus dados!" })
         }
 
-        return res.status(403).json({ message: "No permission" })
+
 
     }
 
