@@ -296,6 +296,13 @@ acabou de assinar o contrato de ${newUser.customFields['Background do Aluno']}`
                 const [resultComercial, countComercial] = await prisma.$transaction([
 
                     prisma.registers.findMany({
+                        select: {
+                            name: true,
+                            customFields: true,
+                            comissaoStatus: true,
+                            owner: true,
+
+                        },
                         where: {
                             created_at: {
                                 gte: new Date(initial),
@@ -336,6 +343,13 @@ acabou de assinar o contrato de ${newUser.customFields['Background do Aluno']}`
                 const [result, total] = await prisma.$transaction([
 
                     prisma.registers.findMany({
+                        select: {
+                            name: true,
+                            customFields: true,
+                            comissaoStatus: true,
+                            owner: true,
+
+                        },
                         where: {
                             created_at: {
                                 gte: new Date(initial),
