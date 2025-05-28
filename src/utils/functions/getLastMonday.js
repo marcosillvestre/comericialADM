@@ -38,6 +38,8 @@ export class PastCodes {
     }
 
     codeContractMaker = async (name) => {
+        if (!name) return "Dados insuficientes para criar um código"
+
         const splitedName = name.split(" ")
         const serializeDate = await this.getCodeFor2Day()
 

@@ -39,16 +39,14 @@ export const bodyMakerForCustomFields = async (contractData) => {
 
     const convenio = await findYourValueForCustomFields("Tipo de Campanha / Convênio", deal.deal_custom_fields)
 
-
     const promocao = convenio && convenio.length > 0 ?
         "Sim" : "Não"
-
 
     const vendedor = findYourValueForCustomFields("Vendedor", deal.deal_custom_fields) ?
         findYourValueForCustomFields("Vendedor", deal.deal_custom_fields) : deal.user.name
 
     return {
-        ...data.customFields,
+        ...data?.customFields,
         id: deal.id,
         promocao,
         products,
