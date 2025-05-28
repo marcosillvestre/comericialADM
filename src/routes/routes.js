@@ -146,7 +146,7 @@ routes.get('/pessoal', HistoricController.indexPersonalHistoric)
 routes.get('/historico', HistoricController.index)
 
 
-routes.get('/comissao', PostConttroller.comissionData)
+routes.post('/comissao', PostConttroller.comissionData)
 
 routes.get('/unidades', UnityController.unities)
 routes.post('/unidades', UnityController.storeUnities)

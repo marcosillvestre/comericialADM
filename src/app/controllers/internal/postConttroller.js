@@ -1,5 +1,5 @@
 import "dotenv/config";
-
+import * as yup from 'yup';
 import prisma from '../../../database/database.js';
 import { Historic } from "../../../database/historic/properties.js";
 import { bodyMakerForCustomFields } from '../../../utils/functions/customFieldFinder.js';
@@ -276,85 +276,141 @@ acabou de assinar o contrato de ${newUser.customFields['Background do Aluno']}`
     }
 
     async comissionData(req, res) {
-        const { range, unity, dates } = req.query
+        const { dates, responsible } = req.body;
 
+        const schema = yup.object().shape({
+            dates: yup.string().required(),
+            responsible: yup.object().required(),
 
+        })
         try {
 
+            await schema.validateSync(req.body, { abortEarly: false })
 
             const [initial, final] = dates.split("~")
 
-            const [result, count] = await prisma.$transaction([
+            const { name, role } = responsible
 
-                prisma.registers.findMany({
-                    where: {
-                        created_at: {
-                            gte: new Date(initial),
-                            lte: new Date(final)
+
+            const comercial = async () => {
+                const [resultComercial, countComercial] = await prisma.$transaction([
+
+                    prisma.registers.findMany({
+                        where: {
+                            created_at: {
+                                gte: new Date(initial),
+                                lte: new Date(final)
+                            },
+                            owner: {
+                                contains: name,
+                                mode: 'insensitive'
+                            }
+                        },
+                        orderBy: {
+                            name: 'asc',
+                        },
+                    }),
+                    prisma.registers.count({
+                        where: {
+                            created_at: {
+                                gte: new Date(initial),
+                                lte: new Date(final)
+                            },
+                            owner: {
+                                contains: name,
+                                mode: 'insensitive'
+                            }
                         }
-                    },
-                    orderBy: {
-                        name: 'asc',
-                    },
-                }),
-                prisma.registers.count({
-                    where: {
-                        created_at: {
-                            gte: new Date(initial),
-                            lte: new Date(final)
-                        }
-                    }
-                })
+                    })
 
 
-            ])
-
-
-
-
-
-            const selectedDbData = await Promise.all(result.map(async r => {
-
-                const wichFunnel = (unity, background) => {
-
-                    const funis = {
-                        "PTB/matricula": "Funil de Vendas PTB",
-                        "PTB/rematricula": "Funil de Rematrícula PTB",
-                        "Centro/matricula": "Funil de Vendas Centro",
-                        "Centro/rematricula": "Funil de Rematrículas Centro",
-                    }
-
-                    const type = background === "Rematrícula" ? "rematricula" : "matricula"
-                    const funil = funis[unity + "/" + type];
-                    return funil
-                }
+                ])
                 return {
-                    name: r.name,
-                    aluno: r.customFields["Nome do aluno"],
-                    curso: r.customFields["Curso"],
-                    tipoMatricula: r["comissaoStatus"],
-                    unidade: r.customFields["Unidade"],
-                    dataMatricula: r.customFields["Data de emissão da venda"],
-                    owner: r["owner"],
-                    background: r.customFields["Background do Aluno"],
-                    ppFormaPg: r.customFields["Forma de pagamento da parcela"],
-                    funnel: await wichFunnel(r.customFields["Unidade"], r.customFields["Background do Aluno"])
+                    result: resultComercial,
+                    total: countComercial
                 }
-            }))
+
+            }
+
+            const administrative = async () => {
+                const [result, total] = await prisma.$transaction([
+
+                    prisma.registers.findMany({
+                        where: {
+                            created_at: {
+                                gte: new Date(initial),
+                                lte: new Date(final)
+                            }
+                        },
+                        orderBy: {
+                            name: 'asc',
+                        },
+                    }),
+                    prisma.registers.count({
+                        where: {
+                            created_at: {
+                                gte: new Date(initial),
+                                lte: new Date(final)
+                            }
+                        }
+                    })
+
+
+                ])
+
+                return {
+                    result, total
+                }
+
+            }
+
+            const { result, total } = role === 'comercial' ?
+                await comercial() :
+                await administrative();
+
+
+            const selectedDbData = await Promise.all(
+                result.map(async r => {
+                    const wichFunnel = (unity, background) => {
+
+                        const funis = {
+                            "PTB/matricula": "Funil de Vendas PTB",
+                            "PTB/rematricula": "Funil de Rematrícula PTB",
+                            "Centro/matricula": "Funil de Vendas Centro",
+                            "Centro/rematricula": "Funil de Rematrículas Centro",
+                        }
+
+                        const type = background === "Rematrícula" ? "rematricula" : "matricula"
+                        const funil = funis[unity + "/" + type];
+                        return funil
+                    }
+                    return {
+                        name: r.name,
+                        aluno: r.customFields["Nome do aluno"],
+                        curso: r.customFields["Curso"],
+                        tipoMatricula: r["comissaoStatus"],
+                        unidade: r.customFields["Unidade"],
+                        dataMatricula: r.customFields["Data de emissão da venda"],
+                        owner: r["owner"],
+                        background: r.customFields["Background do Aluno"],
+                        ppFormaPg: r.customFields["Forma de pagamento da parcela"],
+                        funnel: await wichFunnel(r.customFields["Unidade"], r.customFields["Background do Aluno"])
+                    }
+                }))
 
 
             return res.status(200).json({
-                data: {
-                    period: range,
-                    total: count,
-                    deals: selectedDbData
-                }
+                total,
+                deals: selectedDbData
             })
 
 
 
         } catch (error) {
-            console.log(error)
+            console.log({
+                where: "[comissiondata.get]",
+                error
+            })
             return res.status(400).json({ Erro: "Tente novamente mais tarde, se o erro persistir entre em contato com o suporte " })
         }
     }
