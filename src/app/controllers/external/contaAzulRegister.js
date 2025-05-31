@@ -227,7 +227,7 @@ Turma: ${dataPrimeiraAula} de ${horarioInicio} às ${horarioFim}
 Professor: ${Professor}
 Carga horária: ${cargaHoraria} 
 Unidade: ${Unidade}
-Observações pedagógicas: ${observacaoFinanceiro}
+Observações pedagógicas: 
 Observações financeiras:${observacaoPedagogico}
 id: ${id}
 serviço: parcela
@@ -482,7 +482,7 @@ Turma: ${dataPrimeiraAula} de ${horarioInicio} às ${horarioFim}
 Professor: ${Professor}
 Carga horária: ${cargaHoraria} 
 Unidade: ${Unidade}
-Observações pedagógicas: ${observacaoFinanceiro}
+Observações pedagógicas: 
 Observações financeiras:${observacaoPedagogico}
 id: ${id}
 serviço: material didatico
@@ -846,7 +846,7 @@ Turma: ${dataPrimeiraAula} de ${horarioInicio} às ${horarioFim}
 Professor: ${Professor}
 Carga horária: ${cargaHoraria} 
 Unidade: ${Unidade}
-Observações pedagógicas: ${observacaoFinanceiro}
+Observações pedagógicas: 
 Observações financeiras:${observacaoPedagogico}
 id: ${id}
 serviço: taxa de matricula
