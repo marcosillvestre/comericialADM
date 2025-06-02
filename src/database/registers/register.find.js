@@ -13,6 +13,18 @@ export class RegisterFinder {
 
     }
 
+    async registerFindMany(where, config) {
+        const response = await prisma.registers.findMany({
+            ...config,
+            where: {
+                ...where
+            }
+        })
+
+        return response
+
+    }
+
     async registerFinderForCustomFields(where, what) {
         const response = await prisma.registers.findMany({
             where: {

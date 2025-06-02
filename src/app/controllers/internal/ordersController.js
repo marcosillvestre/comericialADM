@@ -293,6 +293,9 @@ class OrderController {
             const date = new Date()
             const code = await getLastMondayCode(date);
 
+
+            // console.log({ orders })
+
             orders.map(async r => {
                 await prisma.orders.create({
                     data: {

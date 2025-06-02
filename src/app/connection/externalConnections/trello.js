@@ -44,7 +44,7 @@ async function getData(listId) {
 
     } catch (error) {
         console.log(error.response.data)
-        throw new Error(error)
+        // throw new Error(error)
     }
 }
 

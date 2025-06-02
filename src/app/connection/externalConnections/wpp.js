@@ -25,11 +25,9 @@ export async function SendGroupAlerts(message, chat) {
 
 
     await axios.post("https://app-utalk.umbler.com/api/v1/messages", messageBody, { headers })
-        .then((data) => console.log(`Enviado com sucesso`))
-        .catch((err) => console.log(err.response))
+        .then(() => console.log(`Enviado com sucesso`))
+        .catch((err) => console.log(err.response.data))
 }
-
-
 
 
 
@@ -43,9 +41,8 @@ export async function SendSimpleWpp(name, phone, message) {
         "skipReassign": false,
         "contactName": name
     }
+
     try {
-
-
         const response = await axios.post("https://app-utalk.umbler.com/api/v1/messages/simplified", messageBody, { headers })
 
         return response
