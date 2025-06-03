@@ -64,6 +64,8 @@ class PostController {
 
             const [type, id] = name.split("+")
 
+            if (!id) return res.status(200).json({ message: "Success" })
+
             if (type.includes("reciboMd")) {
                 const ordersIds = id.split("_")
 
