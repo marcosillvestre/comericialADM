@@ -326,9 +326,7 @@ class BillingRulesExec {
 
 const chargingBillingRules = () => {
 
-    [
-        "PTB", "Centro"
-    ].forEach(async unity => {
+    ["PTB", "Centro"].forEach(async unity => {
 
         try {
             const token = await getToken(unity, 'refresh')
@@ -345,6 +343,7 @@ const chargingBillingRules = () => {
 
     });
 }
+
 
 
 export default chargingBillingRules

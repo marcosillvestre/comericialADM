@@ -67,11 +67,7 @@ class associationDatabaseAndCas {
 
     async orderRegisterForDatabaseSales(idSale, name, material, unity, phone, student) {
 
-        const header = {
-            "Authorization": `Bearer ${await getToken(unity)}`
-        }
-
-        const { data } = await axios.get("https://api.contaazul.com/v1/products?size=10000", { headers: header })
+        const { data } = await axios.get("https://api.contaazul.com/v1/products?size=10000", { headers: this.header })
 
         const body = material.map((res, index) => {
             let splited = res.split(" / ")
