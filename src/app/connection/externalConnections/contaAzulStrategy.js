@@ -11,14 +11,18 @@ export const getAllSales = async (headers, page, daysBackward, daysForward) => {
     end.setDate(end.getDate() + daysForward)
     end.setUTCHours(23, 59, 59, 59)
 
+
+
+
     try {
         const { data } = await axios
-            .get(`https://api.contaazul.com/v1/sales?emission_start=${start.toISOString()}&emission_end=${end.toISOString()}&size=300&page=${page}`,
+            .get(`https://api.contaazul.com/v1/sales?emission_start=${start.toISOString()}&emission_end=${end.toISOString()}&size=200&page=${page}`,
                 { headers: headers })
+
 
         return {
             data,
-            has_more: data.length === 300
+            has_more: data.length === 200
         }
 
     } catch (error) {
@@ -32,11 +36,12 @@ export const getCustomerData = async (header, id) => {
 
     try {
         const { data } = await axios.get(
-            `https://api.contaazul.com/v1/customers/${id}/contacts`, { headers: header })
+            `https://api.contaazul.com/v1/customers/${id}`, { headers: header })
 
-        return data[0]
+
+        return data
     } catch (error) {
-        console.log(error)
+        console.log({ error, where: "[CUSTOMERDATA]" })
         throw new Error("Error looking for customer");
 
     }
