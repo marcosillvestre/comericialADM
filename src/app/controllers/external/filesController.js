@@ -97,7 +97,7 @@ class FilesController {
 
         const files = await prisma.files.findMany({
             where: {
-                contract
+                id: contract
             },
             select: {
                 id: true,
