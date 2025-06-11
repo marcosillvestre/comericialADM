@@ -116,7 +116,7 @@ class RegisterContaAzulController {
             ['Nº do contrato']: contrato,
             ['Forma de pagamento da parcela']: formaPagamentoParcelas,
             ['Número de parcelas do curso']: parcelas,
-            ['Data de vencimento da primeira parcela']: vencimentoPrimeiraParcela,
+            ['Data de Vencimento da Primeira Parcela']: vencimentoPrimeiraParcela,
             ['Data de vencimento da última parcela']: vencimentoUltimaParcela,
             ['Forma de pagamento TM']: formaPagamentoTaxaMatricula,
             ['Data de pagamento TM']: dataPagamentoTaxaMatricula,
@@ -181,7 +181,7 @@ Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parseCurrency(p
 Desconto da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
 Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
 Dia de vencimento: ${vencimentoPrimeiraParcela.split("/")[0]}
-Data de vencimento da primeira parcela: ${vencimentoPrimeiraParcela}
+Data de Vencimento da Primeira Parcela: ${vencimentoPrimeiraParcela}
 Data de vencimento da última parcela: ${vencimentoUltimaParcela}
 
 TAXA DE MATRÍCULA: 
@@ -326,7 +326,7 @@ serviço: parcela
             ['Nº do contrato']: contrato,
             ['Forma de pagamento da parcela']: formaPagamentoParcelas,
             ['Número de parcelas do curso']: parcelas,
-            ['Data de vencimento da primeira parcela']: vencimentoPrimeiraParcela,
+            ['Data de Vencimento da Primeira Parcela']: vencimentoPrimeiraParcela,
             ['Data de vencimento da última parcela']: vencimentoUltimaParcela,
             ['Forma de pagamento TM']: formaPagamentoTaxaMatricula,
             ['Data de pagamento TM']: dataPagamentoTaxaMatricula,
@@ -435,7 +435,7 @@ Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parseCurrency(p
 Desconto da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
 Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
 Dia de vencimento: ${vencimentoPrimeiraParcela.split("/")[0]}
-Data de vencimento da primeira parcela: ${vencimentoPrimeiraParcela}
+Data de Vencimento da Primeira Parcela: ${vencimentoPrimeiraParcela}
 Data de vencimento da última parcela: ${vencimentoUltimaParcela}
 
 
@@ -679,7 +679,7 @@ serviço: material didatico
             ['Nº do contrato']: contrato,
             ['Forma de pagamento da parcela']: formaPagamentoParcelas,
             ['Número de parcelas do curso']: parcelas,
-            ['Data de vencimento da primeira parcela']: vencimentoPrimeiraParcela,
+            ['Data de Vencimento da Primeira Parcela']: vencimentoPrimeiraParcela,
             ['Data de vencimento da última parcela']: vencimentoUltimaParcela,
             ['Forma de pagamento TM']: formaPagamentoTaxaMatricula,
             ['Data de pagamento TM']: dataPagamentoTaxaMatricula,
@@ -799,7 +799,7 @@ Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parseCurrency(p
 Desconto da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
 Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
 Dia de vencimento: ${vencimentoPrimeiraParcela.split("/")[0]}
-Data de vencimento da primeira parcela: ${vencimentoPrimeiraParcela}
+Data de Vencimento da Primeira Parcela: ${vencimentoPrimeiraParcela}
 Data de vencimento da última parcela: ${vencimentoUltimaParcela}
 
 
