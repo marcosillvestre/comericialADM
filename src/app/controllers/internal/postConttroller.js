@@ -303,7 +303,7 @@ acabou de assinar o contrato de ${newUser.customFields['Background do Aluno']}`
                             customFields: true,
                             comissaoStatus: true,
                             owner: true,
-
+                            created_at: true
                         },
                         where: {
                             created_at: {
@@ -350,6 +350,7 @@ acabou de assinar o contrato de ${newUser.customFields['Background do Aluno']}`
                             customFields: true,
                             comissaoStatus: true,
                             owner: true,
+                            created_at: true
 
                         },
                         where: {
@@ -401,6 +402,7 @@ acabou de assinar o contrato de ${newUser.customFields['Background do Aluno']}`
                         return funil
                     }
                     return {
+                        dataCriação: r.created_at,
                         name: r.name,
                         aluno: r.customFields["Nome do aluno"],
                         curso: r.customFields["Curso"],
