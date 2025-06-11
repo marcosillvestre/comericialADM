@@ -51,12 +51,6 @@ const parsed = (string) => {
     }
 }
 
-
-
-
-
-
-
 class associationDatabaseAndCas {
     constructor({ unity, header, registers }) {
         this._sales = [];
@@ -101,8 +95,6 @@ class associationDatabaseAndCas {
     }
 
     async EchoRegister(response, where, saleId) {
-
-        await historic._storeLog("Automatização", where, "Ok", response.id)
 
         let messages = {
             "materialDidaticoStatus": `> *${response.name}*
