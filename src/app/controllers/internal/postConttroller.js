@@ -404,7 +404,7 @@ acabou de assinar o contrato de ${newUser.customFields['Background do Aluno']}`
                     return {
                         dataCriação: r.created_at,
                         name: r.name,
-                        aluno: r.customFields["Nome do aluno"],
+                        aluno: r.customFields["Nome do aluno (se não for responsável próprio))"],
                         curso: r.customFields["Curso"],
                         tipoMatricula: r["comissaoStatus"],
                         unidade: r.customFields["Unidade"],
