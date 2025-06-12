@@ -77,7 +77,9 @@ class AutentiqueController {
 ${customerLink}
 
 Qualquer problema você pode entrar em contato com seu consultor responsável(para tornar o link clicável você pode salvar o número da American Way🗽).
-`)
+`,
+                            ['automação']
+                        ),
                         ,
                         SendSimpleWpp("Victor", `${process.env.VICTOR}`,
                             `🆕🆕🆕🆕🆕🆕🆕
@@ -181,8 +183,10 @@ ${school}`
                             `Olá *${name}*, a American Way está te enviando um documento para assinatura neste link:
 ${customerLink}
 
-Qualquer problema você pode entrar em contato com seu consultor responsável(para tornar o link clicável você pode salvar o número da American Way🗽).
-                            `),
+Qualquer problema você pode entrar em contato com seu consultor responsável (para tornar o link clicável você pode salvar o número da American Way🗽).
+                            `,
+                            ['automação']
+                        ),
                     ])
 
                     return res.status(200).json({

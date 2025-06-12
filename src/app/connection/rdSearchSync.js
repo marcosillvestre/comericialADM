@@ -10,7 +10,8 @@ import { getContactsWithId } from './externalConnections/rdStation.js';
 import { StartCicleWhenNewRegisterIsCreated } from "./externalConnections/trello.js";
 import { getDataFromCep } from "./externalConnections/viaCep.js";
 import { SendSimpleWpp } from "./externalConnections/wpp.js";
-const comebackDays = 3
+
+const comebackDays = 5
 const options = { method: 'GET', headers: { accept: 'application/json' } };
 
 const { getCodeFor2Day, codeContractMaker, getLastWeekMondayCode } = new PastCodes()
@@ -21,7 +22,7 @@ async function UpdateTheCustomFields() {
     fetch(`https://crm.rdstation.com/api/v1/custom_fields?token=${process.env.RD_TOKEN}&for=deal`, options)
         .then(response => response.json())
         .then(async res => {
-            console.log(res.length)
+            console.log({ customFields: res.length })
 
 
             res.map(async (r, i) => {
@@ -75,7 +76,7 @@ async function GetPipelineStage(id) {
 
         return deal_pipeline
     } catch (error) {
-        console.log(error)
+        console.log({ where: "[GETPIPELINESRD]", error })
     }
 }
 
@@ -182,7 +183,7 @@ export const gatheringDataForDatabase = async (deals) => {
         }
         return data
     } catch (error) {
-        console.log(error)
+        console.log({ where: "[GATHERINGDATABASEDATA]", error })
         await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[GATHERINGDATAFORDATABASE]: ${error}`, null, 2))
         return []
     }
@@ -235,11 +236,7 @@ async function NewSearchSync() {
 
 export default NewSearchSync
 
-// const t = [
-
-//     "Ravi Murari Fernandes Veira de Queiros",
-// ]
-
+// const t = []
 
 // async function achadorEMandadorParaOTrello(params) {
 //     t.map(async res => {
@@ -269,5 +266,3 @@ export default NewSearchSync
 //     })
 // }
 // achadorEMandadorParaOTrello()
-
-// 01JJYP6XW329EBG6JNXDCYAHB5

@@ -21,7 +21,7 @@ const functionsArray = [
         fn: SyncronizeSalesAndRegisters
     },
     {
-        time: "0 2 * * *",
+        time: "0 5 * * *",
         fn: chargingBillingRules
     },
     {

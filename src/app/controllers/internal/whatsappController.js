@@ -19,7 +19,8 @@ class WhatsappController {
                 SendSimpleWpp(
                     name,
                     phone,
-                    message
+                    message,
+                    ['automação']
                 )
                     .then((response) => resolve(response))
                     .catch((error) => reject(error))

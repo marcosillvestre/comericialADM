@@ -86,7 +86,8 @@ const dispatchReminders = async ({ billingAplied, reminderMethod, message, where
         if (whatsapp) await SendSimpleWpp(
             nameCustomer,
             business_phone,
-            messageCustomized
+            messageCustomized,
+            ['automação', 'cobranças']
         );
 
         if (emailReminder) await SendMail({
@@ -300,7 +301,7 @@ class BillingRulesExec {
     }
 
     async getDataContaAzulData(pages) {
-        const data = await getAllSales(this.header, pages, 90, 60)
+        const data = await getAllSales(this.header, pages, 120, 60)
 
         return data
     }
@@ -311,6 +312,9 @@ class BillingRulesExec {
             if (!contracts) throw new Error("Init data came as null");
 
             const { data, has_more } = contracts
+            console.log({
+                pages,
+            })
             await this.GatheringDatabaseBillingRules(data);
 
             has_more && this.init(pages + 1);
@@ -336,14 +340,15 @@ const chargingBillingRules = () => {
                 "Authorization": `Bearer ${token}`
             })
 
-            startBilling.init(1)
+            console.log(`[CHARGEBILLING: ${unity}]`);
+
+            await startBilling.init(0);
         } catch (error) {
             console.log(error)
         }
 
     });
 }
-
 
 
 export default chargingBillingRules

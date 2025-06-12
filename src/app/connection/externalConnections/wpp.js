@@ -29,9 +29,63 @@ export async function SendGroupAlerts(message, chat) {
         .catch((err) => console.log(err.response.data))
 }
 
+async function getAllTags() {
+    const query = new URLSearchParams({
+        organizationId: process.env.UMBLER_ORG_ID,
+        Skip: 0,
+        Take: 50,
+    });
+
+    try {
+        const { data } = await axios.get(`https://app-utalk.umbler.com/api/v1/tags/?${query}`, { headers })
+
+        return data;
+    } catch (error) {
+        console.log({
+            where: "[GETTAGS]",
+            error
+        })
+
+        return null
+    }
+
+}
 
 
-export async function SendSimpleWpp(name, phone, message) {
+async function putTagsToContacts(idContact, arrayTagsId) {
+    try {
+
+        const { items } = await getAllTags();
+
+        const tagIds = arrayTagsId.map(res => items.find(item => item.name === res).id)
+
+        const body = {
+            tagIds,
+            organizationId: process.env.UMBLER_ORG_ID,
+        }
+
+        await axios.post(
+            `https://app-utalk.umbler.com/api/v1/chats/${idContact}/tags/list`,
+            body,
+            { headers }
+        )
+            .then(() => console.log("Tags atribuidas com sucesso"))
+            .catch((err) => console.log(err.response));
+
+
+    } catch (error) {
+
+        console.log({
+            where: "[PUTTAGS]",
+            error
+        })
+    }
+
+}
+
+
+
+export async function SendSimpleWpp(name, phone, message, tag) {
     const messageBody = {
         "toPhone": phone,
         "fromPhone": process.env.FROM,
@@ -43,18 +97,27 @@ export async function SendSimpleWpp(name, phone, message) {
     }
 
     try {
-        const response = await axios.post("https://app-utalk.umbler.com/api/v1/messages/simplified", messageBody, { headers })
+        const { data } = await axios.post(
+            "https://app-utalk.umbler.com/api/v1/messages/simplified",
+            messageBody,
+            { headers }
+        )
+        if (!data) throw new Error("Mensagem não enviada")
 
-        return response
+        const { contactId: _, chat: { id } } = data;
+
+        if (Array.isArray(tag)) await putTagsToContacts(id, tag)
+
+        return data
 
     } catch (error) {
 
+        console.log(error)
         return new Error(error)
 
     }
 
 }
-
 
 export async function ScheduleBotMessages(name, phone, date, botName) {
 

@@ -238,7 +238,9 @@ Te esperamos na aula 👩‍💻`,
                     SendSimpleWpp(
                         newUser.name,
                         newUser.customFields["Phone"],
-                        curseMessages[newUser.customFields["Curso"]]),
+                        curseMessages[newUser.customFields["Curso"]],
+                        ['automação']
+                    ),
                 ])
 
 

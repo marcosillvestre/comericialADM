@@ -353,7 +353,8 @@ class RequestsController {
             if (wppPermission) await SendSimpleWpp(
                 name,
                 contacts?.whatsapp,
-                message
+                message,
+                ['automação']
             )
 
             if (emailPermission) await SendMail({
