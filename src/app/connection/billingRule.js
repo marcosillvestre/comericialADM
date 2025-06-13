@@ -96,7 +96,7 @@ const dispatchReminders = async ({ billingAplied, reminderMethod, message, where
             text: messageCustomized
         });
 
-        await delay(2000);
+        await delay(3000);
     }
 }
 
