@@ -60,9 +60,10 @@ class PostController {
         try {
             const { event: { data } } = req.body
 
-            const { name, signatures, files } = await GetDocument(data.document)
+            const { name, signatures, files } = await GetDocument(data.document);
+            const [type, id] = name.split("+");
 
-            const [type, id] = name.split("+")
+            const { signed } = files;
 
             if (!id) return res.status(200).json({ message: "Success" })
 
@@ -122,10 +123,15 @@ class PostController {
                     data: {
                         ...data,
                         assinaturaContratoStatus: "Ok",
+                        files: {
+                            create: {
+                                contentType: "link",
+                                key: signed,
+                                name: "Link do documento assinado"
+                            }
+                        },
                         historic: {
-
                             create: usersSigned.filter(res => res !== false)
-
                         }
                     }
                 })
@@ -139,6 +145,13 @@ class PostController {
                 const imutable = {
                     ...data,
                     assinaturaContratoStatus: "Ok",
+                    files: {
+                        create: {
+                            contentType: "link",
+                            key: signed,
+                            name: "Link do documento assinado"
+                        }
+                    },
                     historic: {
                         create: {
                             responsible: responsible,
