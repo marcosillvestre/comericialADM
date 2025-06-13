@@ -103,7 +103,7 @@ Realizou o pagamento do material didático
     
 > ${response.customFields["Material didático"]}
 
-Aluno: *${response.customFields["Nome do aluno"]}*
+Aluno: *${response.customFields["Nome do aluno (se não for responsável próprio))"]}*
 
 Professor: *${response.customFields["Professor"]}*
 `,
@@ -113,7 +113,7 @@ Professor: *${response.customFields["Professor"]}*
             
 Realizou o pagamento da primeira parcela do curso: *${response.customFields["Curso"]}*
 
-Aluno: *${response.customFields["Nome do aluno"]}*
+Aluno: *${response.customFields["Nome do aluno (se não for responsável próprio))"]}*
 
 Professor: *${response.customFields["Professor"]}*
 
@@ -124,7 +124,7 @@ Professor: *${response.customFields["Professor"]}*
             
 Realizou o pagamento da taxa de matrícula do curso: *${response.customFields["Curso"]}*
 
-Aluno: *${response.customFields["Nome do aluno"]}*
+Aluno: *${response.customFields["Nome do aluno (se não for responsável próprio))"]}*
 
 Professor: *${response.customFields["Professor"]}*
 
@@ -156,7 +156,7 @@ Professor: *${response.customFields["Professor"]}*
                             response.customFields["Material didático"],
                             response.customFields["Unidade"],
                             rdPhoneData?.phone,
-                            response.customFields["Nome do aluno"]
+                            response.customFields["Nome do aluno (se não for responsável próprio))"]
                         ),
                         unity: idList[response.customFields["Unidade"]]
                     }
@@ -340,7 +340,7 @@ Professor: *${response.customFields["Professor"]}*
                 phone: customerData[0]?.business_phone || '',
                 book: element.name.concat(" / ").concat(element.code),
 
-                student: found?.customFields["Nome do aluno"] ?? null,
+                student: found?.customFields["Nome do aluno (se não for responsável próprio))"] ?? null,
                 link: "",
                 removedBy: "",
             }

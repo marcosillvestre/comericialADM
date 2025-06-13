@@ -132,7 +132,7 @@ class TrelloWebhook {
                         storeHistoric(),
                         update(),
                         createTasks(data.name,
-                            data.customFields["Nome do Aluno"],
+                            data.customFields["Nome do aluno (se não for responsável próprio))"],
                             data.customFields["Classe"]),
 
                         StartChatbot(data.name,

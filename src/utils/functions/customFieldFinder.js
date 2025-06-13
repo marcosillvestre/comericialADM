@@ -70,7 +70,7 @@ export const bodyFilterCustomFields = async (deal) => {
         created_at,
         id,
         name: contacts[0]?.name || " ",
-        student: findYourValueForCustomFields("Nome do aluno", deal_custom_fields),
+        student: findYourValueForCustomFields("Nome do aluno (se não for responsável próprio))", deal_custom_fields),
         createdDate: findYourValueForCustomFields("Data de emissão da venda", deal_custom_fields),
         phone: contacts[0]?.phones[0]?.phone || " ",
         subclass: Subclasse,

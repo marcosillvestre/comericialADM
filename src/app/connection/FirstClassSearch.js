@@ -69,7 +69,7 @@ const databaseSearch = async (unity) => {
             "Responsável": res.name,
             text: `🆕🆕🆕🆕🆕🆕🆕🆕🆕🆕🆕🆕
 
-> Aluno: *${res.customFields["Nome do aluno"]}* 
+> Aluno: *${res.customFields["Nome do aluno (se não for responsável próprio))"]}* 
 
 Data da aula: ${res.customFields[`Data da primeira aula`]}
 

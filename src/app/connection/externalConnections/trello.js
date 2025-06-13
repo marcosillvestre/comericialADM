@@ -299,13 +299,13 @@ export async function StartCicleWhenNewRegisterIsCreated(object) {
         const { phone, email } = await getContactsWithId(object.id)
 
         const description = {
-            "background": customFields["Background do Aluno"],
-            "nome do aluno": customFields["Nome do aluno"],
-            "idade ": customFields["Idade do Aluno"],
-            "vendedor": customFields["Vendedor"],
-            "responsável": name,
-            "whatsapp": phone,
-            "email": email,
+            "Background": customFields["Background do Aluno"],
+            "Nome do aluno": customFields["Nome do aluno (se não for responsável próprio))"],
+            "Idade ": customFields["Idade do Aluno"],
+            "Vendedor": customFields["Vendedor"],
+            "Responsável": name,
+            "Whatsapp": phone,
+            "Email": email,
             "Precisa de nivelamento": customFields["Precisa de nivelamento?"],
             "Professor": customFields["Professor"],
             "Dia de aula": customFields["Dia de aula"],
@@ -316,9 +316,9 @@ export async function StartCicleWhenNewRegisterIsCreated(object) {
             "Classe": customFields["Classe"],
             "Sub Classe": customFields["Subclasse"],
             "Material": customFields["Material didático"],
-            "modalidade": customFields["Tipo/ modalidade"],
+            "Modalidade": customFields["Tipo/ modalidade"],
             "Formato das aulas": customFields["Formato de Aula"],
-            "anotações": customFields["Observações importantes para o pedagógico:"],
+            "Anotações": customFields["Observações importantes para o pedagógico:"],
             "Valor do material": customFields["Valor total do material didático"],
             "Vaor da taxa de matricula": customFields["Valor de taxa de matrícula"],
             "Valor da mensalidade": customFields["Valor total da parcela"],
@@ -343,7 +343,7 @@ export async function StartCicleWhenNewRegisterIsCreated(object) {
 
 > *${body.name}*
  
-Nome do aluno: *${customFields["Nome do aluno"]}*
+Nome do aluno: *${customFields["Nome do aluno (se não for responsável próprio))"]}*
 
 Turma: *${customFields["Horário de Inicio"]}* às *${customFields["Horário de fim"]}* no dia *${customFields["Data da primeira aula"]}*
 

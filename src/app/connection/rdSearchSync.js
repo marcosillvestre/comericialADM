@@ -126,7 +126,7 @@ export const gatheringDataForDatabase = async (deals) => {
 
                 if (result["O responsável e o aluno são a mesma pessoa ?"] === "Sim" && contacts.birthday) {
                     result["Data de nascimento do aluno"] = new Date(`${contacts.birthday?.year}/${contacts.birthday?.month}/${contacts.birthday?.day}`).toLocaleDateString()
-                    result["Nome do aluno"] = contacts.name
+                    result["Nome do aluno (se não for responsável próprio))"] = contacts.name
                 }
 
 
@@ -252,7 +252,7 @@ export default NewSearchSync
 //                     },
 //                     {
 //                         customFields: {
-//                             path: ["Nome do aluno"],
+//                             path: ["Nome do aluno (se não for responsável próprio))"],
 //                             string_contains: res
 //                         }
 //                     }

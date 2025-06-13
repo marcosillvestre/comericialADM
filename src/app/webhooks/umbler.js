@@ -28,7 +28,7 @@ class UmblerWebhook {
         await CreateCommentOnTrello(
             name,
             customFields["Unidade"],
-            `${customFields["Nome do Aluno"]} realizou a pesquisa de satisfação da primeira aula, Professor: ${customFields["Professor"]} , Nota: ${nota},Relato: "${relato}".`)
+            `${customFields["Nome do aluno (se não for responsável próprio))"]} realizou a pesquisa de satisfação da primeira aula, Professor: ${customFields["Professor"]} , Nota: ${nota},Relato: "${relato}".`)
 
 
         return res.status(200).json({ name, unidade, professor, aluno })
