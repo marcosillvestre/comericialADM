@@ -61,13 +61,18 @@ class associationDatabaseAndCas {
 
     async orderRegisterForDatabaseSales(idSale, name, material, unity, phone, student) {
 
-        const { data } = await axios.get("https://api.contaazul.com/v1/products?size=10000", { headers: this.header })
+        const { data } = await axios.get(
+            "https://api.contaazul.com/v1/products?size=10000",
+            { headers: this.header }
+        )
 
         const body = material.map((res, index) => {
             let splited = res.split(" / ")
 
+            const code = splited[1].replace(/(\r\n|\n|\r|\\[rn])/g, '')
 
-            const pdFiltered = data.filter(res => res.code.includes(splited[1]))
+
+            const pdFiltered = data.filter(res => res.code.includes(code))
             const id = idSale.concat(`-${index}`)
 
             if (pdFiltered.length > 0) return {
@@ -103,7 +108,7 @@ Realizou o pagamento do material didático
     
 > ${response.customFields["Material didático"]}
 
-Aluno: *${response.customFields["Nome do aluno (se não for responsável próprio))"]}*
+Aluno: *${response.customFields["Nome do aluno (se não for responsável próprio))"] ?? response.name}*
 
 Professor: *${response.customFields["Professor"]}*
 `,
@@ -113,7 +118,7 @@ Professor: *${response.customFields["Professor"]}*
             
 Realizou o pagamento da primeira parcela do curso: *${response.customFields["Curso"]}*
 
-Aluno: *${response.customFields["Nome do aluno (se não for responsável próprio))"]}*
+Aluno: *${response.customFields["Nome do aluno (se não for responsável próprio))"] ?? response.name}*
 
 Professor: *${response.customFields["Professor"]}*
 
@@ -124,7 +129,7 @@ Professor: *${response.customFields["Professor"]}*
             
 Realizou o pagamento da taxa de matrícula do curso: *${response.customFields["Curso"]}*
 
-Aluno: *${response.customFields["Nome do aluno (se não for responsável próprio))"]}*
+Aluno: *${response.customFields["Nome do aluno (se não for responsável próprio))"] ?? response.name}*
 
 Professor: *${response.customFields["Professor"]}*
 
@@ -156,7 +161,7 @@ Professor: *${response.customFields["Professor"]}*
                             response.customFields["Material didático"],
                             response.customFields["Unidade"],
                             rdPhoneData?.phone,
-                            response.customFields["Nome do aluno (se não for responsável próprio))"]
+                            response.customFields["Nome do aluno (se não for responsável próprio))"] ?? response.name
                         ),
                         unity: idList[response.customFields["Unidade"]]
                     }
@@ -359,7 +364,8 @@ Professor: *${response.customFields["Professor"]}*
         if (data.length > 0) {
             console.log({
                 where: "[orderRegisterForContaAzulSales]",
-                message: "Venda sem observação enviada para o pedido de livros"
+                message: "Venda sem observação enviada para o pedido de livros",
+                for: data.map(d => d.name)
             })
 
             await ordersController.storeMany(bodyOrder)
@@ -387,12 +393,16 @@ Professor: *${response.customFields["Professor"]}*
                 continue
             }
 
-            let { service, student } = await parsed(notes)
+            const { service, student } = await parsed(notes)
+            const { name, id: idCustomer } = customer;
 
             const deliverData = {
                 id,
                 student,
-                customer,
+                customer: {
+                    name: name.split(" -")[0],
+                    id: idCustomer
+                },
                 service,
                 payment: payment.installments[0] ?? payment.method,
                 products
@@ -539,10 +549,10 @@ async function reorganizeDatabaseData(unity) {
 
 const SyncronizeSalesAndRegisters = async () => {
 
-    ["Centro", "PTB"].forEach(async unity => {
+    ["PTB", "Centro"].forEach(async unity => {
 
         try {
-            const token = await getToken(unity, 'refresh')
+            const token = await getToken(unity, 'refresh');
             const registers = await reorganizeDatabaseData(unity)
 
             const startBilling = new associationDatabaseAndCas({
@@ -559,6 +569,5 @@ const SyncronizeSalesAndRegisters = async () => {
 
     });
 }
-
 
 export default SyncronizeSalesAndRegisters
