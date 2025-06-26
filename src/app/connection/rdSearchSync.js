@@ -125,7 +125,7 @@ export const gatheringDataForDatabase = async (deals) => {
                 }
 
                 if (result["Aluno é o próprio responsável?"] === "Sim" && contacts.birthday) {
-                    result["Data de nascimento do aluno"] = new Date(`${contacts.birthday?.year}/${contacts.birthday?.month}/${contacts.birthday?.day}`).toLocaleDateString()
+                    result["Data de nascimento do aluno"] = contacts.birthday ? `${contacts.birthday?.day}/0${contacts.birthday?.month}/${contacts.birthday?.year}` : undefined
                     result["Nome do aluno (se não for responsável próprio))"] = contacts.name
                 }
 
