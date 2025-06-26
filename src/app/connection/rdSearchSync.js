@@ -124,7 +124,7 @@ export const gatheringDataForDatabase = async (deals) => {
                         .map(res => res.value)[0] || ""
                 }
 
-                if (result["O responsável e o aluno são a mesma pessoa ?"] === "Sim" && contacts.birthday) {
+                if (result["Aluno é o próprio responsável?"] === "Sim" && contacts.birthday) {
                     result["Data de nascimento do aluno"] = new Date(`${contacts.birthday?.year}/${contacts.birthday?.month}/${contacts.birthday?.day}`).toLocaleDateString()
                     result["Nome do aluno (se não for responsável próprio))"] = contacts.name
                 }
@@ -177,7 +177,17 @@ export const gatheringDataForDatabase = async (deals) => {
                 id,
                 name: json['Nome do responsável'],
                 owner: json['Vendedor'] || user.name,
-                customFields: json
+                customFields: json,
+                historic: {
+                    create: {
+                        responsible: "Automação",
+                        information: {
+                            field: "created_at",
+                            text: "Esse registro acabou de ser criado",
+                            from: "1",
+                        }
+                    }
+                }
             })
 
         }
