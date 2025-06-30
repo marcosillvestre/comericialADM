@@ -1,9 +1,10 @@
 import axios from "axios";
 import 'dotenv';
+import { RegisterFinder } from "../../../database/registers/register.find.js";
 import { StringsMethods } from "../../../utils/functions/serializerStrings.js";
 import { getContactsWithId, updateStageRd } from "./rdStation.js";
 import { SendGroupAlerts, SendSimpleWpp } from "./wpp.js";
-
+const { registerFindMany, registerFinder } = new RegisterFinder()
 const { spacesAndLowerCase } = new StringsMethods()
 
 const list = {
@@ -357,10 +358,53 @@ Responsável pela venda: *${customFields["Vendedor"]}*
 
 ${url}`
 
+                const date = new Date();
+                const firstDay = new Date(`${date.getFullYear()}-${date.getMonth() + 1}-1`).setUTCHours(0)
+                const lastDay = new Date(`${date.getFullYear()}-${date.getMonth() + 1}-31`).setUTCHours(0)
+
+                const countCentro = await registerFindMany({
+                    created_at: {
+                        gte: new Date(firstDay),
+                        lte: new Date(lastDay),
+                    },
+                    customFields: {
+                        path: ["Unidade"],
+                        string_contains: "Centro"
+                    }
+                })
+                const countPTB = await registerFindMany({
+                    created_at: {
+                        gte: new Date(firstDay),
+                        lte: new Date(lastDay),
+                    },
+                    customFields: {
+                        path: ["Unidade"],
+                        string_contains: "PTB"
+                    }
+                })
+
+                let comercialMessage = `
+NOVO ALUNO, UHUULL!!🥳🤩
+
+Nome aluno: *${customFields["Nome do aluno (se não for responsável próprio))"]}*
+Vendedor: *${customFields["Vendedor"]}*
+Unidade: *${customFields["Unidade"]}*
+Idade: *${customFields["Idade do Aluno"]}*
+Curso: *${customFields["Curso"]}*
+Tipo: *${customFields["Formato de Aula"]}*
+
++1 para o *${customFields["Unidade"]}*
+
+PTB: ${countPTB?.length}
+Centro: ${countCentro?.length}
+                `
                 let chat = customFields["Unidade"] === "Centro" ?
                     process.env.UMBLER_CHAT_REM_ID_CENTRO : process.env.UMBLER_CHAT_REM_ID_PTB
+
                 await Promise.all([
                     SendGroupAlerts(message, chat),
+                    SendGroupAlerts(comercialMessage, process.env.UMBLER_COMERCIAL),
+
                 ])
 
             })
