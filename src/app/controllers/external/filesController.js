@@ -61,6 +61,16 @@ class FilesController {
                                 contentType,
                                 key: fileName,
                             }
+                        },
+                        historic: {
+                            create: {
+                                responsible,
+                                information: {
+                                    field: "Anexos",
+                                    text: `Um novo arquivo foi anexado à matrícula`,
+                                    from: id,
+                                }
+                            }
                         }
                     }
                 })
