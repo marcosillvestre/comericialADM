@@ -386,6 +386,8 @@ ${url}`
                 let comercialMessage = `
 NOVO ALUNO, UHUULL!!🥳🤩
 
+> *${body.name}*
+
 Nome aluno: *${customFields["Nome do aluno (se não for responsável próprio))"]}*
 Vendedor: *${customFields["Vendedor"]}*
 Unidade: *${customFields["Unidade"]}*
