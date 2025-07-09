@@ -23,7 +23,14 @@ class UmblerWebhook {
 
         if (!search) return res.status(400).json({ message: `${nome} não encontrado na base de dado` })
 
-        const { name, customFields } = search
+        const { name, customFields } = search;
+        const body = {
+            name,
+            unidade: customFields["Unidade"],
+            professor: customFields["Professor"],
+            aluno: customFields["Nome do aluno (se não for responsável próprio))"],
+
+        }
 
         await CreateCommentOnTrello(
             name,
@@ -31,7 +38,7 @@ class UmblerWebhook {
             `${customFields["Nome do aluno (se não for responsável próprio))"]} realizou a pesquisa de satisfação da primeira aula, Professor: ${customFields["Professor"]} , Nota: ${nota},Relato: "${relato}".`)
 
 
-        return res.status(200).json({ name, unidade, professor, aluno })
+        return res.status(200).json(body)
     }
 
     async firstClassAppointment(req, res) {
