@@ -124,8 +124,8 @@ class RegisterContaAzulController {
             ['Forma de pagamento do MD']: formaPagamentoMaterialDidatico,
             ['Data de pagamento MD']: vencimentoMaterialDidatico,
             ['Carga horário do curso']: cargaHoraria,
-            ['Observações importantes para o financeiro:']: observacaoFinanceiro,
-            ['Observações importantes para o pedagógico:']: observacaoPedagogico,
+            ['Observações para o financeiro:']: observacaoFinanceiro,
+            ['Observações para o pedagógico:']: observacaoPedagogico,
 
             ['Idade do Aluno']: idadeAluno,
             ['Quantidade de parcelas MD']: parcelasMaterial,
@@ -336,8 +336,8 @@ serviço: parcela
             ['Quantidade de parcelas MD']: parcelasMaterial,
             ['Data da primeira aula']: dataPrimeiraAula,
             ['Carga horário do curso']: cargaHoraria,
-            ['Observações importantes para o financeiro:']: observacaoFinanceiro,
-            ['Observações importantes para o pedagógico:']: observacaoPedagogico,
+            ['Observações para o financeiro:']: observacaoFinanceiro,
+            ['Observações para o pedagógico:']: observacaoPedagogico,
             ['Horário de Inicio']: horarioInicio,
             ['Horário de fim']: horarioFim,
 
@@ -689,8 +689,8 @@ serviço: material didatico
             ['Quantidade de parcelas MD']: parcelasMaterial,
             ['Data da primeira aula']: dataPrimeiraAula,
             ['Carga horário do curso']: cargaHoraria,
-            ['Observações importantes para o financeiro:']: observacaoFinanceiro,
-            ['Observações importantes para o pedagógico:']: observacaoPedagogico,
+            ['Observações para o financeiro:']: observacaoFinanceiro,
+            ['Observações para o pedagógico:']: observacaoPedagogico,
             ['Horário de Inicio']: horarioInicio,
             ['Horário de fim']: horarioFim,
 
