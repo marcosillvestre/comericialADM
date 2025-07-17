@@ -571,3 +571,47 @@ const SyncronizeSalesAndRegisters = async () => {
 }
 
 export default SyncronizeSalesAndRegisters
+
+
+// let p = pd.slice(0, 5)
+
+// console.log(p[0].priceSale + 10.20)
+// console.log(p)
+// p.map(async res => {
+
+//     await prisma.Product.update({
+//         where: {
+//             id: res.id
+//         },
+//         data: {
+//             priceSale: parseFloat(res.priceSale)
+//         }
+//     })
+//         .then(r => r)
+//         .catch(r => console.log(r))
+// })
+
+
+//     // let key = res.sku.startsWith('97') ? 'ean' : 'code'
+//     // let sub = key === ean &&
+
+
+//     // console.log(key)
+// pd.map(async res => {
+
+//     await prisma.Product.create({
+
+//         data: {
+//             ean: res.sku.startsWith('97') ? res.sku : null,
+//             name: res.name,
+//             priceSale: res.price_ticket,
+//             code: res.sku,
+//             unit: "UN"
+//         }
+//     })
+//         .then(r => r)
+//         .catch(r => console.log(r))
+
+
+// })
+

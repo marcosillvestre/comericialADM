@@ -9,20 +9,15 @@ export const getDataFromCep = async (cep) => {
         const cepCleared = cep.replace(/\s+/g, "");
 
         const { data } = await axios.get(`https://viacep.com.br/ws/${cepCleared}/json/`)
-        return data
+        return data;
     } catch (error) {
 
         console.log({
             where: "ViaCEP",
-            error
+            error: error.response.status
         })
 
-        return {
-            Endereco: "Confira o cep indicado",
-            Bairro: "Confira o cep indicado",
-            Cidade: "Confira o cep indicado",
-            Uf: "Confira o cep indicado",
-        }
+        return null
     }
 
 }

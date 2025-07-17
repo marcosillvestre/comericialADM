@@ -52,7 +52,7 @@ async function UpdateTheCustomFields() {
 }
 
 
-const calcularDiferencaAnos = async (dataString) => {
+export const calcularDiferencaAnos = async (dataString) => {
     if (!dataString) return undefined
 
     const dataFornecida = await DateTransformer(dataString)
@@ -276,3 +276,24 @@ export default NewSearchSync
 //     })
 // }
 // achadorEMandadorParaOTrello()
+
+
+
+// const v = {
+//     "Nome": "(AW) Marcos Silvestre",
+//     "E-mail": "",
+//     "Whatsapp": "+5531973375058",
+//     "Curso": "Inglês",
+//     Modalidade: "Online",
+//     Unidade: "PTB, Betim"
+// }
+
+
+// await axios.post(
+//     // "https://crm.rdstation.com/api/v1/contacts?token=64c1219c7de4220029d55fc7",
+//     // t
+//     "https://hook.us1.make.com/ojd5jbriukkssc6r3fn8vs7u9bl6bqws",
+//     v
+// )
+//     .then(r => console.log(r))
+//     .catch(r => console.log(r))

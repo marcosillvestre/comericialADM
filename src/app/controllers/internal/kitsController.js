@@ -3,32 +3,32 @@ import prisma from '../../../database/database.js';
 import { AplieDescount } from '../../../utils/functions/descountAplied.js';
 import { getOptionsFromRdCustomFields, updateRdOptionsCustomFields } from '../../connection/externalConnections/rdStation.js';
 
-class ProductsController {
+class KitsController {
 
     async indexFilter(req, res) {
         try {
 
 
-            const [products, count] = await prisma.$transaction([
-                prisma.Product.findMany({
+            const [kits, count] = await prisma.$transaction([
+                prisma.kit.findMany({
 
                     orderBy: {
                         name: "asc"
                     }
                 }),
-                prisma.Product.count()
+                prisma.kit.count()
 
             ])
 
 
             return res.status(200).json({
-                products,
+                kits,
                 total: count
             });
 
         } catch (error) {
             console.log({ error })
-            return res.status(500).json({ error: 'Failed to fetch Products' });
+            return res.status(500).json({ error: 'Failed to fetch kits' });
         }
     }
 
@@ -37,8 +37,8 @@ class ProductsController {
 
         try {
             const withQuery = async () => {
-                const [products, count] = await prisma.$transaction([
-                    prisma.product.findMany({
+                const [kits, count] = await prisma.$transaction([
+                    prisma.kit.findMany({
                         where: {
                             OR: [
                                 {
@@ -48,7 +48,7 @@ class ProductsController {
                                     }
                                 },
                                 {
-                                    code: {
+                                    sku: {
                                         contains: query,
                                         mode: "insensitive"
                                     }
@@ -59,9 +59,18 @@ class ProductsController {
                         skip: parseInt(skip),
                         orderBy: {
                             [orderBy]: orderFor
+                        },
+                        include: {
+                            relatedProducts: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    priceSale: true
+                                }
+                            }
                         }
                     }),
-                    prisma.product.count({
+                    prisma.kit.count({
                         where: {
                             OR: [
                                 {
@@ -71,7 +80,7 @@ class ProductsController {
                                     }
                                 },
                                 {
-                                    code: {
+                                    sku: {
                                         contains: query,
                                         mode: "insensitive"
                                     }
@@ -81,81 +90,76 @@ class ProductsController {
                     })
 
                 ])
-                return { products, count }
+                return { kits, count }
             };
 
             const withoutQuery = async () => {
-                const [products, count] = await prisma.$transaction([
-                    prisma.product.findMany({
+                const [kits, count] = await prisma.$transaction([
+                    prisma.kit.findMany({
                         take: parseInt(take),
                         skip: parseInt(skip),
                         orderBy: {
                             [orderBy]: orderFor
+                        },
+                        include: {
+                            relatedProducts: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    priceSale: true
+                                }
+                            }
                         }
                     }),
-                    prisma.Product.count()
+                    prisma.kit.count()
 
                 ])
-                return { products, count }
+                return { kits, count }
             }
 
 
 
-            const { products, count } = query ? await withQuery() :
+            const { kits, count } = query ? await withQuery() :
                 await withoutQuery()
 
             return res.status(200).json({
-                products,
+                kits,
                 total: count
             });
 
         } catch (error) {
             console.log({ error })
-            return res.status(500).json({ error: 'Failed to fetch Products' });
+            return res.status(500).json({ error: 'Failed to fetch kits' });
         }
     }
 
     async store(req, res) {
         const schema = yup.object().shape({
-            name: yup.string().required(),
-            code: yup.string().required(),
-            ean: yup.string().nullable(),
+            name: yup.string().required("Nome do kit é um campo obrigatório \n"),
+            code: yup.string().required("Código do kit é um campo obrigatório \n"),
             description: yup.string().nullable(),
-            unit: yup.string().required(),
-            active: yup.bool().nullable(),
-            categorieName: yup.string().required(),
-
-            priceSale: yup.number().required(),
-            priceCost: yup.number().required(),
-            minStock: yup.number().required(),
-            maxStock: yup.number().required(),
+            priceSale: yup.number().required("Preço de venda é um campo obrigatório \n"),
+            relatedProducts: yup.array().required(),
         })
-
-        const { name, code, priceSale, priceCost, ean, unit,
-            description, minStock, maxStock, active, categorieName,
-        } = req.body;
-
-        if (minStock > maxStock) return res.status(500).json({ message: 'Estoque máximo deve ser maior que o mínimo' });
-
         try {
             await schema.validateSync(req.body, { abortEarly: false })
 
-            const newProduct = await prisma.product.create({
-                data: {
-                    name,
-                    code,
-                    priceSale, priceCost, ean, unit,
-                    description, minStock, maxStock, active,
-                    categorie: {
-                        connect: {
-                            name: categorieName
-                        }
-                    }
+            const { name, code, priceSale, description, relatedProducts } = req.body;
+
+            const body = {
+                name, code, priceSale, description,
+            }
+
+            if (relatedProducts.length > 0) {
+                body['relatedProducts'] = {
+                    connect: relatedProducts
                 }
+            }
+
+
+            const newKit = await prisma.kit.create({
+                data: body,
             })
-
-
-
 
             if (1 > 2) {
                 const opts = await getOptionsFromRdCustomFields("64bee4fa5ccd17001cec1e12")
@@ -167,7 +171,7 @@ class ProductsController {
 
                 const { decreaseFifteen, descreaseThird, descreaseTw, increseTax } = await AplieDescount(price_selling)
 
-                const newInsume = await prisma.Product.create({
+                const newInsume = await prisma.kit.create({
                     data: {
                         name,
                         sku,
@@ -180,12 +184,18 @@ class ProductsController {
                         category: "Product"
                     },
                 });
+
             }
 
-            return res.status(201).json(newProduct);
+            return res.status(201).json(newKit);
         } catch (error) {
-            console.log(error)
-            return res.status(500).json({ message: 'Failed to create Insume' });
+            console.log({
+                where: "[CREATE.KIT]",
+                error
+            })
+
+            if ("errors" in error) return res.status(400).json({ message: error.errors })
+            return res.status(500).json({ message: 'Falha ao criar kit, verifique os dados enviados' });
         }
     }
 
@@ -194,54 +204,37 @@ class ProductsController {
         const schema = yup.object().shape({
             name: yup.string().required(),
             code: yup.string().required(),
-            ean: yup.string().nullable(),
             description: yup.string().nullable(),
-            unit: yup.string().required(),
-            active: yup.bool().nullable(),
-            categorieName: yup.string().nullable(),
-
             priceSale: yup.number().required(),
-            priceCost: yup.number().required(),
-            minStock: yup.number().required(),
-            maxStock: yup.number().required(),
+            relatedProducts: yup.array().required(),
         })
-
-        const { name, code, priceSale, priceCost, ean, unit,
-            description, minStock, maxStock, active, categorieName,
-        } = req.body;
-
-        if (minStock > maxStock) return res.status(500).json({ message: 'Estoque máximo deve ser maior que o mínimo' });
-
         try {
             await schema.validateSync(req.body, { abortEarly: false })
 
+
+            const { name, code, priceSale, description, relatedProducts } = req.body;
+
             const body = {
-                name,
-                code,
-                priceSale, priceCost, ean, unit,
-                description, minStock, maxStock, active,
+                name, code, priceSale, description,
             }
 
-            if (categorieName) {
-                body['categorie'] = {
-                    connect: {
-                        name: categorieName
-                    }
+            if (relatedProducts.length > 0) {
+                body['relatedProducts'] = {
+                    connect: relatedProducts
                 }
             }
 
-            const updatedProduct = await prisma.product.update({
+
+            const kitUpdated = await prisma.kit.update({
                 where: {
                     id
                 },
-                data: body
+                data: body,
+
             })
 
-
-
-
             if (1 > 2) {
-                const { name: fName, status: fStatus } = await prisma.Product.findUnique({
+                const { name: fName, status: fStatus } = await prisma.kit.findUnique({
                     where: {
                         id
                     }
@@ -268,7 +261,7 @@ class ProductsController {
 
                 const { decreaseFifteen, descreaseThird, descreaseTw, increseTax } = await AplieDescount(price_selling)
 
-                const updatedInsume = await prisma.Product.update({
+                const updatedInsume = await prisma.kit.update({
                     where: { id: id },
                     data: {
                         name,
@@ -282,12 +275,17 @@ class ProductsController {
                         status
                     },
                 })
-
             }
 
-            return res.status(200).json(updatedProduct);
+
+            return res.status(200).json(kitUpdated);
         } catch (error) {
-            console.log(error)
+            console.log({
+                where: "[UPDATE.KIT]",
+                error
+            })
+
+            if ("errors" in error) return res.status(400).json({ message: error.errors })
             return res.status(500).json({ message: 'Failed to update Insume' });
         }
     }
@@ -295,7 +293,7 @@ class ProductsController {
     async delete(req, res) {
         const { id } = req.params;
 
-        const { name: fName } = await prisma.Product.findUnique({
+        const { name: fName } = await prisma.kit.findUnique({
             where: {
                 id
             }
@@ -310,7 +308,7 @@ class ProductsController {
 
 
 
-            await prisma.Product.delete({
+            await prisma.kit.delete({
                 where: { id },
             });
             return res.status(200).json({ message: 'Insume deleted successfully' });
@@ -321,5 +319,5 @@ class ProductsController {
     }
 }
 
-export default new ProductsController();
+export default new KitsController();
 

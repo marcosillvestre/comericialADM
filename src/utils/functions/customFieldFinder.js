@@ -28,9 +28,9 @@ export const bodyMakerForCustomFields = async (contractData) => {
 
 
     const [products] = await prisma.$transaction([
-        prisma.products.findMany({
+        prisma.product.findMany({
             where: {
-                sku: {
+                code: {
                     in: materilFiltered.filter(res => res !== undefined)
                 }
             }
