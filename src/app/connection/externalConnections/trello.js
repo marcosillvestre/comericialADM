@@ -323,8 +323,9 @@ export async function StartCicleWhenNewRegisterIsCreated(object) {
             "Valor do material": customFields["Valor total do material didático"],
             "Vaor da taxa de matricula": customFields["Valor de taxa de matrícula"],
             "Valor da mensalidade": customFields["Valor total da parcela"],
+            "Observações pedagógicas": customFields["Observações para o pedagógico:"],
+            "Observações financeiras": customFields["Observações para o financeiro:"]
         }
-
 
         const body = {
             name: name,
