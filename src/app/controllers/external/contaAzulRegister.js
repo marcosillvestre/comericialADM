@@ -241,11 +241,11 @@ serviço: parcela
                             let venc = await DateTransformer(vencimentoPrimeiraParcela)
                             venc.setDate(venc.getDate() - 25)
 
-                            let less20Days = venc.toISOString()
+                            let lessDays = venc.toISOString()
 
 
                             const body = {
-                                "emission": less20Days,
+                                "emission": lessDays,
                                 "status": "COMMITTED",
                                 "customer_id": data.data[0]?.id,
                                 "services": [
@@ -253,7 +253,7 @@ serviço: parcela
                                         "description": filtered?.name,
                                         "quantity": 1,
                                         "service_id": filtered?.id,
-                                        "value": parseInt(parcel.parcels[parcel.parcels.length - 1]?.valor)
+                                        "value": parcel.total / parseInt(parcelas)
                                     }
                                 ],
                                 "discount": {
