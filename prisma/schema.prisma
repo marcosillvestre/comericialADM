@@ -360,3 +360,47 @@ model billingRules {
   created_at                       DateTime  @default(now())
   updated_at                       DateTime  @updatedAt 
 }
+
+model productCategories {
+  id              String   @id @default(uuid())
+  name            String   @unique
+
+  products        Product[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Product {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  code            String   @unique
+  priceSale       Decimal  @default(0.0)
+  priceCost       Decimal  @default(0.0)
+  ean             String?  @unique
+  unit            String   // ex: UN, KG
+  description     String?
+  minStock        Int      @default(0)
+  maxStock        Int      @default(0)
+  active          Boolean  @default(true)
+
+  kitsRelated     Kit[]
+  categorieName   String?  
+  categorie       productCategories? @relation(fields: [categorieName], references: [name])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Kit {
+  id               String   @id @default(uuid())
+  name             String   @unique
+  code             String   @unique
+  priceSale        Decimal  @default(0.0)
+  description      String?
+
+  relatedProducts  Product[]
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+} 

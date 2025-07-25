@@ -13,8 +13,10 @@ import AutentiqueController from '../app/controllers/external/autentiqueControll
 import FilesController from '../app/controllers/external/filesController.js';
 import BillingRulesController from '../app/controllers/internal/billingRulesController.js';
 import CampaignController from '../app/controllers/internal/campaignController.js';
+import CategorieProductController from "../app/controllers/internal/categoriesController.js";
 import ContractsController from '../app/controllers/internal/crmContractsController.js';
 import CustomFieldsController from '../app/controllers/internal/customFieldsController.js';
+import KitsController from '../app/controllers/internal/kitsController.js';
 import OrdersController from '../app/controllers/internal/ordersController.js';
 import ProductsController from '../app/controllers/internal/productsController.js';
 import RegistersController from '../app/controllers/internal/registersController.js';
@@ -23,7 +25,6 @@ import ServicesController from '../app/controllers/internal/servicesController.j
 import SupliersController from '../app/controllers/internal/supliersController.js';
 import WhatsappController from '../app/controllers/internal/whatsappController.js';
 import UmblerWebhook from '../app/webhooks/umbler.js';
-
 import { storage } from '../config/multer.js';
 import auth from "../middleware/auth.js";
 import webhookToken from '../middleware/webhooks.js';
@@ -51,7 +52,12 @@ routes.post('/redefinir-senha', SessionController.forgetPassword)
 routes.post('/nova-senha', SessionController.redefinePassword)
 
 
+routes.post('/cliente', RegisterContaAzulController.storeCostumer)
+routes.post('/registro-conta-azul', RegisterContaAzulController.storeContract)
+routes.post('/venda', RegisterContaAzulController.storeSale)
+routes.post('/taxa', RegisterContaAzulController.storeEnrollmentFee)
 
+//////////////
 routes.use(auth) // autenticated routes
 
 routes.post('/mensagem', WhatsappController.store)
@@ -84,9 +90,22 @@ routes.delete("/reguas/:id", BillingRulesController.delete)
 
 routes.post("/produto", ProductsController.store)
 routes.post("/produtos", ProductsController.index)
+routes.post("/produto-query", ProductsController.query)
 routes.get("/produtos-totais", ProductsController.indexFilter)
 routes.put("/produtos/:id", ProductsController.update)
 routes.delete("/produtos/:id", ProductsController.delete)
+
+routes.post("/kit", KitsController.store)
+routes.post("/kits", KitsController.index)
+routes.get("/kits-totais", KitsController.indexFilter)
+routes.put("/kits/:id", KitsController.update)
+routes.delete("/kits/:id", KitsController.delete)
+
+routes.post("/categoria", CategorieProductController.store)
+routes.post("/categorias", CategorieProductController.index)
+routes.get("/categorias-totais", CategorieProductController.indexFilter)
+routes.put("/categoria/:id", CategorieProductController.update)
+routes.delete("/categoria/:id", CategorieProductController.delete)
 
 routes.post("/novo-fornecedor", SupliersController.store)
 routes.post("/fornecedor", SupliersController.index)
@@ -133,11 +152,6 @@ routes.put('/multi-pedidos', OrdersController.updateManyOrders)
 
 routes.post('/pedidos', OrdersController.storeMany)
 
-
-routes.post('/cliente', RegisterContaAzulController.storeCostumer)
-routes.post('/registro-conta-azul', RegisterContaAzulController.storeContract)
-routes.post('/venda', RegisterContaAzulController.storeSale)
-routes.post('/taxa', RegisterContaAzulController.storeEnrollmentFee)
 
 
 

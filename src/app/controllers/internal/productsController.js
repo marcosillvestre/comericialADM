@@ -1,6 +1,7 @@
+import * as yup from 'yup';
 import prisma from '../../../database/database.js';
-import { AplieDescount } from '../../../utils/functions/descountAplied.js';
 import { getOptionsFromRdCustomFields, updateRdOptionsCustomFields } from '../../connection/externalConnections/rdStation.js';
+
 class ProductsController {
 
     async indexFilter(req, res) {
@@ -8,13 +9,13 @@ class ProductsController {
 
 
             const [products, count] = await prisma.$transaction([
-                prisma.products.findMany({
+                prisma.product.findMany({
 
                     orderBy: {
                         name: "asc"
                     }
                 }),
-                prisma.products.count()
+                prisma.product.count()
 
             ])
 
@@ -31,80 +32,77 @@ class ProductsController {
     }
 
     async index(req, res) {
-        const { take, skip, orderBy, query, orderFor } = req.body;
+        const schema = yup.object().shape({
+
+            skip: yup.string().required(),
+            take: yup.string().required(),
+
+            orderFor: yup.string().required(),
+            orderBy: yup.string().required(),
+
+            typeFilter: yup.array(),
+
+        })
 
         try {
-            const withQuery = async () => {
-                const [products, count] = await prisma.$transaction([
-                    prisma.products.findMany({
-                        where: {
-                            OR: [
-                                {
-                                    name: {
-                                        contains: query,
-                                        mode: "insensitive"
-                                    }
-                                },
-                                {
-                                    sku: {
-                                        contains: query,
-                                        mode: "insensitive"
-                                    }
-                                }
-                            ]
-                        },
-                        take: parseInt(take),
-                        skip: parseInt(skip),
-                        orderBy: {
-                            [orderBy]: orderFor
+            await schema.validateSync(req.body, { abortEarly: false });
+
+            const { take, skip, orderBy, typeFilter, orderFor, } = req.body;
+
+
+            const filters = typeFilter.map(res => {
+                const bools = {
+                    "Sim": true,
+                    "Não": false
+                }
+
+
+                if (res.label.includes("DATA")) {
+                    const [initialValue, finalValue] = res.value.split("~")
+
+                    return {
+                        [res.key]: {
+                            gte: HandleUTCDate(initialValue),
+                            lte: HandleUTCDate(finalValue)
                         }
-                    }),
-                    prisma.products.count({
-                        where: {
-                            OR: [
-                                {
-                                    name: {
-                                        contains: query,
-                                        mode: "insensitive"
-                                    }
-                                },
-                                {
-                                    sku: {
-                                        contains: query,
-                                        mode: "insensitive"
-                                    }
-                                }
-                            ]
-                        },
-                    })
+                    }
+                }
 
-                ])
-                return { products, count }
-            };
+                return {
+                    [res.key]: {
+                        equals: bools[res.value] ?? res.value
 
-            const withoutQuery = async () => {
-                const [products, count] = await prisma.$transaction([
-                    prisma.products.findMany({
-                        take: parseInt(take),
-                        skip: parseInt(skip),
-                        orderBy: {
-                            [orderBy]: orderFor
-                        }
-                    }),
-                    prisma.products.count()
-
-                ])
-                return { products, count }
-            }
+                    }
+                }
+            })
 
 
 
-            const { products, count } = query ? await withQuery() :
-                await withoutQuery()
+            const [products, total] = await prisma.$transaction([
+                prisma.product.findMany({
+                    take: parseInt(take),
+                    skip: parseInt(skip),
+                    orderBy: {
+                        [orderBy]: orderFor
+                    },
+                    where: {
+                        AND: [
+                            ...filters
+                        ]
+                    }
+                }),
+                prisma.product.count({
+                    where: {
+                        AND: [...filters]
+                    }
+                })
+
+            ])
+
 
             return res.status(200).json({
                 products,
-                total: count
+                total
             });
 
         } catch (error) {
@@ -113,10 +111,161 @@ class ProductsController {
         }
     }
 
-    async store(req, res) {
-        const { name, sku, price_selling, color } = req.body;
+    async query(req, res) {
+        const schema = yup.object().shape({
+
+            skip: yup.string().required(),
+            take: yup.string().required(),
+
+            orderFor: yup.string().required(),
+            orderBy: yup.string().required(),
+            query: yup.string().required(),
+
+            typeFilter: yup.array(),
+
+        })
 
         try {
+            await schema.validateSync(req.body, { abortEarly: false });
+
+            const { take, skip, orderBy, typeFilter, orderFor, query } = req.body;
+
+
+            const filters = typeFilter.map(res => {
+                const bools = {
+                    "Sim": true,
+                    "Não": false
+                }
+
+
+                if (res.label.includes("DATA")) {
+                    const [initialValue, finalValue] = res.value.split("~")
+
+                    return {
+                        [res.key]: {
+                            gte: HandleUTCDate(initialValue),
+                            lte: HandleUTCDate(finalValue)
+                        }
+                    }
+                }
+
+                return {
+                    [res.key]: {
+                        equals: bools[res.value] ?? res.value
+
+                    }
+                }
+            })
+
+            const [products, total] = await prisma.$transaction([
+                prisma.product.findMany({
+                    where: {
+                        AND: [
+                            ...filters,
+                            {
+                                OR: [
+                                    {
+                                        name: {
+                                            contains: query,
+                                            mode: "insensitive"
+                                        }
+                                    },
+                                    {
+                                        code: {
+                                            contains: query,
+                                            mode: "insensitive"
+                                        }
+                                    }
+                                ]
+                            }
+                        ],
+                    },
+                    take: parseInt(take),
+                    skip: parseInt(skip),
+                    orderBy: {
+                        [orderBy]: orderFor
+                    }
+                }),
+                prisma.product.count({
+                    where: {
+                        AND: [
+                            ...filters,
+                            {
+                                OR: [
+                                    {
+                                        name: {
+                                            contains: query,
+                                            mode: "insensitive"
+                                        }
+                                    },
+                                    {
+                                        code: {
+                                            contains: query,
+                                            mode: "insensitive"
+                                        }
+                                    }
+                                ]
+                            }
+                        ],
+                    },
+                })
+
+            ])
+
+
+            return res.status(200).json({
+                products,
+                total
+            });
+
+        } catch (error) {
+            console.log({ error })
+            return res.status(500).json({ error: 'Failed to fetch Products' });
+        }
+    }
+
+
+
+    async store(req, res) {
+        const schema = yup.object().shape({
+            name: yup.string().required(),
+            code: yup.string().required(),
+            ean: yup.string().nullable(),
+            description: yup.string().nullable(),
+            unit: yup.string().required(),
+            active: yup.bool().nullable(),
+            categorieName: yup.string().required(),
+
+            priceSale: yup.number().required(),
+            priceCost: yup.number().required(),
+            minStock: yup.number().required(),
+            maxStock: yup.number().required(),
+        })
+
+        const { name, code, priceSale, priceCost, ean, unit,
+            description, minStock, maxStock, active, categorieName,
+        } = req.body;
+
+        if (minStock > maxStock) return res.status(500).json({ message: 'Estoque máximo deve ser maior que o mínimo' });
+
+        try {
+            await schema.validateSync(req.body, { abortEarly: false })
+
+            const newProduct = await prisma.product.create({
+                data: {
+                    name,
+                    code,
+                    priceSale, priceCost, ean, unit,
+                    description, minStock, maxStock, active,
+                    categorie: {
+                        connect: {
+                            name: categorieName
+                        }
+                    }
+                }
+            })
+
+
 
             const opts = await getOptionsFromRdCustomFields("64bee4fa5ccd17001cec1e12")
             let newMd = name.concat(` / ${sku}`)
@@ -125,89 +274,93 @@ class ProductsController {
             await updateRdOptionsCustomFields("64bee4fa5ccd17001cec1e12", filteredOptions.concat(newMd))
 
 
-            const { decreaseFifteen, descreaseThird, descreaseTw, increseTax } = await AplieDescount(price_selling)
-
-            const newInsume = await prisma.products.create({
-                data: {
-                    name,
-                    sku,
-                    price_selling,
-                    color,
-                    price_ticket: increseTax,
-                    price_card: descreaseTw,
-                    price_cash: descreaseThird,
-                    price_link: decreaseFifteen,
-                    category: "Product"
-                },
-            });
-
-            return res.status(201).json(newInsume);
+            return res.status(201).json(newProduct);
         } catch (error) {
-            console.log(error)
-            return res.status(500).json({ error: 'Failed to create Insume' });
+            console.log({ where: "[CREATE.PRODUCT]", error })
+            return res.status(500).json({ message: 'Falha para criar um novo produto, verifique os dados' });
         }
     }
 
     async update(req, res) {
         const { id } = req.params;
-        const { name, sku, price_selling, color, status } = req.body;
+        const schema = yup.object().shape({
+            name: yup.string().required(),
+            code: yup.string().required(),
+            ean: yup.string().nullable(),
+            description: yup.string().nullable(),
+            unit: yup.string().required(),
+            active: yup.bool().nullable(),
+            categorieName: yup.string().nullable(),
 
+            priceSale: yup.number().required(),
+            priceCost: yup.number().required(),
+            minStock: yup.number().required(),
+            maxStock: yup.number().required(),
+        })
+
+        const { name, code, priceSale, priceCost, ean, unit,
+            description, minStock, maxStock, active, categorieName,
+        } = req.body;
+
+        if (minStock > maxStock) return res.status(500).json({ message: 'Estoque máximo deve ser maior que o mínimo' });
 
         try {
-            const { name: fName, status: fStatus } = await prisma.products.findUnique({
+            await schema.validateSync(req.body, { abortEarly: false })
+
+            const body = {
+                name,
+                code,
+                priceSale, priceCost, ean, unit,
+                description, minStock, maxStock, active,
+            }
+
+            if (categorieName) {
+                body['categorie'] = {
+                    connect: {
+                        name: categorieName
+                    }
+                }
+            }
+
+            const { name: fName, } = await prisma.product.findUnique({
                 where: {
                     id
                 }
             });
 
 
-            if (name !== fName || status !== fStatus) {
-                try {
-                    const opts = await getOptionsFromRdCustomFields("64bee4fa5ccd17001cec1e12")
-                    let newMd = name.concat(` / ${sku}`)
-                    let filteredOptions = opts.filter(res => !res.includes(fName))
+            if (name !== fName) {
+                const opts = await getOptionsFromRdCustomFields("64bee4fa5ccd17001cec1e12")
+                let newMd = name.concat(` / ${sku}`)
+                let filteredOptions = opts.filter(res => !res.includes(fName))
 
-                    status === false ? await updateRdOptionsCustomFields("64bee4fa5ccd17001cec1e12", filteredOptions) :
-                        await updateRdOptionsCustomFields("64bee4fa5ccd17001cec1e12", filteredOptions.concat(newMd))
-
-
-                } catch (error) {
-                    console.log(error)
-                    return res.status(500).json({ error: 'Failed to update Insume' });
-
-                }
+                await updateRdOptionsCustomFields("64bee4fa5ccd17001cec1e12", filteredOptions.concat(newMd))
 
             }
 
-            const { decreaseFifteen, descreaseThird, descreaseTw, increseTax } = await AplieDescount(price_selling)
 
-            const updatedInsume = await prisma.products.update({
-                where: { id: id },
-                data: {
-                    name,
-                    sku,
-                    price_selling,
-                    price_ticket: increseTax,
-                    price_card: descreaseTw,
-                    price_cash: descreaseThird,
-                    price_link: decreaseFifteen,
-                    color,
-                    status
+            const updatedProduct = await prisma.product.update({
+                where: {
+                    id
                 },
+                data: body
             })
 
 
-
-            return res.status(200).json(updatedInsume);
+            return res.status(200).json(updatedProduct);
         } catch (error) {
-            return res.status(500).json({ error: 'Failed to update Insume' });
+            console.log({ where: "[UPDATE.PRODUCT]", error })
+
+            if ("errors" in error) return res.status(400).json({ message: error.errors })
+
+            return res.status(500).json({ message: 'Failed to update Insume' });
         }
     }
 
     async delete(req, res) {
         const { id } = req.params;
 
-        const { name: fName } = await prisma.products.findUnique({
+        const { name: fName } = await prisma.product.findUnique({
             where: {
                 id
             }
@@ -222,7 +375,7 @@ class ProductsController {
 
 
 
-            await prisma.products.delete({
+            await prisma.product.delete({
                 where: { id },
             });
             return res.status(200).json({ message: 'Insume deleted successfully' });

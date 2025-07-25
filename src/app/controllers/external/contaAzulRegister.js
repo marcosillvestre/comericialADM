@@ -4,8 +4,9 @@ import * as yup from 'yup';
 import { DateTransformer } from '../../../utils/functions/DateTransformer.js';
 import { installments } from '../../../utils/functions/installments.js';
 import { parseCurrency } from '../../../utils/functions/serializeNumbers.js';
+import { CreateContract, CreatePeople } from '../../connection/externalConnections/contaAzulStrategy.js';
 import { SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
-import { getToken } from '../../core/getToken.js';
+import { getNewToken, getToken } from '../../core/getToken.js';
 
 class RegisterContaAzulController {
 
@@ -14,96 +15,64 @@ class RegisterContaAzulController {
     async storeCostumer(req, res) {
 
         const schema = yup.object().shape({
-            CPF: yup.string().transform((curr) => curr.replace(" ", "")).required(),
-            CelularResponsavel: yup.string().transform((curr) => curr.replace(" ", "")).required(),
-            Email: yup.string().transform((curr) => curr.replace(" ", "")).email().required(),
-            CEP: yup.string().transform((curr) => curr.replace(" ", "")).required(),
-            'Nome do responsável': yup.string().transform((curr) => curr.replace(" ", "")).required(),
-            'Data de nascimento do  responsável': yup.string().transform((curr) => curr.replace(" ", "")).required(),
+            CPF: yup.string().transform((curr) => curr.replace(" ", "")).required("cpf é um campo obrigatório"),
+            CelularResponsavel: yup.string().transform((curr) => curr.replace(" ", "")).required("CelularResponsavel é um campo obrigatório"),
+            Email: yup.string().transform((curr) => curr.replace(" ", "")).email().required("Email é um campo obrigatório"),
+            CEP: yup.string().transform((curr) => curr.replace(" ", "")).min(8, "O número válido mínimo para o CEP são 8 números").required("CEP é um campo obrigatório"),
+            'Nome do responsável': yup.string().transform((curr) => curr.replace(" ", "")).required("Nome do responsável é um campo obrigatório"),
+            'Data de nascimento do  responsável': yup.string().transform((curr) => curr.replace(" ", "")).required("Data de nascimento do  responsável é um campo obrigatório"),
         })
 
         try {
             await schema.validateSync(req.body, { abortEarly: false })
 
-            const { CelularResponsavel, Email, Bairro, CEP, Complemento, Unidade, CPF,
-                ['Nome do responsável']: nomeResponsavel, ['Data de nascimento do  responsável']: nascimentoResponsavel,
-                ['Nº do contrato']: contrato, ['Profissão']: profissao,
-                ['Endereco']: endereco, ['Número']: numero,
-            } = req.body
+            const { CelularResponsavel, Email, Bairro, CEP,
+                Complemento, Unidade, CPF,
+                ['Nome do responsável']: nomeResponsavel,
+                ['Data de nascimento do  responsável']: nascimentoResponsavel,
+                ['Nº do contrato']: contrato,
+                ['Profissão']: profissao,
+                ['Endereco']: endereco,
+                ['Número']: numero,
+            } = req.body;
 
 
-            var header = {
-                "Authorization": `Bearer ${await getToken(Unidade, 'refresh')}`,
-                "Content-Type": "application/json"
+
+            const body = {
+                cpf: CPF,
+                phone: CelularResponsavel,
+                email: Email,
+                neighboor: Bairro,
+                cep: CEP,
+                complement: Complemento,
+                name: nomeResponsavel,
+                birth: nascimentoResponsavel,
+                contract: contrato,
+                role: profissao,
+                address: endereco,
+                number: numero,
             }
 
-
-            const customerBody = {
-                "name": nomeResponsavel,
-                "email": Email,
-                "business_phone": CelularResponsavel,
-                "mobile_phone": CelularResponsavel,
-                "person_type": CPF.length > 11 ? "LEGAL" : "NATURAL",
-                "document": CPF,
-                "identity_document": "",
-                "date_of_birth": new Date(nascimentoResponsavel.split("/").reverse().join("-")),
-                "notes": contrato,
-                "contacts": [
-                    {
-                        "name": nomeResponsavel.split("-")[0],
-                        "business_phone": CelularResponsavel,
-                        "email": Email,
-                        "job_title": profissao
-                    }
-                ],
-                "address": {
-                    "zip_code": CEP,
-                    "street": endereco,
-                    "number": numero,
-                    "complement": Complemento,
-                    "neighborhood": Bairro
-                }
-            }
-
-
-            await new Promise(resolve => {
-                resolve(
-                    axios.post('https://api.contaazul.com/v1/customers',
-                        customerBody, { headers: header })
-                )
-            })
-                .then((response) => {
-                    // if(res )
-                    return res.status(201).json({ message: "Success" })
-                })
-                .catch(error => {
-
-                    if (error.response.data.message === 'CPF/CPNJ já utilizado por outro cliente.') {
-                        return res.status(201).json({ message: "Success" })
-                    }
-                    if (error.response.data.message !== 'CPF/CPNJ já utilizado por outro cliente.') {
-
-                        return res.status(401).json({ message: error.response.data.message })
-                    }
-
-                })
+            const newPeople = await CreatePeople({ unity: Unidade, body });
+            return res.status(201).json(newPeople);
 
         } catch (error) {
 
-            return res.status(400).json({ message: `Campos inválidos: ${error.errors}` })
+            if ("errors" in error) return res.status(400).json({ message: `Campos inválidos: ${error.errors}` })
+            return res.status(400).json({ message: error })
         }
 
     }
 
     async storeContract(req, res) {
 
-        const { id, promocao, valorCurso, service,
+        const { id, promocao, valorCurso,
             CPF, Curso, Unidade,
 
             material,
             parcel,
             tax,
-
+            ['service']: servico,
             ['Material didático']: materialDidatico,
             ['Valor do desconto material didático']: valorDescontoMaterialDidatico,
 
@@ -132,12 +101,341 @@ class RegisterContaAzulController {
             ['Data da primeira aula']: dataPrimeiraAula,
             ['Horário de Inicio']: horarioInicio,
             ['Horário de fim']: horarioFim,
-        } = req.body
+        } = req.body;
 
+        const token = await getNewToken(Unidade);
 
-
+        const headers = {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+        }
 
         try {
+            const queryForService = new URLSearchParams({
+                pagina: '1',
+                tamanho_pagina: '100',
+            }).toString();
+
+            const queryForCostumer = new URLSearchParams({
+                pagina: '1',
+                tamanho_pagina: '1',
+                'documento[]': CPF,
+
+            }).toString();
+
+            const queryForCostCenter = new URLSearchParams({
+                pagina: '1',
+                tamanho_pagina: '100',
+                'documento[]': CPF,
+
+            }).toString();
+
+            const queryForCategories = new URLSearchParams({
+                pagina: '1',
+                tamanho_pagina: '100',
+                permite_apenas_filhos: 'false'
+            }).toString();
+
+            const queryForAccount = new URLSearchParams({
+                pagina: '1',
+                tamanho_pagina: '100',
+                apenas_ativo: 'true',
+
+            }).toString();
+
+            const [person, service, cost, categorie, financialAccount] = await Promise.all([
+                axios.get(`https://api-v2.contaazul.com/v1/pessoa??${queryForCostumer}`,
+                    { headers: headers }),
+
+                axios.get(`https://api-v2.contaazul.com/v1/servicos?${queryForService}`,
+                    { headers: headers }),
+
+                axios.get(`https://api-v2.contaazul.com/v1/centro-de-custo?${queryForCostCenter}`,
+                    { headers: headers }),
+
+                axios.get(`https://api-v2.contaazul.com/v1/categorias?${queryForCategories}`,
+                    { headers: headers }),
+
+                axios.get(`https://api-v2.contaazul.com/v1/conta-financeira?${queryForAccount}`,
+                    { headers: headers }),
+            ])
+
+            const { data: { itens: [persons] } } = person;
+            const { data: { itens: services } } = service;
+            const { data: { itens: costs } } = cost;
+            const { data: { itens: categories } } = categorie;
+            const { data: { itens: financialAccounts } } = financialAccount;
+
+
+            if (!persons) return res.status(400).json({ message: "CPF inválido, cliente não encontrado no conta azul" })
+
+            // console.log({
+            // persons,
+            // services,
+
+            // costs,
+            // financialAccounts: financialAccounts.length,
+            // map: financialAccounts.map(r => r.nome),
+            // });
+
+
+            const saleNotes = `
+Responsável: ${nomeResponsavel} 
+Aluno: ${nomeAluno}
+Idade: ${idadeAluno}
+Telefone para contato financeiro: ${CelularResponsavel}
+Email do responsável financeiro: ${Email}
+contrato: ${contrato}
+Vendedor: ${vendedor}
+
+Informações do plano financeiro:
+
+VALOR DO CURSO/MENSALIDADES:
+
+CAMPANHA: ${parcel?.campaign?.name ?? 'sem campanha'}
+DESCRIÇÃO DA CAMPANHA: ${parcel?.campaign?.description ?? 'sem campanha'}
+Valor total: ${parseCurrency(parcel.total)}
+Desconto total: ${parseCurrency(parcel.descount)}
+Forma de pagamento: ${formaPagamentoParcelas}
+
+DETALHAMENTO DAS PARCELAS: 
+
+Quantidade de parcelas: ${parcelas}
+Número de parcelas afetadas: ${parcel?.campaign?.affectedParcels ?? 'sem campanha'}
+Valor total da(s) parcelas(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
+Desconto da(s) parcela(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
+Número de parcelas restantes: ${parcel?.campaign?.affectedParcels ? parseInt(parcelas) - parseInt(parcel?.campaign?.affectedParcels) : 'sem campanha'}
+Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
+Desconto da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
+Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
+Dia de vencimento: ${vencimentoPrimeiraParcela.split("/")[0]}
+Data de Vencimento da Primeira Parcela: ${vencimentoPrimeiraParcela}
+Data de vencimento da última parcela: ${vencimentoUltimaParcela}
+
+
+TAXA DE MATRÍCULA: 
+
+CAMPANHA: ${tax?.campaign?.name ?? 'sem campanha'}
+DESCRIÇÃO DA CAMPANHA: ${tax?.campaign?.description ?? 'sem campanha'}
+VALOR TOTAL: ${parseCurrency(350)}
+VALOR DO DESCONTO: ${parseCurrency(tax.descount)}
+VALOR LÍQUIDO: ${parseCurrency(tax.total)}
+FORMA DE PAGAMENTO: ${formaPagamentoTaxaMatricula}
+Vencimento: ${dataPagamentoTaxaMatricula}
+
+DETALHAMENTO DAS PARCELAS:
+
+Número de parcelas: ${parcelasTaxaMatricula}
+Valor da parcela: ${parseCurrency(tax.taxes[0]?.valor)}
+Desconto por parcela: ${parseCurrency(tax.total / tax.taxes.length)}
+
+
+MATERIAL DIDÁTICO/PRODUTOS:
+
+CAMPANHA: ${material?.campaign?.name ?? 'sem campanha'}
+DESCRIÇÃO DA CAMPANHA : ${material?.campaign?.description ?? 'sem campanha'}
+MATERIAL DIDÁTICO: ${materialDidatico}
+VALOR TOTAL: ${parseCurrency(material?.total) ?? 'sem campanha'}
+VALOR DO DESCONTO:${parseCurrency(material?.descount) ?? 'sem campanha'}
+VALOR LÍQUIDO: ${parseCurrency(material?.total)}
+FORMA DE PAGAMENTO: ${formaPagamentoMaterialDidatico}
+PRIMEIRO VENCIMENTO: ${vencimentoMaterialDidatico}
+
+DETALHAMENTO DAS PARCELAS:
+
+Número de parcelas: ${parcelasMaterial}
+Valor da parcela: ${parseCurrency(material.materials[0]?.valor) ?? "Sem material"}
+Desconto por parcela: ${parseCurrency(material.descount / material.materials.length)}
+Valor líquido por parcela: ${parseCurrency(material.materials[0]?.valor) ?? "Sem material"}
+
+
+Informações pedagógicas: 
+
+Data de início das aulas: ${dataPrimeiraAula} 
+Turma: ${dataPrimeiraAula} de ${horarioInicio} às ${horarioFim}
+Professor: ${Professor}
+Carga horária: ${cargaHoraria} 
+Unidade: ${Unidade}
+Observações pedagógicas: ${observacaoFinanceiro} 
+Observações financeiras:${observacaoPedagogico}
+id: ${id}
+serviço: parcela
+            `
+
+            const categorieOrCost = {
+                "El Español - En grupo - Turma": "Curso Espanhol",
+                "El Español - X1": "Curso Espanhol",
+                "El Español - X2": "Curso Espanhol",
+                "El Español - X3": "Curso Espanhol",
+                "Fluency Way Class - Adults": "Curso Adults and YA",
+                "Fluency Way Class - Kids": "Curso Kids",
+                "Fluency Way Class - Little Ones": "Curso Kids",
+                "Fluency Way Class - Online": "Curso Adults and YA",
+                "Fluency Way Class - Standard One": "Curso Adults and YA",
+                "Fluency Way Class - Teens": "Curso Teens",
+                "Fluency Way X - 4X": "Curso Particular",
+                "Fluency Way X - Double X": "Curso Particular",
+                "Fluency Way X - One X": "Curso Particular",
+                "Fluency Way X Plus - 4X": "Curso Particular",
+                "Fluency Way X Plus - Double X": "Curso Particular",
+                "Fluency Way X Plus - One X": "Curso Particular",
+                "Fluency Way X Plus - Triple X": "Curso Particular",
+                "Fluency Way X - Triple X": "Curso Particular",
+                "Tecnologia - Office Essential": "Curso Informática",
+            }
+            const paymentType = {
+                "Boleto": "BOLETO_BANCARIO",
+                "Cartão de crédito via link": "CARTAO_CREDITO_VIA_LINK",
+                "Boleto bancário": "BOLETO_BANCARIO",
+                "Cartão de crédito via outro bancos": "CARTAO_CREDITO",
+                "Cartão de débito via outros bancos": "CARTAO_DEBITO",
+                "Dinheiro": "DINHEIRO",
+                "PIX - Pagamento Instantâneo": "PIX_PAGAMENTO_INSTANTANEO",
+                "Pix": "PIX_PAGAMENTO_INSTANTANEO",
+                "Pix cobrança": "PIX_COBRANCA",
+                "Sem pagamento": "SEM_PAGAMENTO",
+                "Isenção": "SEM_PAGAMENTO",
+                "Transferência bancária": "TRANSFERENCIA_BANCARIA",
+                "Outros": "OUTRO",
+
+                "": "DEBITO_AUTOMATICO",
+                "": "PROGRAMA_FIDELIDADE",
+                "": "CARTEIRA_DIGITAL",
+                "": "CASHBACK",
+                "": "CHEQUE",
+                "": "CREDITO_LOJA",
+                "": "CREDITO_VIRTUAL",
+                "": "BANKING_DEPOSIT",
+                "": "VALE_ALIMENTACAO",
+                "": "VALE_COMBUSTIVEL",
+                "": "VALE_PRESENTE",
+                "": "VALE_REFEICAO",
+            }
+            const financial_account = {
+                "Boleto": 'Conta PJ Conta Azul',
+                "Cartão de crédito via link": 'Conta PJ Conta Azul',
+                "Cartão de débito via outros bancos": 'Rede',
+                "Cartão de crédito via outro bancos": 'Rede',
+                "Dinheiro": 'Caixa Físico',
+                "Outros": 'Bolsas, isenções e outros meios indeterminados',
+                "Pix": 'Inter_PJ',
+                "Transferência bancária": 'Inter_PJ',
+                "Pix cobrança": 'Conta PJ Conta Azul',
+                "Sem pagamento": 'Bolsas, isenções e outros meios indeterminados',
+
+                "": 'Amais Financeira',
+                "": 'Azulzinha da Caixa',
+                "": 'Bolsistas Integrais',
+                "": 'BTG Pactual - PJ',
+                "": 'Caixa Econômica Conta PJ',
+                "": 'Caixa Excedente',
+                "": 'Cartão Caixa',
+                "": 'Cartão Inter PJ',
+                "": 'Cartão PJ Santander 21',
+                "": 'Cartão PJ Santander 26',
+                "": 'Cartão Santander PJ 12',
+                "": 'Itaú_PJ',
+                "": 'Receba Fácil',
+                "": 'Santander_PJ',
+                "": 'ZOOP'
+
+            }
+
+
+            const serviceFiltered = services.find(ser => ser.descricao.includes(servico));
+            const { id: idCategorie } = categories.find(cat => cat.nome.includes(categorieOrCost[servico]));
+            const { id: idCenterCost } = costs.find(cos => cos.nome.includes("Mensalidade"));
+            const { id: idFinancialAccount } = financialAccounts.find(fin => fin.nome.includes(financial_account[formaPagamentoParcelas]));
+
+
+            let venc = await DateTransformer(vencimentoPrimeiraParcela);
+            venc.setDate(venc.getDate() - 25);
+
+            let less25Days = venc.toLocaleDateString('pt-BR');
+
+            const body = {
+                contract: contrato,
+                start: "29/06/2025",
+                end: "29/07/2026",
+                emissionDate: less25Days,
+                idClient: persons?.uuid,
+                idCategorie,
+                idCenterCost,
+                serviceFiltered,
+                idFinancialAccount,
+                notes: saleNotes,
+                paymentType: paymentType[formaPagamentoParcelas],
+                firstDayToPay: vencimentoPrimeiraParcela,
+                dueDay: parseInt(vencimentoPrimeiraParcela.split("/")[0]),
+            }
+
+            const newContract = await CreateContract({ unity: Unidade, body });
+            console.log({ newContract })
+            /*
+            {
+              "id_cliente": "123e4567-e89b-12d3-a456-426614174000",
+              "data_emissao": "2021-01-01",
+              "id_categoria": "123e4567-e89b-12d3-a456-426614174000",
+              "id_centro_custo": "123e4567-e89b-12d3-a456-426614174000",
+              "id_vendedor": "123e4567-e89b-12d3-a456-426614174000",
+              "observacoes": "string",
+              "observacoes_pagamento": "Pagamento à vista",
+              "termos": {
+                "tipo_frequencia": "MENSAL",
+                "tipo_expiracao": "DATA",
+                "data_inicio": "2021-01-01",
+                "data_fim": "2021-12-31",
+                "intervalo_frequencia": 1,
+                "dia_emissao_venda": 1,
+                "numero": 1
+              },
+              "composicao_de_valor": {
+                "frete": 10,
+                "desconto": {
+                  "tipo": "PORCENTAGEM",
+                  "valor": 10
+                }
+              },
+              "condicao_pagamento": {
+                "tipo_pagamento": "BOLETO",
+                "id_conta_financeira": "123e4567-e89b-12d3-a456-426614174000",
+                "dia_vencimento": 10,
+                "primeira_data_vencimento": "2021-01-10"
+              },
+              "itens": [
+                {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "quantidade": 10,
+                  "descricao": "Produto 1",
+                  "valor": 100,
+                  "valor_custo": 100
+                }
+              ]
+            }
+            */
+
+
+
+            return res.status(200).send("Ok")
+
+
+        } catch (error) {
+            console.log(error)
+
+            return res.status(400).send("Ok")
+
+        }
+
+
+
+
+
+
+        return
+
+        try {
+
+
 
             var header = {
                 "Authorization": `Bearer ${await getToken(Unidade)}`,

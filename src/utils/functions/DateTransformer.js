@@ -1,10 +1,15 @@
-export function DateTransformer(dateStr) {
-    if (!dateStr) return "Invalid Date"
-    let [day, month, year] = dateStr.split('/');
+export const ReOrderDate = (string) => {
+    let [day, month, year] = string.split('/');
 
     // Reorganiza para o formato "YYYY-MM-DD"
-    let isoDate = `${year}-${month}-${day}T00:00:00.000Z`;
+    let isoDate = `${year}-${month}-${day}`;
 
+    return isoDate
+}
+
+export function DateTransformer(dateStr) {
+    if (!dateStr) return "Invalid Date"
+    const isoDate = ReOrderDate(dateStr) + "T00:00:00.000Z";
     return new Date(isoDate)
 }
 

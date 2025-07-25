@@ -131,7 +131,19 @@ class PostController {
                             }
                         },
                         historic: {
-                            create: usersSigned.filter(res => res !== false)
+                            createMany: {
+                                data: [
+                                    {
+                                        responsible: "Automação",
+                                        information: {
+                                            field: "created_at",
+                                            text: "Dia de criação do registro",
+                                            from: "1",
+                                        }
+                                    },
+                                    ...usersSigned.filter(res => res !== false)
+                                ]
+                            }
                         }
                     }
                 })

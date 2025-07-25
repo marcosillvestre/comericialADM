@@ -28,9 +28,9 @@ export const bodyMakerForCustomFields = async (contractData) => {
 
 
     const [products] = await prisma.$transaction([
-        prisma.products.findMany({
+        prisma.product.findMany({
             where: {
-                sku: {
+                code: {
                     in: materilFiltered.filter(res => res !== undefined)
                 }
             }
@@ -75,5 +75,6 @@ export const bodyFilterCustomFields = async (deal) => {
         phone: contacts[0]?.phones[0]?.phone || " ",
         subclass: Subclasse,
         seller: findYourValueForCustomFields("Vendedor", deal_custom_fields),
+        convenio: findYourValueForCustomFields("Tipo de Campanha / Convênio", deal.deal_custom_fields)
     }
 }
