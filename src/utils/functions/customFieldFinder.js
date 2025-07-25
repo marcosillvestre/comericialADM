@@ -75,5 +75,6 @@ export const bodyFilterCustomFields = async (deal) => {
         phone: contacts[0]?.phones[0]?.phone || " ",
         subclass: Subclasse,
         seller: findYourValueForCustomFields("Vendedor", deal_custom_fields),
+        convenio: findYourValueForCustomFields("Tipo de Campanha / Convênio", deal.deal_custom_fields)
     }
 }

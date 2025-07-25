@@ -90,6 +90,7 @@ routes.delete("/reguas/:id", BillingRulesController.delete)
 
 routes.post("/produto", ProductsController.store)
 routes.post("/produtos", ProductsController.index)
+routes.post("/produto-query", ProductsController.query)
 routes.get("/produtos-totais", ProductsController.indexFilter)
 routes.put("/produtos/:id", ProductsController.update)
 routes.delete("/produtos/:id", ProductsController.delete)
