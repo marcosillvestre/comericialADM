@@ -40,7 +40,7 @@ class ProductsController {
             orderFor: yup.string().required(),
             orderBy: yup.string().required(),
 
-            typeFilter: yup.array(),
+            typeFilter: yup.array().required(),
 
         })
 
@@ -121,7 +121,7 @@ class ProductsController {
             orderBy: yup.string().required(),
             query: yup.string().required(),
 
-            typeFilter: yup.array(),
+            typeFilter: yup.array().required(),
 
         })
 
