@@ -1,6 +1,7 @@
 import * as yup from 'yup';
 import prisma from '../../../database/database.js';
-import { getOptionsFromRdCustomFields, updateRdOptionsCustomFields } from '../../connection/externalConnections/rdStation.js';
+import { CreateProducts } from '../../connection/externalConnections/contaAzulStrategy.js';
+import { getOptionsFromRdCustomFields, UpdateCustomFields, updateRdOptionsCustomFields } from '../../connection/externalConnections/rdStation.js';
 
 class ProductsController {
 
@@ -230,16 +231,17 @@ class ProductsController {
         const schema = yup.object().shape({
             name: yup.string().required(),
             code: yup.string().required(),
+            unit: yup.string().required(),
+            priceSale: yup.number().nullable(),
+            priceCost: yup.number().nullable(),
+            minStock: yup.number().nullable(),
+            maxStock: yup.number().nullable(),
+
             ean: yup.string().nullable(),
             description: yup.string().nullable(),
-            unit: yup.string().required(),
             active: yup.bool().nullable(),
-            categorieName: yup.string().required(),
+            categorieName: yup.string().nullable(),
 
-            priceSale: yup.number().required(),
-            priceCost: yup.number().required(),
-            minStock: yup.number().required(),
-            maxStock: yup.number().required(),
         })
 
         const { name, code, priceSale, priceCost, ean, unit,
@@ -249,34 +251,46 @@ class ProductsController {
         if (minStock > maxStock) return res.status(500).json({ message: 'Estoque máximo deve ser maior que o mínimo' });
 
         try {
-            await schema.validateSync(req.body, { abortEarly: false })
+            await schema.validateSync(req.body, { abortEarly: false });
 
-            const newProduct = await prisma.product.create({
-                data: {
-                    name,
-                    code,
-                    priceSale, priceCost, ean, unit,
-                    description, minStock, maxStock, active,
-                    categorie: {
-                        connect: {
-                            name: categorieName
-                        }
+
+            const body = {
+                name,
+                code,
+                priceSale, priceCost, ean, unit,
+                description, minStock, maxStock, active,
+
+            }
+
+            if (categorieName) {
+                body["categorie"] = {
+                    connect: {
+                        name: categorieName
                     }
                 }
+            }
+
+
+            const newProduct = await prisma.product.create({
+                data: body
             })
 
-
-
-            const opts = await getOptionsFromRdCustomFields("64bee4fa5ccd17001cec1e12")
-            let newMd = name.concat(` / ${sku}`)
-            let filteredOptions = opts.filter(res => !res.includes(name))
-
-            await updateRdOptionsCustomFields("64bee4fa5ccd17001cec1e12", filteredOptions.concat(newMd))
+            await Promise.allSettled([
+                UpdateCustomFields({ value: name, sku: code, id: '64bee4fa5ccd17001cec1e12' }),
+                CreateProducts({ unity: ["Centro", "PTB"], body: req.body })
+            ])
 
 
             return res.status(201).json(newProduct);
+
         } catch (error) {
-            console.log({ where: "[CREATE.PRODUCT]", error })
+
+            console.log({
+                error,
+                where: "[CREATE.PRODUCT]",
+            })
+            if ("errors" in error) return res.status(400).json({ message: error.errors })
+
             return res.status(500).json({ message: 'Falha para criar um novo produto, verifique os dados' });
         }
     }
@@ -286,16 +300,17 @@ class ProductsController {
         const schema = yup.object().shape({
             name: yup.string().required(),
             code: yup.string().required(),
+            unit: yup.string().required(),
+            priceSale: yup.number().nullable(),
+            priceCost: yup.number().nullable(),
+            minStock: yup.number().nullable(),
+            maxStock: yup.number().nullable(),
+
             ean: yup.string().nullable(),
             description: yup.string().nullable(),
-            unit: yup.string().required(),
             active: yup.bool().nullable(),
             categorieName: yup.string().nullable(),
 
-            priceSale: yup.number().required(),
-            priceCost: yup.number().required(),
-            minStock: yup.number().required(),
-            maxStock: yup.number().required(),
         })
 
         const { name, code, priceSale, priceCost, ean, unit,

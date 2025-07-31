@@ -6,11 +6,11 @@ const encoded = Buffer.from(`${process.env.CONTA_AZUL_CLIENT_ID}:${process.env.C
 const encodedTest = Buffer.from(`${process.env.CONTA_AZUL_CLIENT_IDd}:${process.env.CONTA_AZUL_CLIENT_SECRETt}`).toString('base64');
 
 const header = {
-    "authorization": `Basic ${encoded}`,
+    "Authorization": `Basic ${encoded}`,
     "content-Type": "application/x-www-form-urlencoded"
 }
 const headerTest = {
-    "authorization": `Basic ${encodedTest}`,
+    "Authorization": `Basic ${encodedTest}`,
     "content-Type": "application/x-www-form-urlencoded"
 }
 
@@ -66,77 +66,93 @@ export const getToken = async (unity, action) => {
     return access_token
 }
 
-// const codeData = await axios.get(
-//     `https://auth.contaazul.com/oauth2/authorize?response_type=code&client_id=${process.env.CONTA_AZUL_CLIENT_IDd}&redirect_uri=https://controlecomercial-git-stagetest-marcosillvestres-projects.vercel.app&state=ESTADO&scope=openid+profile+aws.cognito.signin.user.admin`
-// )
 
-// console.log(codeData)
-
-// return;
 
 async function Run({ code, refresh_token }) {
 
     const body = {
         client_id: process.env.CONTA_AZUL_CLIENT_IDd,
         client_secret: process.env.CONTA_AZUL_CLIENT_SECRETt,
-        grant_type: 'refresh_token',
         code,
+
+        grant_type: 'refresh_token',
         refresh_token
     }
 
-    const { data } = await axios.post(
-        "https://auth.contaazul.com/oauth2/token", body, { headers: headerTest }
+    try {
 
-    )
-    const { access_token } = data;
+        const { data } = await axios.post(
+            "https://auth.contaazul.com/oauth2/token",
+            new URLSearchParams(body),
+            { headers: headerTest }
+        )
 
-    return access_token
+        return data;
+
+    } catch (error) {
+
+        console.log({
+            error: error.response,
+            where: "[SWITCH GRANT_TYPE FOR ACCESS_CODE]",
+        })
+    }
 }
 
-async function getData() {
-
-    const token = await getNewToken("PTB")
-
-    const query = new URLSearchParams({
-        pagina: '1',
-        tamanho_pagina: '10',
-
-        tipo_perfil: 'FORNECEDOR',
-        status: 'ATIVO'
-    }).toString();
-
-    const resp = await fetch(
-        `https://api-v2.contaazul.com/v1/pessoa?${query}`,
-        {
-            method: 'GET',
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        }
-    );
-
-    const data = await resp.json();
-    const { itens } = data
-    console.log(data);
-}
 
 export const getNewToken = async (unity) => {
 
-    const { refresh_token, access_token } =
-        await prisma.conec.findUnique({
-            where: {
-                id: unity === "PTB" ? 3 : 4
-            }
-        })
+    const id = unity === "PTB" ? 3 : 4;
 
-    const refresh = await Run({
-        code: access_token,
-        refresh_token
-    });
+    const { refresh_token, access_token } = await prisma.conec.findUnique({
+        where: {
+            id
+        }
+    })
 
-    return refresh;
+    const refresh = await Run({ code: access_token, refresh_token });
+
+    if (!refresh) return null;
+
+    const { access_token: newToken, refresh_token: newRefresh } = refresh;
+
+    await prisma.conec.update({
+        where: {
+            id
+        },
+        data: {
+            refresh_token: newRefresh
+        }
+    })
+
+    return newToken;
 }
 
+// async function getData() {
+
+//     const token = await getNewToken(unity)
+
+//     const query = new URLSearchParams({
+//         pagina: '1',
+//         tamanho_pagina: '1',
+
+//         tipo_perfil: 'FORNECEDOR',
+//         status: 'ATIVO'
+//     }).toString();
+
+//     const resp = await fetch(
+//         `https://api-v2.contaazul.com/v1/pessoa?${query}`,
+//         {
+//             method: 'GET',
+//             headers: {
+//                 Authorization: `Bearer ${token}`
+//             }
+//         }
+//     );
+
+//     const data = await resp.json();
+//     const { itens } = data
+//     console.log(data);
+// }
 
 // getData()
 
@@ -144,6 +160,11 @@ export const getNewToken = async (unity) => {
 
 
 
+// const codeData = await axios.get(
+//     `https://auth.contaazul.com/oauth2/authorize?response_type=code&client_id=${process.env.CONTA_AZUL_CLIENT_IDd}&redirect_uri=https://controlecomercial-git-stagetest-marcosillvestres-projects.vercel.app&state=ESTADO&scope=openid+profile+aws.cognito.signin.user.admin`
+// )
+
+// console.log(codeData.request)
 
 
 

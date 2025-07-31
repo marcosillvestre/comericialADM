@@ -280,3 +280,24 @@ export async function Funnels(id) {
     }
 
 }
+
+
+export async function UpdateCustomFields({ value, sku, id }) {
+    try {
+
+        const opts = await getOptionsFromRdCustomFields(id)
+        let newMd = value.concat(` / ${sku}`)
+        let filteredOptions = opts.filter(res => !res.includes(sku))
+
+        await updateRdOptionsCustomFields(id, filteredOptions.concat(newMd))
+
+        return true
+
+    } catch (error) {
+
+        console.log({
+            error,
+            where: "[UPDATE RD CUSTOMFIELDS]"
+        })
+    }
+}

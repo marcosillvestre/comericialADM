@@ -370,7 +370,18 @@ model productCategories {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+model Kit {
+  id               String   @id @default(uuid())
+  name             String   @unique
+  code             String   @unique
+  priceSale        Decimal  @default(0.0)
+  description      String?
 
+  relatedProducts  Product[]
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+} 
 model Product {
   id              String   @id @default(uuid())
   name            String   @unique
@@ -385,22 +396,53 @@ model Product {
   active          Boolean  @default(true)
 
   kitsRelated     Kit[]
+  rules           billings[]
+
   categorieName   String?  
   categorie       productCategories? @relation(fields: [categorieName], references: [name])
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+
+  @@map("newProduct")
 }
 
-model Kit {
-  id               String   @id @default(uuid())
-  name             String   @unique
-  code             String   @unique
-  priceSale        Decimal  @default(0.0)
-  description      String?
+model Service {
+  id                String   @id  @default(cuid())
+  name              String
+  code              String
+  active            Boolean       @default(true)
+  category          typeInsume 
+  workLoad          String?
+  description       String?
+  priceSale         Decimal       @default(0.0)
+  priceCost         Decimal       @default(0.0)
+  modality          String
+  duration          Int           @default(0)
+  rules             billings[]
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
 
-  relatedProducts  Product[]
-  
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-} 
+  @@map("newService")
+}
+model billings {
+  id               String   @id  @default(uuid())
+  name             String
+  description      String
+  reminderMethod   Json
+  daysToAction     Int
+  message          String
+
+  typeTrigger      TriggerMoment  
+  category         typeInsume
+  productsRelated  Product[]
+  servicesRelated  Service[]  
+
+  status           Boolean    @default(true)
+
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt 
+
+  @@map("newBillingRule")
+}
