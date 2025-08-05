@@ -1,5 +1,6 @@
+import * as yup from 'yup';
 import prisma from '../../../database/database.js';
-import { AplieDescount } from '../../../utils/functions/descountAplied.js';
+import { CreateServices } from '../../connection/externalConnections/contaAzulStrategy.js';
 import { CreateServicesAtRD, EditServicesAtRD, ReturnServiceAtRD } from '../../connection/externalConnections/rdStation.js';
 class ServicesController {
 
@@ -8,13 +9,13 @@ class ServicesController {
 
 
             const [services, count] = await prisma.$transaction([
-                prisma.services.findMany({
+                prisma.service.findMany({
 
                     orderBy: {
                         name: "asc"
                     }
                 }),
-                prisma.services.count()
+                prisma.service.count()
 
             ])
 
@@ -26,168 +27,205 @@ class ServicesController {
 
         } catch (error) {
             console.log({ error })
-            return res.status(500).json({ error: 'Failed to fetch services' });
+            return res.status(500).json({ message: 'Failed to fetch services' });
         }
     }
 
     async index(req, res) {
 
-        const { take, skip, orderBy, query, orderFor } = req.body
+        const schema = yup.object().shape({
+
+            skip: yup.string().required(),
+            take: yup.string().required(),
+
+            orderFor: yup.string().required(),
+            orderBy: yup.string().required(),
+
+            typeFilter: yup.array().required(),
+
+        })
 
         try {
-            const withQuery = async () => {
-                const [services, count] = await prisma.$transaction([
-                    prisma.services.findMany({
-                        where: {
-                            OR: [
-                                {
-                                    name: {
-                                        contains: query,
-                                        mode: "insensitive"
-                                    }
-                                },
-                                {
-                                    sku: {
-                                        contains: query,
-                                        mode: "insensitive"
-                                    }
-                                }
-                            ]
-                        },
-                        take: parseInt(take),
-                        skip: parseInt(skip),
-                        orderBy: {
-                            [orderBy]: orderFor
+            await schema.validateSync(req.body, { abortEarly: false });
+
+            const { take, skip, orderBy, typeFilter, orderFor, } = req.body;
+
+            const filters = typeFilter.map(res => {
+                const bools = {
+                    "Sim": true,
+                    "Não": false
+                }
+
+
+                if (res.label.includes("DATA")) {
+                    const [initialValue, finalValue] = res.value.split("~")
+
+                    return {
+                        [res.key]: {
+                            gte: HandleUTCDate(initialValue),
+                            lte: HandleUTCDate(finalValue)
                         }
-                    }),
-                    prisma.services.count({
-                        where: {
-                            OR: [
-                                {
-                                    name: {
-                                        contains: query,
-                                        mode: "insensitive"
-                                    }
-                                },
-                                {
-                                    sku: {
-                                        contains: query,
-                                        mode: "insensitive"
-                                    }
-                                }
-                            ]
-                        },
-                    })
+                    }
+                }
 
-                ])
-                return { services, count }
-            }
-            const withoutQuery = async () => {
-                const [services, count] = await prisma.$transaction([
-                    prisma.services.findMany({
-                        take: parseInt(take),
-                        skip: parseInt(skip),
-                        orderBy: {
-                            [orderBy]: orderFor
-                        }
-                    }),
-                    prisma.services.count()
+                return {
+                    [res.key]: {
+                        equals: bools[res.value] ?? res.value
 
-                ])
-                return { services, count }
-            }
+                    }
+                }
+            })
 
 
 
-            const { services, count } = query ? await withQuery() :
-                await withoutQuery()
+            const [services, total] = await prisma.$transaction([
+                prisma.service.findMany({
+                    take: parseInt(take),
+                    skip: parseInt(skip),
+                    orderBy: {
+                        [orderBy]: orderFor
+                    },
+                    where: {
+                        AND: [
+                            ...filters
+                        ]
+                    }
+                }),
+                prisma.service.count({
+                    where: {
+                        AND: [...filters]
+                    }
+                })
+
+            ])
+
 
             return res.status(200).json({
                 services,
-                total: count
+                total
             });
 
+
+
         } catch (error) {
-            return res.status(500).json({ error: 'Failed to fetch Insumes' });
+            console.log({
+                error,
+                where: "[GET INDEX SERVICES]"
+            })
+
+            if ("errors" in error) return res.status(400).json({ message: error.errors })
+
+            return res.status(500).json({ message: 'Failed to fetch Insumes' });
         }
     }
 
     async store(req, res) {
-        const { name, sku, price_selling, color, status,
-            workLoad, course, modality, duration } = req.body;
+
+        const schema = yup.object().shape({
+            name: yup.string().required(),
+            code: yup.string().required(),
+            description: yup.string().required(),
+            priceSale: yup.string().required(),
+            priceCost: yup.string().required(),
+            modality: yup.string().required(),
+            workLoad: yup.string().required(),
+
+            duration: yup.number().required(),
+            active: yup.bool(),
+        })
+
 
         try {
 
-            const { decreaseFifteen, descreaseThird, descreaseTw, increseTax } = await AplieDescount(price_selling)
+            await schema.validateSync(req.body, { abortEarly: false });
 
-            await CreateServicesAtRD({
-                "name": name,
-                "description": `
-sku: ${sku},
-carga horária: ${workLoad},
-modalidade: ${modality},
-duração: ${duration},
-curso: ${course}
-`,
-                "base_price": increseTax * parseInt(duration),
-            })
+            const { name, code, active, workLoad, description, priceSale,
+                priceCost, modality, duration } = req.body;
 
 
-            const newInsume = await prisma.services.create({
+            await Promise.allSettled([
+                CreateServicesAtRD(req.body),
+                CreateServices({
+                    unity: ["Centro", "PTB"],
+                    body: req.body
+                })
+            ])
+
+
+            const newInsume = await prisma.service.create({
                 data: {
                     name,
-                    sku,
-                    price_selling,
-                    color,
-                    price_ticket: increseTax,
-                    price_card: descreaseTw,
-                    price_cash: descreaseThird,
-                    price_link: decreaseFifteen,
-                    category: "Service",
-                    status,
-                    workLoad, course, modality, duration
-                },
+                    code, active, workLoad,
+                    description, priceSale,
+                    priceCost, modality, duration,
+
+                    category: "Service"
+                }
             });
 
             return res.status(201).json(newInsume);
+
         } catch (error) {
-            return res.status(500).json({ error: 'Failed to create Insume' });
+
+            console.error({
+                error,
+                where: "[CREATE SERVICES]"
+            })
+
+            if ("errors" in error) return res.status(400).json({ message: error.errors })
+
+            return res.status(500).json({ message: 'Falha ao criar um novo serviço, verifique seus dados' });
         }
     }
 
     async update(req, res) {
-        const { id } = req.params;
-        const { name, sku, price_selling, color, status,
-            workLoad, course, modality, duration
-        } = req.body;
 
-        const { decreaseFifteen, descreaseThird, descreaseTw, increseTax } = await AplieDescount(price_selling)
+        const schema = yup.object().shape({
+            name: yup.string().required(),
+            code: yup.string().required(),
+            workLoad: yup.string().required(),
+            description: yup.string().required(),
+            priceSale: yup.string().required(),
+            priceCost: yup.string().required(),
+            modality: yup.string().required(),
+
+            active: yup.bool().required(),
+            duration: yup.number().required(),
+
+        })
+
 
 
         try {
+            await schema.validateSync(req.body, { abortEarly: false });
 
-            const { name: fName, status: fStatus } = await prisma.services.findUnique({
+            const { id } = req.params;
+
+            const { name, code, active, workLoad, description,
+                priceSale, priceCost, modality, duration } = req.body;
+
+            const { name: fName, status: fStatus } = await prisma.service.findUnique({
                 where: {
                     id
                 }
             });
 
 
-            if (name !== fName || status !== fStatus) {
+            if (name !== fName || active !== fStatus) {
                 try {
                     const { id } = await ReturnServiceAtRD(fName)
 
-                    if (!id) res.status(500).json({ error: 'Failed to update Insume' });
+                    if (!id) res.status(500).json({ message: 'Failed to update Insume' });
 
                     const editBody = {
                         name,
-                        visible: status,
+                        visible: active,
                         description: `
-sku: ${sku},
+sku: ${code},
 carga horária: ${workLoad},
 modalidade: ${modality},
 duração: ${duration},
-curso: ${course}
+curso: ${name}
 `,
                     }
 
@@ -196,7 +234,7 @@ curso: ${course}
 
                 } catch (error) {
                     console.log(error)
-                    return res.status(500).json({ error: 'Failed to update Insume' });
+                    return res.status(500).json({ message: 'Failed to update Insume' });
 
                 }
 
@@ -204,26 +242,27 @@ curso: ${course}
 
 
 
-            const updatedInsume = await prisma.services.update({
+            const updatedInsume = await prisma.service.update({
                 where: { id: id },
                 data: {
-                    name,
-                    sku,
-                    price_selling,
-                    price_ticket: increseTax,
-                    price_card: descreaseTw,
-                    price_cash: descreaseThird,
-                    price_link: decreaseFifteen,
-                    color,
-                    status,
-                    workLoad, course, modality, duration
+                    name, code, active, workLoad, description, priceSale,
+                    priceCost, modality, duration,
 
                 },
             });
 
             return res.status(200).json(updatedInsume);
+
         } catch (error) {
-            return res.status(500).json({ error: 'Failed to update Insume' });
+
+            console.error({
+                error,
+                where: "[CREATE SERVICES]"
+            })
+
+            if ("errors" in error) return res.status(400).json({ message: error.errors })
+
+            return res.status(500).json({ message: 'Failed to update Insume' });
         }
     }
 
@@ -231,21 +270,32 @@ curso: ${course}
         const { id } = req.params;
 
         try {
-            const { id } = await ReturnServiceAtRD(fName)
+            const { name: fName } = await prisma.service.findUnique({ where: { id } });
+            const serviceAtRd = await ReturnServiceAtRD(fName);
+
+            if (serviceAtRd) {
+                const { id: idService } = serviceAtRd;
+
+                await EditServicesAtRD(idService, {
+                    visible: false,
+                })
+
+            }
 
 
-            await EditServicesAtRD(id, {
-                visible: false,
+            await prisma.service.delete({ where: { id } });
 
-            })
-
-            await prisma.services.delete({
-                where: { id },
-            });
             return res.status(204).send();
 
         } catch (error) {
-            return res.status(500).json({ error: 'Failed to delete Insume' });
+            console.log({
+                error,
+                where: "[DELETE SERVICES]"
+            })
+
+            if ("errors" in error) return res.status(400).json({ message: error.errors })
+
+            return res.status(500).json({ message: 'Failed to fetch Insumes' });
         }
     }
 }

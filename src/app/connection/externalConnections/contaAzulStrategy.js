@@ -134,7 +134,7 @@ export const CreatePeople = async ({ unity, body }) => {
         }
 
 
-        const { data } = await axios.post(
+        const { data, statusText } = await axios.post(
             `https://api-v2.contaazul.com/v1/pessoa`,
             newBody,
             {
@@ -145,7 +145,7 @@ export const CreatePeople = async ({ unity, body }) => {
             }
         );
 
-
+        console.log({ data, statusText })
         return data;
 
     } catch (error) {
@@ -309,8 +309,8 @@ export async function CreateProducts({ unity, body }) {
     } catch (error) {
 
         console.error({
-            error: error.response.data,
-            where: "[CREATE PRODUCTS]"
+            error,
+            where: "[CREATE PRODUCTS CONTA AZUL]",
         })
 
         return null
@@ -326,35 +326,41 @@ export async function CreateServices({ unity, body }) {
         custo: priceCost,
         descricao: description,
         preco: priceSale,
-        status: true,
+        status: 'ATIVO',
         tipo_servico: 'PRESTADO'
     }
 
+    if (!Array.isArray(unity)) throw new Error("Formato de unidade inválido!");
 
     try {
-        const newToken = await getNewToken(unity);
+        const services = unity.map(async (uni) => {
 
+            const newToken = await getNewToken(uni);
 
-        const { data } = await axios.post(
-            `https://api-v2.contaazul.com/v1/servicos`,
-            newBody,
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${newToken}`
+            const { data } = await axios.post(
+                `https://api-v2.contaazul.com/v1/servicos`,
+                newBody,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${newToken}`
+                    }
                 }
-            }
-        );
+            );
 
+            return data;
 
-        return data;
+        })
+
+        return services;
 
     } catch (error) {
 
         console.error({
-            error: error.response.data,
-            where: "[CREATE PRODUCTS]"
-        })
+            error,
+            where: "[CREATE SERVICES CONTA AZUL]",
+        });
+
         return null
     }
 }

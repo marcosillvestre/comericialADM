@@ -573,6 +573,14 @@ const SyncronizeSalesAndRegisters = async () => {
 export default SyncronizeSalesAndRegisters
 
 
+// const o = await prisma.service.findMany()
+
+// await axios.post(
+//     "https://hook.us1.make.com/r53ooor6quxbs64zlxgzuyuiqe8mdvme",
+//     { o }
+// )
+
+
 // let p = pd.slice(0, 5)
 
 // console.log(p[0].priceSale + 10.20)

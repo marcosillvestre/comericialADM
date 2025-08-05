@@ -410,8 +410,8 @@ model Product {
 
 model Service {
   id                String   @id  @default(cuid())
-  name              String
-  code              String
+  name              String        @unique
+  code              String        @unique
   active            Boolean       @default(true)
   category          typeInsume 
   workLoad          String?

@@ -107,7 +107,12 @@ class ProductsController {
             });
 
         } catch (error) {
-            console.log({ error })
+            console.log({
+                error,
+                where: "[GET INDEX PRODUCTS]"
+            })
+            if ("errors" in error) return res.status(400).json({ message: error.errors })
+
             return res.status(500).json({ error: 'Failed to fetch Products' });
         }
     }
@@ -220,7 +225,13 @@ class ProductsController {
             });
 
         } catch (error) {
-            console.log({ error })
+
+            console.log({
+                error,
+                where: "[GET QUERY PRODUCTS]"
+            })
+            if ("errors" in error) return res.status(400).json({ message: error.errors })
+
             return res.status(500).json({ error: 'Failed to fetch Products' });
         }
     }
@@ -289,6 +300,7 @@ class ProductsController {
                 error,
                 where: "[CREATE.PRODUCT]",
             })
+
             if ("errors" in error) return res.status(400).json({ message: error.errors })
 
             return res.status(500).json({ message: 'Falha para criar um novo produto, verifique os dados' });

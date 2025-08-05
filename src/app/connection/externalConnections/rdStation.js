@@ -205,9 +205,23 @@ export async function CreateProductsAtRD(product) {
 }
 
 export async function CreateServicesAtRD(product) {
+    const { name, code, workLoad, modality, duration } = product;
+    const body = {
+        "name": name,
+        "description": `
+sku: ${code},
+carga horária: ${workLoad},
+modalidade: ${modality},
+duração: ${duration},
+curso: ${name}
+`,
+    }
 
     try {
-        const { data } = await axios.post(`https://crm.rdstation.com/api/v1/products?token=${process.env.RD_TOKEN}`, product)
+        const { data } = await axios.post(
+            `https://crm.rdstation.com/api/v1/products?token=${process.env.RD_TOKEN}`,
+            body
+        )
 
         return data
     } catch (error) {
