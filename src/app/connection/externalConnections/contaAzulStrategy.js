@@ -134,7 +134,7 @@ export const CreatePeople = async ({ unity, body }) => {
         }
 
 
-        const { data, statusText } = await axios.post(
+        const { data } = await axios.post(
             `https://api-v2.contaazul.com/v1/pessoa`,
             newBody,
             {
@@ -145,7 +145,7 @@ export const CreatePeople = async ({ unity, body }) => {
             }
         );
 
-        console.log({ data, statusText })
+
         return data;
 
     } catch (error) {

@@ -57,7 +57,6 @@ class RegisterContaAzulController {
             return res.status(201).json(newPeople);
 
         } catch (error) {
-
             if ("errors" in error) return res.status(400).json({ message: `Campos inválidos: ${error.errors}` })
             return res.status(400).json({ message: error })
         }
@@ -420,7 +419,7 @@ serviço: parcela
 
 
         } catch (error) {
-            console.log(error)
+            console.error({ error })
 
             return res.status(400).send("Ok")
 

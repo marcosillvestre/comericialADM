@@ -48,7 +48,7 @@ const functionsArray = [
 functionsArray.forEach(res => {
     return new CronJob(res.time,
         function () {
-            res.fn();
+            // res.fn();
         },
         null,
         true,
