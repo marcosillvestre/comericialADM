@@ -43,7 +43,6 @@ class RegisterContaAzulController {
 
         try {
 
-
             const customerBody = {
                 "name": nomeResponsavel,
                 "email": email,
