@@ -259,7 +259,7 @@ class ProductsController {
             description, minStock, maxStock, active, categorieName,
         } = req.body;
 
-        if (minStock > maxStock) return res.status(500).json({ message: 'Estoque máximo deve ser maior que o mínimo' });
+        if (minStock >= maxStock) return res.status(500).json({ message: 'Estoque máximo deve ser maior que o mínimo' });
 
         try {
             await schema.validateSync(req.body, { abortEarly: false });
@@ -282,17 +282,19 @@ class ProductsController {
             }
 
 
+            const promise = await Promise.allSettled([
+                UpdateCustomFields({ value: name, sku: code, id: '64bee4fa5ccd17001cec1e12' }),
+                CreateProducts({ unity: ["Centro"], body: req.body })
+            ])
+
+            if (promise.find(pr => pr.status === "rejected")) return res.status(401).json({ message: "Falhar ao criar produto no conta azul, verifique os dados" })
+
             const newProduct = await prisma.product.create({
                 data: body
             })
 
-            await Promise.allSettled([
-                UpdateCustomFields({ value: name, sku: code, id: '64bee4fa5ccd17001cec1e12' }),
-                CreateProducts({ unity: ["Centro", "PTB"], body: req.body })
-            ])
-
-
             return res.status(201).json(newProduct);
+
 
         } catch (error) {
 

@@ -3,6 +3,7 @@ import { getNewToken } from "../../core/getToken.js"
 
 import { v4 } from "uuid"
 import { ReOrderDate } from "../../../utils/functions/DateTransformer.js"
+import { installments } from "../../../utils/functions/installments.js"
 import { randomNumber } from "../../../utils/functions/serializeNumbers.js"
 import { getDataFromCep } from "./viaCep.js"
 
@@ -169,45 +170,176 @@ export const CreatePeople = async ({ unity, body }) => {
 }
 
 
-
-export const CreateContract = async ({ unity, body }) => {
-    const { contract, start, end, idClient, emissionDate, idCategorie,
-        idCenterCost, serviceFiltered, notes, idFinancialAccount, dueDay,
-        firstDayToPay, paymentType
-    } = body;
+export const DeleteDuplicateSale = async ({ unity, personId, student }) => {
+    const newToken = await getNewToken(unity);
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${newToken}`
+    }
+    const queryForSales = new URLSearchParams({ ids_clientes: personId }).toString();
     try {
-        const startDate = await ReOrderDate(start);
-        const endDate = await ReOrderDate(end);
 
-        const newToken = await getNewToken(unity);
+        const { data } = await axios.get(`https://api-v2.contaazul.com/v1/venda/busca?${queryForSales}`,
+            { headers })
 
-        const emission = await ReOrderDate(emissionDate);
-        const payDay = await ReOrderDate(firstDayToPay);
-        const numberSale = await randomNumber(1, 1000000)
+        const { totais, itens } = data;
+
+        return { totais, itens }
+
+    } catch (error) {
+
+        console.log({
+            error: error.response,
+            where: "[DELETE DUPLICATED SALES]"
+        })
+    }
+
+}
+
+
+export const GetDataForCreateSales = async ({ unity, search }) => {
+    const newToken = await getNewToken(unity);
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${newToken}`
+    }
+    const queryForProducts = new URLSearchParams({ pagina: '1', tamanho_pagina: '100', status: "ATIVO" }).toString();
+    const queryForCostumer = new URLSearchParams({ pagina: '1', tamanho_pagina: '1', 'documento[]': search, }).toString();
+    const queryForCostCenter = new URLSearchParams({ pagina: '1', tamanho_pagina: '100', }).toString();
+    const queryForCategories = new URLSearchParams({ pagina: '1', tamanho_pagina: '100', permite_apenas_filhos: 'false' }).toString();
+    const queryForAccount = new URLSearchParams({ pagina: '1', tamanho_pagina: '100', apenas_ativo: 'true', }).toString();
+    const queryForService = new URLSearchParams({ pagina: '1', tamanho_pagina: '100', }).toString();
+
+    const [product, person, cost, categorie, financialAccount, service] = await Promise.all([
+
+        axios.get(`https://api-v2.contaazul.com/v1/produto/busca?${queryForProducts}`,
+            { headers }),
+
+        axios.get(`https://api-v2.contaazul.com/v1/pessoa?${queryForCostumer}`,
+            { headers }),
+
+        axios.get(`https://api-v2.contaazul.com/v1/centro-de-custo?${queryForCostCenter}`,
+            { headers }),
+
+        axios.get(`https://api-v2.contaazul.com/v1/categorias?${queryForCategories}`,
+            { headers }),
+
+        axios.get(`https://api-v2.contaazul.com/v1/conta-financeira?${queryForAccount}`,
+            { headers }),
+
+        axios.get(`https://api-v2.contaazul.com/v1/servicos?${queryForService}`,
+            { headers }),
+
+    ])
+
+    const { data: { itens: [persons] } } = person;
+    const { data: { itens: costs } } = cost;
+    const { data: { itens: categories } } = categorie;
+    const { data: { itens: financialAccounts } } = financialAccount;
+    const { data: { itens: services, paginacao } } = service;
+    const { data: { itens: products } } = product;
+
+
+    return {
+        persons, costs, categories,
+        financialAccounts, services, products
+    }
+}
+
+export const CreateSale = async ({ unity, body }) => {
+    const newToken = await getNewToken(unity);
+
+    const { notes, idClient, itens, dueDay, payment,
+        paymentType, idCategorie, idCenterCost, idFinancialAccount,
+        parcels
+    } = body;
+
+
+    try {
+        const { total, descount } = payment;
+
+        const installment = await installments(dueDay, parcels, total - descount);
+        const numberSale = await randomNumber(1, 1000000);
+        const emission = await ReOrderDate(dueDay);
+
 
         const newBody = {
             id_cliente: idClient,
-            data_emissao: emission,
+            situacao: 'EM_ANDAMENTO',
+            data_venda: emission,
+            numero: numberSale,
             id_categoria: idCategorie,
             id_centro_custo: idCenterCost,
-            id_vendedor: '',
-            observacoes_pagamento: '',
             observacoes: notes,
+            itens,
+            composicao_de_valor: {
+                frete: 0,
+                desconto: { tipo: 'VALOR', valor: descount }
+            },
+            condicao_pagamento: {
+                tipo_pagamento: paymentType,
+                id_conta_financeira: idFinancialAccount,
+                opcao_condicao_pagamento: installment.length === 1 ? 'À vista' : `${installment.length}X`,
+                parcelas: installment
+            }
+        }
+
+        const { data } = await axios.post(
+            `https://api-v2.contaazul.com/v1/venda`,
+            newBody,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${newToken}`
+                }
+            }
+        );
+
+
+        return data;
+
+    } catch (error) {
+
+        const status = error?.response?.status;
+        const msg = error?.response?.data?.message || error.message || "Erro inesperado";
+
+        console.error({
+            context: "[CREATE SALE]",
+            status,
+            message: msg,
+            fullError: error?.response?.data || error,
+        });
+
+        throw (`[CREATE SALE] [${status || 'Erro'}] ${msg}`);
+    }
+}
+export const CreateContract = async ({ unity, body }) => {
+
+    const { start, end, idClient, emissionDate, idCategorie,
+        idCenterCost, serviceFiltered, notes, idFinancialAccount, dueDay,
+        firstDayToPay, paymentType
+    } = body;
+
+    try {
+        const newToken = await getNewToken(unity);
+
+        const startDate = await ReOrderDate(start);
+        const endDate = await ReOrderDate(end);
+        const emission = await ReOrderDate(emissionDate);
+        const payDay = await ReOrderDate(firstDayToPay);
+        const numberSale = await randomNumber(1, 1000000);
+
+        const newBody = {
+            id_cliente: idClient,
             termos: {
                 tipo_frequencia: 'MENSAL',
                 tipo_expiracao: 'DATA',
                 data_inicio: startDate,
                 data_fim: endDate,
                 intervalo_frequencia: 1,
-                dia_emissao_venda: 17,
-                numero: 15
-            },
-            composicao_de_valor: {
-                frete: 0,
-                desconto: {
-                    tipo: 'VALOR',
-                    valor: 0
-                }
+                dia_emissao_venda: parseInt(emission.split("-")[2]),
+                numero: numberSale
             },
             condicao_pagamento: {
                 tipo_pagamento: paymentType,
@@ -221,19 +353,20 @@ export const CreateContract = async ({ unity, body }) => {
                     quantidade: 1,
                     valor: serviceFiltered?.preco,
                 }
-            ]
-
+            ],
+            data_emissao: emission,
+            id_categoria: idCategorie,
+            id_centro_custo: idCenterCost,
+            observacoes: notes,
         }
-
-
-        console.log(JSON.stringify(newBody, null, 2))
 
         const { data } = await axios.post(
             `https://api-v2.contaazul.com/v1/contratos`,
             newBody,
             {
                 headers: {
-                    Authorization: `Bearer ${newToken}`
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${newToken}`
                 }
             }
         );
@@ -243,24 +376,18 @@ export const CreateContract = async ({ unity, body }) => {
 
     } catch (error) {
 
-
-        console.log(error)
-
         const status = error?.response?.status;
         const msg = error?.response?.data?.message || error.message || "Erro inesperado";
 
-        // console.error({
-        //     context: "[CREATECONTRACT]",
-        //     status,
-        //     message: msg,
-        //     fullError: error?.response?.data || error,
-        // });
+        console.error({
+            context: "[CREATE CONTRACT]",
+            status,
+            message: msg,
+            fullError: error?.response?.data || error,
+        });
 
-        throw new Error(`[CREATECONTRACT] [${status || 'Erro'}] ${msg}`);
+        throw (`[CREATE CONTRACT] [${status || 'Erro'}] ${msg}`);
 
-        // Retorna erro padronizado para tratamento em nível superior
-
-        return null
     }
 }
 
@@ -285,35 +412,41 @@ export async function CreateProducts({ unity, body }) {
 
     try {
 
-        const products = unity.map(async (uni) => {
+        const products = await new Promise((resolve, reject) => {
 
-            const newToken = await getNewToken(uni);
+            unity.map(async (uni) => {
 
-            const { data } = await axios.post(
-                `https://api-v2.contaazul.com/v1/produto`,
-                newBody,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${newToken}`
+                const newToken = await getNewToken(uni);
+
+                await axios.post(
+                    `https://api-v2.contaazul.com/v1/produto`,
+                    newBody,
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${newToken}`
+                        }
                     }
-                }
-            );
+                )
+                    .then(r => resolve(r))
+                    .catch(err => reject(err))
 
-            return data;
-        })
+
+            })
+        }
+        )
 
 
         return products;
 
     } catch (error) {
 
-        console.error({
-            error,
+        console.log({
+            error: error.response.data,
             where: "[CREATE PRODUCTS CONTA AZUL]",
         })
 
-        return null
+        throw (error.response?.data.errorMessage)
     }
 }
 
@@ -387,7 +520,7 @@ export async function CreateServices({ unity, body }) {
 //                 "id_centro_custo": "dfc2738e-4ec7-11ee-a6e8-27bfd7200447",
 //                 "id_vendedor": "",
 //                 "observacoes_pagamento": "",
-//                 // "observacoes": "\nResponsável: Warley Souza China \nAluno: undefined\nIdade: 31\nTelefone para contato financeiro: 31975303648\nEmail do responsável financeiro: warleychena1@gmail.com\ncontrato: VS270new Date(62025-1\nVendedor: Victor Souza\n\nInformações do plano financeiro:\n\nVALOR DO CURSO/MENSALIDADES:\n\nCAMPANHA: sem campanha\nDESCRIÇÃO DA CAMPANHA: sem campanha\nValor total: R$ 3.012,00\nDesconto total: R$ 312,00\nForma de pagamento: Pix cobrança\n\nDETALHAMENTO DAS PARCELAS: \n\nQuantidade de parcelas: 12\nNúmero de parcelas afetadas: sem campanha\nValor total da(s) parcelas(s) afetadas: sem campanha\nDesconto da(s) parcela(s) afetadas: sem campanha\nNúmero de parcelas restantes: sem campanha\nValor total da(s) parcelas(s) restante(s):  sem campanha\nDesconto da(s) parcela(s) restantes: sem campanha\nValor líquido da(s) parcela(s) restantes: sem campanha\nDia de vencimento: 20\nData de Vencimento da Primeira Parcela: 20/08/2025\nData de vencimento da última parcela: Erro para calcular data de fim\n\n\nTAXA DE MATRÍCULA: \n\nCAMPANHA: Isenção da taxa de matrícula\nDESCRIÇÃO DA CAMPANHA: Os beneficiários dessa campanha terão custo zero na taxa de matrícula.\nVALOR TOTAL: R$ 350,00\nVALOR DO DESCONTO: R$ 350,00\nVALOR LÍQUIDO: R$ 0,00\nFORMA DE PAGAMENTO: Sem pagamento\nVencimento: 25/06/2025\n\nDETALHAMENTO DAS PARCELAS:\n\nNúmero de parcelas: 1\nValor da parcela: R$ 0,00\nDesconto por parcela: R$ 0,00\n\n\nMATERIAL DIDÁTICO/PRODUTOS:\n\nCAMPANHA: Desconto especial no material didático\nDESCRIÇÃO DA CAMPANHA : O contratante terá desconto adicional no material didático condedido por campanha.\nMATERIAL DIDÁTICO: High School Way Student's book&Workbook Combo + Kit do aluno personalizado - Anual / 20251706\nVALOR TOTAL: R$ 525,00\nVALOR DO DESCONTO:R$ 225,00\nVALOR LÍQUIDO: R$ 525,00\nFORMA DE PAGAMENTO: Pix\nPRIMEIRO VENCIMENTO: 31/07/2025\n\nDETALHAMENTO DAS PARCELAS:\n\nNúmero de parcelas: 1\nValor da parcela: R$ 400,00\nDesconto por parcela: R$ 225,00\nValor líquido por parcela: R$ 400,00\n\n\nInformações pedagógicas: \n\nData de início das aulas: 25/06/2025 \nTurma: 25/06/2025 de 19:00 às 21:00\nProfessor: A Definir\nCarga horária: 80 \nUnidade: PTB\nObservações pedagógicas: \nObservações financeiras:undefined\nid: 685c58cec9346f0014547ec2\nserviço: parcela\n").toISOString(),
+//                 // "observacoes":
 //                 "termos": {
 //                     "tipo_frequencia": "MENSAL",
 //                     "tipo_expiracao": "DATA",

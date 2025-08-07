@@ -13,3 +13,18 @@ export class StringsMethods {
 
 }
 
+
+export const createComment = (body) => {
+
+    return Object.entries(body)
+        .map(([chave, valor]) => {
+
+            const newValue = valor === '\n' ?
+                `\n ${chave}: ${valor}` :
+                `${chave}: ${valor}`
+
+            return newValue
+        })
+        .join('\n');
+}
+

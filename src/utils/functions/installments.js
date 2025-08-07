@@ -14,9 +14,9 @@ export const installments = async (dataPagamento, length, valor) => {
 
         data.push({
             "number": index + 1,
-            "value": parseFloat(valor / length).toFixed(2),
-            "due_date": new Date(addedMonths),
             "status": "PENDING",
+            "valor": parseFloat(valor / length).toFixed(2),
+            "data_vencimento": new Date(addedMonths).toISOString().split("T")[0],
         })
     }
 

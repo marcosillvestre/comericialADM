@@ -138,14 +138,14 @@ export const gatheringDataForDatabase = async (deals) => {
                 const studentAge = await calcularDiferencaAnos(result["Data de nascimento do aluno"])
 
                 const installment = await installments(
-                    result["Data de vencimento da primeira parcela"],
+                    result["Data de Vencimento da Primeira Parcela"],
                     result["Número de parcelas do curso"],
                     0
                 )
 
-                const endDate = await installment[installment.length - 1]?.due_date
-                const { course, workLoad, modality } = await getServiceByName(service.name)
+                const endDate = await installment[installment.length - 1]?.data_vencimento
 
+                const { course, workLoad, modality } = await getServiceByName(service.name)
                 return await {
                     ...result,
                     Endereco: viaCepData['logradouro'],
@@ -163,7 +163,7 @@ export const gatheringDataForDatabase = async (deals) => {
                     "Carga horário do curso": workLoad,
                     "Nome do responsável": contacts?.name ? contacts.name : undefined,
                     "Profissão": contacts?.title ? contacts.title : undefined,
-                    "Data de vencimento da última parcela": endDate ? new Date(endDate).toLocaleDateString('pt-BR') : 'Erro para calcular data de fim',
+                    "Data de Vencimento da Última Parcela": endDate ? new Date(endDate).toLocaleDateString('pt-BR') : null,
                     "Nº do contrato": code,
                     "Idade do Aluno": studentAge,
                     "Background do Aluno": pipeName.includes("Rematrícula") ? "Rematrícula" : "Novo aluno",
@@ -296,4 +296,4 @@ export default NewSearchSync
 //     v
 // )
 //     .then(r => console.log(r))
-//     .catch(r => console.log(r))
+//     .catch(r => console.log(r))]
