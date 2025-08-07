@@ -162,17 +162,22 @@ export async function updateRdOptionsCustomFields(id, params) {
     try {
 
 
-        await axios.
+        const { data } = await axios.
             put(`https://crm.rdstation.com/api/v1/custom_fields/${id}?token=${process.env.RD_TOKEN}`, {
                 custom_field: {
                     "opts": params,
                 }
             })
 
-        return true
+        return data
     } catch (error) {
 
-        return new Error(error)
+        console.log({
+            error,
+            where: "[UPDATE CUSTOM FIELDS AT RD]"
+        })
+
+        throw error
     }
 }
 

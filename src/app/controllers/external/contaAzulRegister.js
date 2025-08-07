@@ -1,15 +1,13 @@
-import axios from 'axios';
 import 'dotenv/config';
 import * as yup from 'yup';
 import { DateTransformer } from '../../../utils/functions/DateTransformer.js';
-import { installments } from '../../../utils/functions/installments.js';
 import { parseCurrency } from '../../../utils/functions/serializeNumbers.js';
+import { createComment } from '../../../utils/functions/serializerStrings.js';
+import { categorieOrCost, financial_account, paymentType } from '../../../utils/services/matches/index.js';
+import { CreateContract, CreatePeople, CreateSale, GetDataForCreateSales } from '../../connection/externalConnections/contaAzulStrategy.js';
 import { SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
-import { getToken } from '../../core/getToken.js';
 
 class RegisterContaAzulController {
-
-
 
     async storeCostumer(req, res) {
 
@@ -22,955 +20,628 @@ class RegisterContaAzulController {
             'Data de nascimento do  responsável': yup.string().transform((curr) => curr.replace(" ", "")).required("Data de nascimento do  responsável é um campo obrigatório"),
         })
 
-
-        await schema.validateSync(req.body, { abortEarly: false })
-
-        const { CelularResponsavel, Email, Bairro, CEP,
-            Complemento, Unidade, CPF,
-            ['Nome do responsável']: nomeResponsavel,
-            ['Data de nascimento do  responsável']: nascimentoResponsavel,
-            ['Nº do contrato']: contrato,
-            ['Profissão']: profissao,
-            ['Endereco']: endereco,
-            ['Número']: numero,
-        } = req.body;
-
-        var header = {
-            "Authorization": `Bearer ${await getToken(Unidade, 'refresh')}`,
-            "Content-Type": "application/json"
-        }
-
-
         try {
+            await schema.validateSync(req.body, { abortEarly: false })
 
-            const customerBody = {
-                "name": nomeResponsavel,
-                "email": email,
-                "business_phone": CelularResponsavel,
-                "mobile_phone": CelularResponsavel,
-                "person_type": CPF.length > 11 ? "LEGAL" : "NATURAL",
-                "document": CPF,
-                "identity_document": rgResponsavel,
-                "date_of_birth": new Date(nascimentoResponsavel.split("/").reverse().join("-")),
-                "notes": contrato,
-                "contacts": [
-                    {
-                        "name": nomeResponsavel.split("-")[0],
-                        "business_phone": CelularResponsavel,
-                        "email": email,
-                        "job_title": profissao
-                    }
-                ],
-                "address": {
-                    "zip_code": CEP,
-                    "street": endereco,
-                    "number": numero,
-                    "complement": Complemento,
-                    "neighborhood": Bairro
-                }
+            const { CelularResponsavel, Email, Bairro, CEP,
+                Complemento, Unidade, CPF,
+                ['Nome do responsável']: nomeResponsavel,
+                ['Data de nascimento do  responsável']: nascimentoResponsavel,
+                ['Nº do contrato']: contrato,
+                ['Profissão']: profissao,
+                ['Endereco']: endereco,
+                ['Número']: numero,
+            } = req.body;
+
+
+
+            const body = {
+                cpf: CPF,
+                phone: CelularResponsavel,
+                email: Email,
+                neighboor: Bairro,
+                cep: CEP,
+                complement: Complemento,
+                name: nomeResponsavel,
+                birth: nascimentoResponsavel,
+                contract: contrato,
+                role: profissao,
+                address: endereco,
+                number: numero,
             }
 
-
-            await new Promise(resolve => {
-                resolve(
-                    axios.post('https://api.contaazul.com/v1/customers',
-                        customerBody, { headers: header })
-                )
-            })
-                .then((response) => {
-                    // if(res )
-                    return res.status(201).json({ message: "Success" })
-                })
-                .catch(error => {
-
-                    if (error.response.data.message === 'CPF/CPNJ já utilizado por outro cliente.') {
-                        return res.status(201).json({ message: "Success" })
-                    }
-                    if (error.response.data.message !== 'CPF/CPNJ já utilizado por outro cliente.') {
-                        return res.status(401).json({ message: error.response.data.message })
-                    }
-
-                })
+            const newPeople = await CreatePeople({ unity: Unidade, body });
+            return res.status(201).json(newPeople);
 
         } catch (error) {
-
             if ("errors" in error) return res.status(400).json({ message: `Campos inválidos: ${error.errors}` })
+
             return res.status(400).json({ message: error })
         }
 
     }
 
     async storeContract(req, res) {
+        const schema = yup.object().shape({
+            'Data de Vencimento da Última Parcela': yup.string().required("Data de vencimento da primeira parcela é um campo obrigatório"),
+            'Data de Vencimento da Primeira Parcela': yup.string().required("Houve um erro no cálculo da Data de vencimento da última parcela verifique seus dados"),
+            'CPF': yup.string().required("CPF é um campo obrigatório").min(11, "O número de caracteres não corresponde a um CPF válido"),
+            'Unidade': yup.string().required("O campo Unidade não preenchido corretamente, verifique os dados"),
+            'parcel': yup.object().required("Dados sobre a parcela não foram preenchidos da maneira correta, verifique os dados"),
+            'Forma de pagamento da parcela': yup.string().required("Forma de pagamento da parcela é um campo obrigatório"),
 
-        const { id, promocao, valorCurso,
-            CPF, Curso, Unidade,
+        })
 
-            material,
-            parcel,
-            tax,
-            ['service']: servico,
-            ['Material didático']: materialDidatico,
-            ['Valor do desconto material didático']: valorDescontoMaterialDidatico,
-
-            Email,
-            Professor,
-            CelularResponsavel,
-            vendedor,
-            ['Nome do responsável']: nomeResponsavel,
-            ['Nome do aluno']: nomeAluno,
-            ['Nº do contrato']: contrato,
-            ['Forma de pagamento da parcela']: formaPagamentoParcelas,
-            ['Número de parcelas do curso']: parcelas,
-            ['Data de Vencimento da Primeira Parcela']: vencimentoPrimeiraParcela,
-            ['Data de vencimento da última parcela']: vencimentoUltimaParcela,
-            ['Forma de pagamento TM']: formaPagamentoTaxaMatricula,
-            ['Data de pagamento TM']: dataPagamentoTaxaMatricula,
-            ['Quantidade de parcelas TM ']: parcelasTaxaMatricula,
-            ['Forma de pagamento do MD']: formaPagamentoMaterialDidatico,
-            ['Data de pagamento MD']: vencimentoMaterialDidatico,
-            ['Carga horário do curso']: cargaHoraria,
-            ['Observações para o financeiro:']: observacaoFinanceiro,
-            ['Observações para o pedagógico:']: observacaoPedagogico,
-
-            ['Idade do Aluno']: idadeAluno,
-            ['Quantidade de parcelas MD']: parcelasMaterial,
-            ['Data da primeira aula']: dataPrimeiraAula,
-            ['Horário de Inicio']: horarioInicio,
-            ['Horário de fim']: horarioFim,
-        } = req.body;
 
         try {
+            await schema.validateSync(req.body, { abortEarly: false })
+
+            const { id, promocao, valorCurso,
+                CPF, Curso, Unidade,
+
+                material,
+                parcel,
+                tax,
+                ['service']: servico,
+                ['Material didático']: materialDidatico,
+                ['Valor do desconto material didático']: valorDescontoMaterialDidatico,
+
+                Email,
+                Professor,
+                CelularResponsavel,
+                vendedor,
+                ['Nome do responsável']: nomeResponsavel,
+                ['Nome do aluno (se não for responsável próprio))']: nomeAluno,
+                ['Nº do contrato']: contrato,
+                ['Forma de pagamento da parcela']: formaPagamentoParcelas,
+                ['Número de parcelas do curso']: parcelas,
+                ['Data de Vencimento da Primeira Parcela']: vencimentoPrimeiraParcela,
+                ['Data de Vencimento da Última Parcela']: vencimentoUltimaParcela,
+                ['Forma de pagamento TM']: formaPagamentoTaxaMatricula,
+                ['Data de pagamento TM']: dataPagamentoTaxaMatricula,
+                ['Quantidade de parcelas TM ']: parcelasTaxaMatricula,
+                ['Forma de pagamento do MD']: formaPagamentoMaterialDidatico,
+                ['Data de pagamento MD']: vencimentoMaterialDidatico,
+                ['Carga horário do curso']: cargaHoraria,
+                ['Observações para o financeiro:']: observacaoFinanceiro,
+                ['Observações para o pedagógico:']: observacaoPedagogico,
+
+                ['Idade do Aluno']: idadeAluno,
+                ['Quantidade de parcelas MD']: parcelasMaterial,
+                ['Data da primeira aula']: dataPrimeiraAula,
+                ['Horário de Inicio']: horarioInicio,
+                ['Horário de fim']: horarioFim,
+            } = req.body;
 
 
+            const { persons, services, costs, categories, financialAccounts } = await GetDataForCreateSales({ search: CPF, unity: Unidade })
 
-            var header = {
-                "Authorization": `Bearer ${await getToken(Unidade)}`,
-                "Content-Type": "application/json"
-            }
-            await new Promise(resolve => {
-                resolve(axios.get(`https://api.contaazul.com/v1/customers?document=${CPF}`,
-                    { headers: header }))
-            }).then(async data => {
-                if (data.data[0]) {
+            if (!persons) return res.status(400).json({ message: "CPF inválido, cliente não encontrado no conta azul" });
 
+            const saleNotes = await createComment({
+                'Responsável': nomeResponsavel,
+                'Aluno': nomeAluno,
+                'Idade': idadeAluno,
+                'Telefone para contato financeiro': CelularResponsavel,
+                'Email do responsável financeiro': Email,
+                'contrato': contrato,
+                'Vendedor': vendedor,
 
-                    const saleNotes = `
-Responsável: ${nomeResponsavel} 
-Aluno: ${nomeAluno}
-Idade: ${idadeAluno}
-Telefone para contato financeiro: ${CelularResponsavel}
-Email do responsável financeiro: ${Email}
-contrato: ${contrato}
-Vendedor: ${vendedor}
+                'Informações do plano financeiro': '\n',
 
-Informações do plano financeiro:
+                'VALOR DO CURSO / MENSALIDADES': '\n',
 
-VALOR DO CURSO/MENSALIDADES:
+                'CAMPANHA': parcel?.campaign?.name ?? 'sem campanha',
+                'DESCRIÇÃO DA CAMPANHA': parcel?.campaign?.description ?? 'sem campanha',
+                'Valor total': parseCurrency(parcel.total),
+                'Desconto total': parseCurrency(parcel.descount),
+                'Forma de pagamento': formaPagamentoParcelas,
 
-CAMPANHA: ${parcel?.campaign?.name ?? 'sem campanha'}
-DESCRIÇÃO DA CAMPANHA: ${parcel?.campaign?.description ?? 'sem campanha'}
-Valor total: ${parseCurrency(parcel.total)}
-Desconto total: ${parseCurrency(parcel.descount)}
-Forma de pagamento: ${formaPagamentoParcelas}
+                'DETALHAMENTO DAS PARCELAS': '\n',
 
-DETALHAMENTO DAS PARCELAS: 
-
-Quantidade de parcelas: ${parcelas}
-Número de parcelas afetadas: ${parcel?.campaign?.affectedParcels ?? 'sem campanha'}
-Valor total da(s) parcelas(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
-Desconto da(s) parcela(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
-Número de parcelas restantes: ${parcel?.campaign?.affectedParcels ? parseInt(parcelas) - parseInt(parcel?.campaign?.affectedParcels) : 'sem campanha'}
-Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
-Desconto da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
-Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
-Dia de vencimento: ${vencimentoPrimeiraParcela.split("/")[0]}
-Data de Vencimento da Primeira Parcela: ${vencimentoPrimeiraParcela}
-Data de vencimento da última parcela: ${vencimentoUltimaParcela}
-
-TAXA DE MATRÍCULA: 
-
-CAMPANHA: ${tax?.campaign?.name ?? 'sem campanha'}
-DESCRIÇÃO DA CAMPANHA: ${tax?.campaign?.description ?? 'sem campanha'}
-VALOR TOTAL: ${parseCurrency(350)}
-VALOR DO DESCONTO: ${parseCurrency(tax.descount)}
-VALOR LÍQUIDO: ${parseCurrency(tax.total)}
-FORMA DE PAGAMENTO: ${formaPagamentoTaxaMatricula}
-Vencimento: ${dataPagamentoTaxaMatricula}
-
-DETALHAMENTO DAS PARCELAS:
-
-Número de parcelas: ${parcelasTaxaMatricula}
-Valor da parcela: ${parseCurrency(tax.taxes[0]?.valor)}
-Desconto por parcela: ${parseCurrency(tax.total / tax.taxes.length)}
+                'Quantidade de parcelas': parcelas,
+                'Número de parcelas afetadas': parcel?.campaign?.affectedParcels ?? 'sem campanha',
+                'Valor total da(s) parcelas(s) afetadas': parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha',
+                'Desconto da(s) parcela(s) afetadas': parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha',
+                'Número de parcelas restantes': parcel?.campaign?.affectedParcels ? parseInt(parcelas) - parseInt(parcel?.campaign?.affectedParcels) : 'sem campanha',
+                'Valor total da(s) parcelas(s) restante(s)': parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha',
+                'Desconto da(s) parcela(s) restantes': parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha',
+                'Valor líquido da(s) parcela(s) restantes': parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha',
+                'Dia de vencimento': vencimentoPrimeiraParcela.split("/")[0],
+                'Data de Vencimento da Primeira Parcela': vencimentoPrimeiraParcela,
+                'Data de Vencimento da Última Parcela': vencimentoUltimaParcela,
 
 
-MATERIAL DIDÁTICO/PRODUTOS:
+                'TAXA DE MATRÍCULA': '\n',
 
-CAMPANHA: ${material?.campaign?.name ?? 'sem campanha'}
-DESCRIÇÃO DA CAMPANHA : ${material?.campaign?.description ?? 'sem campanha'}
-MATERIAL DIDÁTICO: ${materialDidatico}
-VALOR TOTAL: ${parseCurrency(material?.total) ?? 'sem campanha'}
-VALOR DO DESCONTO:${parseCurrency(material?.descount) ?? 'sem campanha'}
-VALOR LÍQUIDO: ${parseCurrency(material?.total)}
-FORMA DE PAGAMENTO: ${formaPagamentoMaterialDidatico}
-PRIMEIRO VENCIMENTO: ${vencimentoMaterialDidatico}
+                'CAMPANHA': tax?.campaign?.name ?? 'sem campanha',
+                'DESCRIÇÃO DA CAMPANHA': tax?.campaign?.description ?? 'sem campanha',
+                'VALOR TOTAL': parseCurrency(350),
+                'VALOR DO DESCONTO': parseCurrency(tax.descount),
+                'VALOR LÍQUIDO': parseCurrency(tax.total),
+                'FORMA DE PAGAMENTO': formaPagamentoTaxaMatricula,
+                'Vencimento': dataPagamentoTaxaMatricula,
 
-DETALHAMENTO DAS PARCELAS:
-
-Número de parcelas: ${parcelasMaterial}
-Valor da parcela: ${parseCurrency(material.materials[0]?.valor) ?? "Sem material"}
-Desconto por parcela: ${parseCurrency(material.descount / material.materials.length)}
-Valor líquido por parcela: ${parseCurrency(material.materials[0]?.valor) ?? "Sem material"}
+                'DETALHAMENTO DAS PARCELAS': '\n',
 
 
-Informações pedagógicas: 
-
-Data de início das aulas: ${dataPrimeiraAula} 
-Turma: ${dataPrimeiraAula} de ${horarioInicio} às ${horarioFim}
-Professor: ${Professor}
-Carga horária: ${cargaHoraria} 
-Unidade: ${Unidade}
-Observações pedagógicas: ${observacaoFinanceiro} 
-Observações financeiras:${observacaoPedagogico}
-id: ${id}
-serviço: parcela
-`
-
-                    await axios.get(`https://api.contaazul.com/v1/services`, { headers: header })
-                        .then(async info => {
-                            const filtered = info.data?.find(services => services.name.includes(servico))
+                'Número de parcelas': parcelasTaxaMatricula,
+                'Valor da parcela': parseCurrency(tax.taxes[0]?.valor),
+                'Desconto por parcela': parseCurrency(tax.total / tax.taxes.length),
 
 
-                            let venc = await DateTransformer(vencimentoPrimeiraParcela)
-                            venc.setDate(venc.getDate() - 25)
+                'MATERIAL DIDÁTICO / PRODUTOS': '\n',
 
-                            let lessDays = venc.toISOString()
+                'CAMPANHA': material?.campaign?.name ?? 'sem campanha',
+                'DESCRIÇÃO DA CAMPANHA ': material?.campaign?.description ?? 'sem campanha',
+                'MATERIAL DIDÁTICO': materialDidatico,
+                'VALOR TOTAL': parseCurrency(material?.total) ?? 'sem campanha',
+                'VALOR DO DESCONTO': parseCurrency(material?.descount) ?? 'sem campanha',
+                'VALOR LÍQUIDO': parseCurrency(material?.total),
+                'FORMA DE PAGAMENTO': formaPagamentoMaterialDidatico,
+                'PRIMEIRO VENCIMENTO': vencimentoMaterialDidatico,
 
+                'DETALHAMENTO DAS PARCELAS': '\n',
 
-                            const body = {
-                                "emission": lessDays,
-                                "status": "COMMITTED",
-                                "customer_id": data.data[0]?.id,
-                                "services": [
-                                    {
-                                        "description": filtered?.name,
-                                        "quantity": 1,
-                                        "service_id": filtered?.id,
-                                        "value": parcel.total / parseInt(parcelas)
-                                    }
-                                ],
-                                "discount": {
-                                    "measure_unit": "VALUE",
-                                    "rate": 0
-                                },
-                                "due_day": parseInt(vencimentoPrimeiraParcela.split("/")[0]),
-                                "duration": parseInt(parcelas),
-                                "notes": saleNotes,
-                                "shipping_cost": 0
-                            }
+                'Número de parcelas': parcelasMaterial,
+                'Valor da parcela': parseCurrency(material.materials[0]?.valor) ?? "Sem material",
+                'Desconto por parcela': parseCurrency(material.descount / material.materials.length),
+                'Valor líquido por parcela': parseCurrency(material.materials[0]?.valor) ?? "Sem material",
 
 
+                'INFORMAÇÕES PEDAGÓGICAS': '\n',
 
-                            return await new Promise(resolve => {
-                                resolve(
-                                    axios.post('https://api.contaazul.com/v1/contracts', body,
-                                        { headers: header })
-                                        .then(async data => {
-                                            if (data.status === 201 || data.status === 200) {
-                                                console.log("O contrato foi lançado")
-
-                                                await axios.post("https://hook.us1.make.com/waleff5wdtt69n7posu6tg5gth23b8k6", body)
-                                                return res.status(200).json({ message: "Success" })
-                                            }
-                                        }).catch((err) => {
-                                            if (err) {
-                                                console.log(err)
-                                                return res.status(401).json({
-                                                    message: err.response.data.message ?
-                                                        err.response.data.message : "Erro"
-                                                })
-                                            }
-                                        })
-                                )
-                            })
-                        })
-                        .catch((err) => {
-
-                            console.log(err)
-                            return res.status(400).json({ message: `Erro no cpf digitado: ${CPF}` })
-                        })
-
-                }
-                if (data.data.length === 0) {
-                    return res.status(400).json({ message: `Erro no cpf digitado: ${CPF}` })
-                }
+                'Data de início das aulas': dataPrimeiraAula,
+                'Turma': `${dataPrimeiraAula} de ${horarioInicio} às ${horarioFim}`,
+                'Professor': Professor,
+                'Carga horária': cargaHoraria,
+                'Unidade': Unidade,
+                'Observações pedagógicas': observacaoPedagogico,
+                'Observações financeiras': observacaoFinanceiro,
+                'id': id,
+                'serviço': 'parcela'
             })
 
+
+            const serviceFiltered = services.find(ser => ser.descricao.includes(servico));
+            const { id: idCategorie } = categories.find(cat => cat.nome.includes(categorieOrCost[servico]));
+            const { id: idCenterCost } = costs.find(cos => cos.nome.includes("Mensalidade"));
+            const { id: idFinancialAccount } = financialAccounts.find(fin => fin.nome.includes(financial_account[formaPagamentoParcelas]));
+
+
+            let venc = await DateTransformer(vencimentoPrimeiraParcela);
+            venc.setDate(venc.getDate() - 25);
+
+            let less25Days = venc.toLocaleDateString('pt-BR');
+
+            const body = {
+                idCategorie,
+                idCenterCost,
+                serviceFiltered,
+                idFinancialAccount,
+                idClient: persons?.uuid,
+                paymentType: paymentType[formaPagamentoParcelas],
+                contract: contrato,
+                start: vencimentoPrimeiraParcela,
+                end: vencimentoUltimaParcela,
+                emissionDate: less25Days,
+                notes: saleNotes,
+                firstDayToPay: vencimentoPrimeiraParcela,
+                dueDay: parseInt(vencimentoPrimeiraParcela.split("/")[0]),
+            }
+
+            const newContract = await CreateContract({ unity: Unidade, body });
+
+            return res.status(200).json(newContract)
+
+
         } catch (error) {
-            console.log({ error })
+            console.error({
+                error,
+                where: "[CREATE CONTRACT]",
+            })
+
+            if ("errors" in error) return res.status(400).json({ message: error.errors })
+
             return res.status(400).json({ message: error })
+
         }
+
+
     }
 
     async storeSale(req, res) {
+        const schema = yup.object().shape({
+            'Forma de pagamento do MD': yup.string().required("Forma de pagamento do MD é um campo obrigatório"),
+            'Data de pagamento MD': yup.string().required("Data de pagamento MD é um campo obrigatório"),
+            'Quantidade de parcelas MD': yup.string().required("Quantidade de parcelas MD é um campo obrigatório"),
 
-        const {
-            id, promocao, valorCurso, CPF, Curso, Unidade,
 
-            material,
-            parcel,
-            tax,
+            'CPF': yup.string().required("CPF é um campo obrigatório").min(11, "O número de caracteres não corresponde a um CPF válido"),
+            'Unidade': yup.string().required("O campo Unidade não preenchido corretamente, verifique os dados"),
+            'tax': yup.object().required("Dados sobre a parcela não foram preenchidos da maneira correta, verifique os dados"),
+            'Forma de pagamento da parcela': yup.string().required("Forma de pagamento da parcela é um campo obrigatório"),
 
-            Email,
-            Professor,
-            CelularResponsavel,
-            vendedor,
-            ['Nome do responsável']: nomeResponsavel,
-            ['Nome do aluno']: nomeAluno,
-            ['Idade do Aluno']: idadeAluno,
-            ['Nº do contrato']: contrato,
-            ['Forma de pagamento da parcela']: formaPagamentoParcelas,
-            ['Número de parcelas do curso']: parcelas,
-            ['Data de Vencimento da Primeira Parcela']: vencimentoPrimeiraParcela,
-            ['Data de vencimento da última parcela']: vencimentoUltimaParcela,
-            ['Forma de pagamento TM']: formaPagamentoTaxaMatricula,
-            ['Data de pagamento TM']: dataPagamentoTaxaMatricula,
-            ['Quantidade de parcelas TM ']: parcelasTaxaMatricula,
-            ['Forma de pagamento do MD']: formaPagamentoMaterialDidatico,
-            ['Data de pagamento MD']: vencimentoMaterialDidatico,
-            ['Quantidade de parcelas MD']: parcelasMaterial,
-            ['Data da primeira aula']: dataPrimeiraAula,
-            ['Carga horário do curso']: cargaHoraria,
-            ['Observações para o financeiro:']: observacaoFinanceiro,
-            ['Observações para o pedagógico:']: observacaoPedagogico,
-            ['Horário de Inicio']: horarioInicio,
-            ['Horário de fim']: horarioFim,
+        })
 
-            ['Valor do Desconto na Taxa de Matrícula']: descontoTaxaMatricula,
-            ['Desconto total']: descontoTotal,
-            ['Material didático']: materialDidatico,
-            ['Valor do desconto material didático']: valorDescontoMaterialDidatico,
-
-        } = req.body
 
         try {
-
-            var header = {
-                "Authorization": `Bearer ${await getToken(Unidade)}`,
-                "Content-Type": "application/json"
-            }
-
-            await new Promise(resolve => {
-                resolve(axios.get(`https://api.contaazul.com/v1/customers?document=${CPF}`,
-                    { headers: header }))
-            }).then(async data => {
-
-                if (data.data[0]) {
-
-                    const [products, sellers, sales, paymentMethods] = await Promise.all([
-                        axios.get("https://api.contaazul.com/v1/products?size=10000",
-                            { headers: header }),
-
-                        axios.get("https://api.contaazul.com/v1/sales/sellers",
-                            { headers: header }),
-
-                        axios.get(`https://api.contaazul.com/v1/sales?customer_id=${data.data[0].id}`,
-                            { headers: header }),
-
-
-                        axios.get(`https://api.contaazul.com/v1/sales/banks`,
-                            { headers: header }),
-                    ])
-
-
-                    sales.data.map(async sale => {
-                        let cleanData = sale.notes.replace(/\\n/g, "")
-                        cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
-
-                        try {
-
-                            const json = JSON.parse(cleanData)
-
-                            if (json["serviço"] === "material didatico" &&
-                                json["Aluno"] === nomeAluno &&
-                                json["Responsável"] === nomeResponsavel &&
-                                JSON.stringify(json["MD"]) === JSON.stringify(materialDidatico)) {
-                                await axios.delete(`https://api.contaazul.com/v1/sales/${sale.id}`, { headers: header })
-                                console.log("copias deletadas")
-                            }
-                        } catch (error) {
-                            console.log("erro ao deletar vendas antigas")
-
-                        }
-                    })
-
-                    let seller = vendedor.split(" ")
-                    let related = sellers.data.filter(res => res.name.includes(seller[0]))
-
-
-                    const saleNotes = `
-Responsável: ${nomeResponsavel} 
-Aluno: ${nomeAluno}
-Idade: ${idadeAluno}
-Telefone para contato financeiro: ${CelularResponsavel}
-Email do responsável financeiro: ${Email}
-contrato: ${contrato}
-Vendedor: ${vendedor}
-
-
-Informações do plano financeiro:
-
-
-VALOR DO CURSO/MENSALIDADES:
-
-CAMPANHA: ${parcel?.campaign?.name ?? 'sem campanha'}
-DESCRIÇÃO DA CAMPANHA: ${parcel?.campaign?.description ?? 'sem campanha'}
-Valor total: ${parseCurrency(parcel.total)}
-Desconto total: ${parseCurrency(parcel.descount)}
-Forma de pagamento: ${formaPagamentoParcelas}
-
-DETALHAMENTO DAS PARCELAS: 
-
-Quantidade de parcelas: ${parcelas}
-Número de parcelas afetadas: ${parcel?.campaign?.affectedParcels ?? 'sem campanha'}
-Valor total da(s) parcelas(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
-Desconto da(s) parcela(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
-Número de parcelas restantes: ${parcel?.campaign?.affectedParcels ? parseInt(parcelas) - parseInt(parcel?.campaign?.affectedParcels) : 'sem campanha'}
-Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
-Desconto da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
-Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
-Dia de vencimento: ${vencimentoPrimeiraParcela.split("/")[0]}
-Data de Vencimento da Primeira Parcela: ${vencimentoPrimeiraParcela}
-Data de vencimento da última parcela: ${vencimentoUltimaParcela}
-
-
-TAXA DE MATRÍCULA: 
-
-CAMPANHA: ${tax?.campaign?.name ?? 'sem campanha'}
-DESCRIÇÃO DA CAMPANHA: ${tax?.campaign?.description ?? 'sem campanha'}
-VALOR TOTAL: ${parseCurrency(350)}
-VALOR DO DESCONTO: ${parseCurrency(tax.descount)}
-VALOR LÍQUIDO: ${parseCurrency(tax.total)}
-FORMA DE PAGAMENTO: ${formaPagamentoTaxaMatricula}
-Vencimento: ${dataPagamentoTaxaMatricula}
-
-DETALHAMENTO DAS PARCELAS:
-
-Número de parcelas: ${parcelasTaxaMatricula}
-Valor da parcela: ${parseCurrency(tax.taxes[0]?.valor)}
-Desconto por parcela: ${parseCurrency(tax.total / tax.taxes.length)}
-
-
-MATERIAL DIDÁTICO/PRODUTOS:
-
-CAMPANHA: ${material?.campaign?.name ?? 'sem campanha'}
-DESCRIÇÃO DA CAMPANHA : ${material?.campaign?.description ?? 'sem campanha'}
-MATERIAL DIDÁTICO: ${materialDidatico}
-VALOR TOTAL: ${parseCurrency(material?.total) ?? 'sem campanha'}
-VALOR DO DESCONTO:${parseCurrency(material?.descount) ?? 'sem campanha'}
-VALOR LÍQUIDO: ${parseCurrency(material?.total)}
-FORMA DE PAGAMENTO: ${formaPagamentoMaterialDidatico}
-PRIMEIRO VENCIMENTO: ${vencimentoMaterialDidatico}
-
-DETALHAMENTO DAS PARCELAS:
-
-Número de parcelas: ${parcelasMaterial}
-Valor da parcela: ${parseCurrency(material.materials[0]?.valor) ?? "Sem material"}
-Desconto por parcela: ${parseCurrency(material.descount / material.materials.length)}
-Valor líquido por parcela: ${parseCurrency(material.materials[0]?.valor) ?? "Sem material"}
-
-
-Informações pedagógicas: 
-
-Data de início das aulas: ${dataPrimeiraAula} 
-Turma: ${dataPrimeiraAula} de ${horarioInicio} às ${horarioFim}
-Professor: ${Professor}
-Carga horária: ${cargaHoraria} 
-Unidade: ${Unidade}
-Observações pedagógicas: ${observacaoFinanceiro} 
-Observações financeiras:${observacaoPedagogico}
-id: ${id}
-serviço: material didatico
-
-
-`
-                    let productsSale = []
-
-                    const product = materialDidatico.map(teachMaterial => {
-                        let splited = teachMaterial.split(" / ")[1].replace(/\s+/g, "")
-
-                        let product;
-                        if (splited !== undefined) {
-                            product = products.data.filter(data => data.code === splited)
-                        }
-                        if (splited === undefined) {
-                            product = products.data.filter(data => data.name.includes(teachMaterial))
-                        }
-                        const pd = {
-                            "description": product[0]?.name,
-                            "quantity": 1,
-                            "value": parseInt(product[0]?.value === 0) ? parseInt(product[0]?.value + 1) : parseInt(product[0]?.value),
-                            "product_id": product[0]?.id,
-                        }
-
-                        productsSale.push(pd)
-
-
-                    })
-
-                    await Promise.all(product)
-
-                    async function ContaAzulSender(cell) {
-                        return await new Promise((resolve, reject) => {
-
-                            axios.post('https://api.contaazul.com/v1/sales', cell, { headers: header })
-                                .then(async data => {
-                                    resolve(data)
-                                    if (data.status === 201 || data.status === 200) {
-                                        console.log("O md foi lançado")
-
-
-                                        await axios.post("https://hook.us1.make.com/waleff5wdtt69n7posu6tg5gth23b8k6", cell)
-
-                                        return res.status(200).json({ message: "O md foi lançado" })
-                                    }
-
-                                }).catch((err) => {
-                                    reject(err)
-                                    console.log(err.response.data)
-                                    if (err.response.data.message === "The sale product's value cannot be null") {
-                                        // console.log("produto nao encontrado")
-                                        return res.status(400).json({ message: "Material didático não cadastrado no conta azul!" })
-                                    }
-                                    if (err.response.data.message !== "The sale product's value cannot be null") {
-                                        return res.status(400).json({ message: err.response.data.message })
-                                    }
-                                })
-
-
-                        })
-
-
-                    }
-
-                    const paymentType = {
-                        "Boleto": "BANKING_BILLET",
-                        "Cartão de crédito via link": "PAYMENT_LINK",
-                        "Boleto bancário": "BANKING_BILLET",
-                        "Cartão de crédito via outro bancos": "CREDIT_CARD",
-                        "Cartão de débito via outros bancos": "DEBIT_CARD",
-                        "Dinheiro": "CASH",
-                        "PIX - Pagamento Instantâneo": "INSTANT_PAYMENT",
-                        "Pix": "INSTANT_PAYMENT",
-                        "Pix cobrança": "PIX_CHARGE",
-                        "Sem pagamento": "WITHOUT_PAYMENT",
-                        "Isenção": "WITHOUT_PAYMENT",
-                        "Transferência bancária": "BANKING_TRANSFER",
-                        "Outros": "OTHER",
-
-                        "": "AUTOMATIC_DEBIT",
-                        "": "FIDELITY_PROGRAM",
-                        "": "DIGITAL_WALLET",
-                        "": "CASHBACK",
-                        "": "CHECK",
-                        "": "STORE_CREDIT",
-                        "": "VIRTUAL_CREDIT",
-                        "": "BANKING_DEPOSIT",
-                        "": "FOOD_VOUCHER",
-                        "": "FUEL_VOUCHER",
-                        "": "GIFT_VOUCHER",
-                        "": "MEAL_VOUCHER",
-                    }
-
-                    const financial_account = {
-                        "Boleto": 'Conta PJ Conta Azul',
-                        "Cartão de crédito via link": 'Conta PJ Conta Azul',
-                        "Cartão de débito via outros bancos": 'Rede',
-                        "Cartão de crédito via outro bancos": 'Rede',
-                        "Dinheiro": 'Caixa Físico',
-                        "Outros": 'Bolsas, isenções e outros meios indeterminados',
-                        "Pix": 'Inter_PJ',
-                        "Transferência bancária": 'Inter_PJ',
-                        "Pix cobrança": 'Conta PJ Conta Azul',
-                        "Sem pagamento": 'Bolsas, isenções e outros meios indeterminados',
-
-                        "": 'Amais Financeira',
-                        "": 'Azulzinha da Caixa',
-                        "": 'Bolsistas Integrais',
-                        "": 'BTG Pactual - PJ',
-                        "": 'Caixa Econômica Conta PJ',
-                        "": 'Caixa Excedente',
-                        "": 'Cartão Caixa',
-                        "": 'Cartão Inter PJ',
-                        "": 'Cartão PJ Santander 21',
-                        "": 'Cartão PJ Santander 26',
-                        "": 'Cartão Santander PJ 12',
-                        "": 'Itaú_PJ',
-                        "": 'Receba Fácil',
-                        "": 'Santander_PJ',
-                        "": 'ZOOP'
-
-                    }
-
-                    if (productsSale.length === materialDidatico.length) {
-
-                        const installment = await installments(vencimentoMaterialDidatico, material.materials.length, material.total)
-                        const financialId = paymentMethods.data.find(p => p.name.includes(financial_account[formaPagamentoMaterialDidatico]))
-
-                        const teachingmaterial = {
-                            "emission": new Date(),
-                            "status": "PENDING",
-                            "customer_id": data.data[0].id,
-                            "products": productsSale,
-                            "seller_id": related.length === 0 ? "" : related[0].id,
-                            "discount": {
-                                "measure_unit": "VALUE",
-                                "rate": material.descount
-                            },
-                            "payment": {
-                                "type": "TIMES",
-                                "method": paymentType[formaPagamentoMaterialDidatico],
-                                "financial_account_id": financialId ? financialId.uuid : "",
-                                "installments": installment
-                            },
-                            "notes": saleNotes,
-                            "category_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
-                                "062c6bab-c7f4-4bd5-bed5-f9e340219642" : "466b417c-9945-413d-ad4b-637a1ad36d51" //
-                        }
-
-                        await ContaAzulSender(teachingmaterial)
-                        // await console.log(teachingmaterial)
-                    }
-
-                    if (productsSale.length !== materialDidatico.length) {
-                        return res.status(400).json({ message: "Erro no material didático" })
-                    }
-
-
+            await schema.validateSync(req.body, { abortEarly: false })
+
+            const {
+                id, promocao, valorCurso, CPF, Curso, Unidade,
+
+                material,
+                parcel,
+                tax,
+
+                Email,
+                Professor,
+                CelularResponsavel,
+                vendedor,
+                ['service']: servico,
+                ['Nome do responsável']: nomeResponsavel,
+                ['Nome do aluno (se não for responsável próprio))']: nomeAluno,
+                ['Idade do Aluno']: idadeAluno,
+                ['Nº do contrato']: contrato,
+                ['Forma de pagamento da parcela']: formaPagamentoParcelas,
+                ['Número de parcelas do curso']: parcelas,
+                ['Data de Vencimento da Primeira Parcela']: vencimentoPrimeiraParcela,
+                ['Data de Vencimento da Última Parcela']: vencimentoUltimaParcela,
+                ['Forma de pagamento TM']: formaPagamentoTaxaMatricula,
+                ['Data de pagamento TM']: dataPagamentoTaxaMatricula,
+                ['Quantidade de parcelas TM ']: parcelasTaxaMatricula,
+                ['Forma de pagamento do MD']: formaPagamentoMaterialDidatico,
+                ['Data de pagamento MD']: vencimentoMaterialDidatico,
+                ['Quantidade de parcelas MD']: parcelasMaterial,
+                ['Data da primeira aula']: dataPrimeiraAula,
+                ['Carga horário do curso']: cargaHoraria,
+                ['Observações para o financeiro:']: observacaoFinanceiro,
+                ['Observações para o pedagógico:']: observacaoPedagogico,
+                ['Horário de Inicio']: horarioInicio,
+                ['Horário de fim']: horarioFim,
+
+                ['Valor do Desconto na Taxa de Matrícula']: descontoTaxaMatricula,
+                ['Desconto total']: descontoTotal,
+                ['Material didático']: materialDidatico,
+                ['Valor do desconto material didático']: valorDescontoMaterialDidatico,
+
+            } = req.body;
+
+            const { persons, costs, categories, financialAccounts, products } = await GetDataForCreateSales({ unity: Unidade, search: CPF })
+
+            if (!persons) return res.status(400).json({ message: "CPF inválido, cliente não encontrado no conta azul" });
+
+            const saleNotes = await createComment({
+                'Responsável': nomeResponsavel,
+                'Aluno': nomeAluno,
+                'Idade': idadeAluno,
+                'Telefone para contato financeiro': CelularResponsavel,
+                'Email do responsável financeiro': Email,
+                'contrato': contrato,
+                'Vendedor': vendedor,
+
+                'Informações do plano financeiro': '\n',
+
+                'VALOR DO CURSO / MENSALIDADES': '\n',
+
+                'CAMPANHA': parcel?.campaign?.name ?? 'sem campanha',
+                'DESCRIÇÃO DA CAMPANHA': parcel?.campaign?.description ?? 'sem campanha',
+                'Valor total': parseCurrency(parcel.total),
+                'Desconto total': parseCurrency(parcel.descount),
+                'Forma de pagamento': formaPagamentoParcelas,
+
+                'DETALHAMENTO DAS PARCELAS': '\n',
+
+                'Quantidade de parcelas': parcelas,
+                'Número de parcelas afetadas': parcel?.campaign?.affectedParcels ?? 'sem campanha',
+                'Valor total da(s) parcelas(s) afetadas': parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha',
+                'Desconto da(s) parcela(s) afetadas': parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha',
+                'Número de parcelas restantes': parcel?.campaign?.affectedParcels ? parseInt(parcelas) - parseInt(parcel?.campaign?.affectedParcels) : 'sem campanha',
+                'Valor total da(s) parcelas(s) restante(s)': parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha',
+                'Desconto da(s) parcela(s) restantes': parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha',
+                'Valor líquido da(s) parcela(s) restantes': parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha',
+                'Dia de vencimento': vencimentoPrimeiraParcela.split("/")[0],
+                'Data de Vencimento da Primeira Parcela': vencimentoPrimeiraParcela,
+                'Data de Vencimento da Última Parcela': vencimentoUltimaParcela,
+
+
+                'TAXA DE MATRÍCULA': '\n',
+
+                'CAMPANHA': tax?.campaign?.name ?? 'sem campanha',
+                'DESCRIÇÃO DA CAMPANHA': tax?.campaign?.description ?? 'sem campanha',
+                'VALOR TOTAL': parseCurrency(350),
+                'VALOR DO DESCONTO': parseCurrency(tax.descount),
+                'VALOR LÍQUIDO': parseCurrency(tax.total),
+                'FORMA DE PAGAMENTO': formaPagamentoTaxaMatricula,
+                'Vencimento': dataPagamentoTaxaMatricula,
+
+                'DETALHAMENTO DAS PARCELAS': '\n',
+
+
+                'Número de parcelas': parcelasTaxaMatricula,
+                'Valor da parcela': parseCurrency(tax.taxes[0]?.valor),
+                'Desconto por parcela': parseCurrency(tax.total / tax.taxes.length),
+
+
+                'MATERIAL DIDÁTICO / PRODUTOS': '\n',
+
+                'CAMPANHA': material?.campaign?.name ?? 'sem campanha',
+                'DESCRIÇÃO DA CAMPANHA ': material?.campaign?.description ?? 'sem campanha',
+                'MATERIAL DIDÁTICO': materialDidatico,
+                'VALOR TOTAL': parseCurrency(material?.total) ?? 'sem campanha',
+                'VALOR DO DESCONTO': parseCurrency(material?.descount) ?? 'sem campanha',
+                'VALOR LÍQUIDO': parseCurrency(material?.total),
+                'FORMA DE PAGAMENTO': formaPagamentoMaterialDidatico,
+                'PRIMEIRO VENCIMENTO': vencimentoMaterialDidatico,
+
+                'DETALHAMENTO DAS PARCELAS': '\n',
+
+                'Número de parcelas': parcelasMaterial,
+                'Valor da parcela': parseCurrency(material.materials[0]?.valor) ?? "Sem material",
+                'Desconto por parcela': parseCurrency(material.descount / material.materials.length),
+                'Valor líquido por parcela': parseCurrency(material.materials[0]?.valor) ?? "Sem material",
+
+
+                'INFORMAÇÕES PEDAGÓGICAS': '\n',
+
+                'Data de início das aulas': dataPrimeiraAula,
+                'Turma': `${dataPrimeiraAula} de ${horarioInicio} às ${horarioFim}`,
+                'Professor': Professor,
+                'Carga horária': cargaHoraria,
+                'Unidade': Unidade,
+                'Observações pedagógicas': observacaoFinanceiro,
+                'Observações financeiras': observacaoPedagogico,
+                'id': id,
+                'serviço': 'material didatico'
+
+            });
+
+            const product = materialDidatico.map(teachMaterial => {
+                let splited = teachMaterial.split(" / ")[1].replace(/\s+/g, "")
+
+                let product = products.find(data => data.codigo_sku === splited ?? teachMaterial)
+
+                return {
+                    "descricao": product?.nome,
+                    "quantidade": 1,
+                    "valor": parseInt(product?.valor_venda === 0) ? parseInt(product?.valor_venda + 1) : parseInt(product?.valor_venda),
+                    "id": product?.id,
                 }
-                if (data.data.length === 0) {
-                    return res.status(400).json({ message: `Erro no cpf digitado: ${CPF}` })
-                }
+
             })
 
-        } catch (error) {
-            console.log(error)
+            if (product.find(pd => !pd.id)) return res.status(400).json({ message: `Material didático não está presente no conta azul da unidade ${Unidade}` })
 
-            await SendSimpleWpp(
-                "marcos", process.env.MARCOS,
-                JSON.stringify(`[CA:FEE]: ${error}`, null, 2))
+
+            const { id: idFinancialAccount } = financialAccounts.find(fin => fin.nome.includes(financial_account[formaPagamentoMaterialDidatico]));
+            const { id: idCategorie } = categories.find(cat => cat.nome.includes("Material Didático"));
+            const { id: idCenterCost } = costs.find(cos => cos.nome.includes("Material Didático"));
+
+            const saleBody = {
+                notes: saleNotes,
+
+                itens: product,
+                parcels: parcelasMaterial,
+                dueDay: vencimentoMaterialDidatico,
+                payment: material,
+
+                idClient: persons.uuid,
+                paymentType: paymentType[formaPagamentoMaterialDidatico],
+
+                idCategorie,
+                idCenterCost,
+                idFinancialAccount,
+            }
+
+
+
+            const newSale = await CreateSale({
+                unity: Unidade,
+                body: saleBody,
+            })
+
+            return res.status(201).json(newSale)
+
+        } catch (error) {
+
+            console.log({
+                error,
+                where: "[CREATE SALE TO CONTA AZUL]"
+
+            })
+
+            if ("errors" in error) return res.status(400).json({ message: error.errors })
 
             return res.status(400).json({ message: error })
+
         }
     }
 
     async storeEnrollmentFee(req, res) {
-        const { id, promocao, valorCurso, CPF, Curso,
-            Unidade, tax, material, parcel,
-
-            ['Valor do Desconto na Taxa de Matrícula']: descontoTaxaMatricula,
-
-            ['Desconto total']: descontoTotal,
-            ['Material didático']: materialDidatico,
-            ['Valor do desconto material didático']: valorDescontoMaterialDidatico,
-
-            Email,
-            Professor,
-            CelularResponsavel,
-            vendedor,
-            ['Nome do responsável']: nomeResponsavel,
-            ['Nome do aluno']: nomeAluno,
-            ['Idade do Aluno']: idadeAluno,
-            ['Nº do contrato']: contrato,
-            ['Forma de pagamento da parcela']: formaPagamentoParcelas,
-            ['Número de parcelas do curso']: parcelas,
-            ['Data de Vencimento da Primeira Parcela']: vencimentoPrimeiraParcela,
-            ['Data de vencimento da última parcela']: vencimentoUltimaParcela,
-            ['Forma de pagamento TM']: formaPagamentoTaxaMatricula,
-            ['Data de pagamento TM']: dataPagamentoTaxaMatricula,
-            ['Quantidade de parcelas TM ']: parcelasTaxaMatricula,
-            ['Forma de pagamento do MD']: formaPagamentoMaterialDidatico,
-            ['Data de pagamento MD']: vencimentoMaterialDidatico,
-            ['Quantidade de parcelas MD']: parcelasMaterial,
-            ['Data da primeira aula']: dataPrimeiraAula,
-            ['Carga horário do curso']: cargaHoraria,
-            ['Observações para o financeiro:']: observacaoFinanceiro,
-            ['Observações para o pedagógico:']: observacaoPedagogico,
-            ['Horário de Inicio']: horarioInicio,
-            ['Horário de fim']: horarioFim,
-
-        } = req.body
+        const schema = yup.object().shape({
+            'Forma de pagamento TM': yup.string().required("Data de vencimento da primeira parcela é um campo obrigatório"),
+            'tax': yup.object().required("Dados sobre a taxa de matrícula não foram preenchidos da maneira correta, verifique os dados"),
+            'Data de pagamento TM': yup.string().required("Data de pagamento da taxa de matrícula é um campo obrigatório, verifique seus dados"),
+            'CPF': yup.string().required("CPF é um campo obrigatório").min(11, "O número de caracteres não corresponde a um CPF válido"),
+            'Unidade': yup.string().required("O campo Unidade não preenchido corretamente, verifique os dados"),
+        })
 
         try {
-            var header = {
-                "Authorization": `Bearer ${await getToken(Unidade)}`,
-                "Content-Type": "application/json"
+            await schema.validateSync(req.body, { abortEarly: false })
+
+            const { id, promocao, valorCurso, CPF, Curso,
+                Unidade, tax, material, parcel,
+
+                ['Valor do Desconto na Taxa de Matrícula']: descontoTaxaMatricula,
+                ['service']: servico,
+                ['Desconto total']: descontoTotal,
+                ['Material didático']: materialDidatico,
+                ['Valor do desconto material didático']: valorDescontoMaterialDidatico,
+
+                Email,
+                Professor,
+                CelularResponsavel,
+                vendedor,
+                ['Nome do responsável']: nomeResponsavel,
+                ['Nome do aluno (se não for responsável próprio))']: nomeAluno,
+                ['Idade do Aluno']: idadeAluno,
+                ['Nº do contrato']: contrato,
+                ['Forma de pagamento da parcela']: formaPagamentoParcelas,
+                ['Número de parcelas do curso']: parcelas,
+                ['Data de Vencimento da Primeira Parcela']: vencimentoPrimeiraParcela,
+                ['Data de Vencimento da Última Parcela']: vencimentoUltimaParcela,
+                ['Forma de pagamento TM']: formaPagamentoTaxaMatricula,
+                ['Data de pagamento TM']: dataPagamentoTaxaMatricula,
+                ['Quantidade de parcelas TM ']: parcelasTaxaMatricula,
+                ['Forma de pagamento do MD']: formaPagamentoMaterialDidatico,
+                ['Data de pagamento MD']: vencimentoMaterialDidatico,
+                ['Quantidade de parcelas MD']: parcelasMaterial,
+                ['Data da primeira aula']: dataPrimeiraAula,
+                ['Carga horário do curso']: cargaHoraria,
+                ['Observações para o financeiro:']: observacaoFinanceiro,
+                ['Observações para o pedagógico:']: observacaoPedagogico,
+                ['Horário de Inicio']: horarioInicio,
+                ['Horário de fim']: horarioFim,
+
+            } = req.body
+
+            const { persons, costs, categories, financialAccounts } = await GetDataForCreateSales({ unity: Unidade, search: CPF })
+
+            if (!persons) return res.status(400).json({ message: "CPF inválido, cliente não encontrado no conta azul" });
+
+            const saleNotes = await createComment({
+                'Responsável': nomeResponsavel,
+                'Aluno': nomeAluno,
+                'Idade': idadeAluno,
+                'Telefone para contato financeiro': CelularResponsavel,
+                'Email do responsável financeiro': Email,
+                'contrato': contrato,
+                'Vendedor': vendedor,
+
+                'Informações do plano financeiro': '\n',
+
+                'VALOR DO CURSO / MENSALIDADES': '\n',
+
+                'CAMPANHA': parcel?.campaign?.name ?? 'sem campanha',
+                'DESCRIÇÃO DA CAMPANHA': parcel?.campaign?.description ?? 'sem campanha',
+                'Valor total': parseCurrency(parcel.total),
+                'Desconto total': parseCurrency(parcel.descount),
+                'Forma de pagamento': formaPagamentoParcelas,
+
+                'DETALHAMENTO DAS PARCELAS': '\n',
+
+                'Quantidade de parcelas': parcelas,
+                'Número de parcelas afetadas': parcel?.campaign?.affectedParcels ?? 'sem campanha',
+                'Valor total da(s) parcelas(s) afetadas': parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha',
+                'Desconto da(s) parcela(s) afetadas': parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha',
+                'Número de parcelas restantes': parcel?.campaign?.affectedParcels ? parseInt(parcelas) - parseInt(parcel?.campaign?.affectedParcels) : 'sem campanha',
+                'Valor total da(s) parcelas(s) restante(s)': parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha',
+                'Desconto da(s) parcela(s) restantes': parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha',
+                'Valor líquido da(s) parcela(s) restantes': parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha',
+                'Dia de vencimento': vencimentoPrimeiraParcela.split("/")[0],
+                'Data de Vencimento da Primeira Parcela': vencimentoPrimeiraParcela,
+                'Data de Vencimento da Última Parcela': vencimentoUltimaParcela,
+
+
+                'TAXA DE MATRÍCULA': '\n',
+
+                'CAMPANHA': tax?.campaign?.name ?? 'sem campanha',
+                'DESCRIÇÃO DA CAMPANHA': tax?.campaign?.description ?? 'sem campanha',
+                'VALOR TOTAL': parseCurrency(350),
+                'VALOR DO DESCONTO': parseCurrency(tax.descount),
+                'VALOR LÍQUIDO': parseCurrency(tax.total),
+                'FORMA DE PAGAMENTO': formaPagamentoTaxaMatricula,
+                'Vencimento': dataPagamentoTaxaMatricula,
+
+                'DETALHAMENTO DAS PARCELAS': '\n',
+
+
+                'Número de parcelas': parcelasTaxaMatricula,
+                'Valor da parcela': parseCurrency(tax.taxes[0]?.valor),
+                'Desconto por parcela': parseCurrency(tax.total / tax.taxes.length),
+
+
+                'MATERIAL DIDÁTICO / PRODUTOS': '\n',
+
+                'CAMPANHA': material?.campaign?.name ?? 'sem campanha',
+                'DESCRIÇÃO DA CAMPANHA ': material?.campaign?.description ?? 'sem campanha',
+                'MATERIAL DIDÁTICO': materialDidatico,
+                'VALOR TOTAL': parseCurrency(material?.total) ?? 'sem campanha',
+                'VALOR DO DESCONTO': parseCurrency(material?.descount) ?? 'sem campanha',
+                'VALOR LÍQUIDO': parseCurrency(material?.total),
+                'FORMA DE PAGAMENTO': formaPagamentoMaterialDidatico,
+                'PRIMEIRO VENCIMENTO': vencimentoMaterialDidatico,
+
+                'DETALHAMENTO DAS PARCELAS': '\n',
+
+                'Número de parcelas': parcelasMaterial,
+                'Valor da parcela': parseCurrency(material.materials[0]?.valor) ?? "Sem material",
+                'Desconto por parcela': parseCurrency(material.descount / material.materials.length),
+                'Valor líquido por parcela': parseCurrency(material.materials[0]?.valor) ?? "Sem material",
+
+
+                'INFORMAÇÕES PEDAGÓGICAS': '\n',
+
+                'Data de início das aulas': dataPrimeiraAula,
+                'Turma': `${dataPrimeiraAula} de ${horarioInicio} às ${horarioFim}`,
+                'Professor': Professor,
+                'Carga horária': cargaHoraria,
+                'Unidade': Unidade,
+                'Observações pedagógicas': observacaoPedagogico,
+                'Observações financeiras': observacaoFinanceiro,
+                'id': id,
+                'serviço': 'material didatico'
+
+            });
+
+
+            const { id: idFinancialAccount } = financialAccounts.find(fin => fin.nome.includes(financial_account[formaPagamentoTaxaMatricula]));
+            const { id: idCategorie } = categories.find(cat => cat.nome.includes("Taxa de Matrícula"));
+            const { id: idCenterCost } = costs.find(cos => cos.nome.includes("Taxa de Matrícula"));
+
+            const itens = [{
+                "descricao": "Taxa de Matrícula",
+                "quantidade": 1,
+                "valor": 350,
+                "id": Unidade.includes("PTB") ?
+                    "09a1a3f8-f75e-4b25-a2ce-e815514028de" : "682c4202-e0c2-4bab-a847-c8dbe89b80d9",
+            }]
+
+            const saleBody = {
+                notes: saleNotes,
+                idClient: persons.uuid,
+                itens,
+                payment: { total: 350, descount: tax.descount },
+                dueDay: vencimentoMaterialDidatico,
+                paymentType: paymentType[formaPagamentoMaterialDidatico],
+                idCategorie,
+                idCenterCost,
+                idFinancialAccount,
+                parcels: 1,
+
             }
 
-            await new Promise(resolve => {
-                resolve(axios.get(`https://api.contaazul.com/v1/customers?document=${CPF}`,
-                    { headers: header }))
-            }).then(async data => {
-                if (data.data[0]) {
-                    const [sellers, sales, paymentMethods] = await Promise.all([
-
-                        axios.get("https://api.contaazul.com/v1/sales/sellers",
-                            { headers: header }),
-
-                        axios.get(`https://api.contaazul.com/v1/sales?customer_id=${data.data[0].id}`,
-                            { headers: header }),
-
-
-                        axios.get(`https://api.contaazul.com/v1/sales/banks`,
-                            { headers: header }),
-                    ])
-
-
-                    async function ContaAzulSender(cell) {
-
-                        return await new Promise(resolve => {
-                            resolve(
-                                axios.post('https://api.contaazul.com/v1/sales', cell, { headers: header })
-                                    .then(async data => {
-                                        if (data.status === 201 || data.status === 200) {
-                                            console.log("A tm foi lançada")
-                                            await axios.post("https://hook.us1.make.com/waleff5wdtt69n7posu6tg5gth23b8k6", cell)
-
-                                            return res.status(200).json({ message: "A tm foi lançada" })
-
-                                        }
-                                    }).catch((err) => {
-
-                                        if (err.response.data.message === "The sale product's value cannot be null") {
-                                            // console.log("produto nao encontrado")
-                                            return res.status(400).json({ message: "Material didático não cadastrado no conta azul!" })
-                                        }
-                                        if (err.response.data.message !== "The sale product's value cannot be null") {
-                                            console.log(err.response.data)
-                                            return res.status(400).json({ message: err.response.data.message })
-                                        }
-                                    })
-                            )
-                        })
-                    }
-
-                    // if (tax.total > 0) {
-                    sales.data.map(async sale => {
-                        let cleanData = sale.notes.replace(/\\n/g, "")
-                        cleanData.replace(/(\s+|[^:{}\[\],]+(?=:)|:([^"]|$))/g, '')
-
-                        const json = JSON.parse(cleanData)
-
-
-                        if (json["serviço"] === "taxa de matricula" &&
-                            json["Aluno"] === nomeAluno &&
-                            json["Responsável"] === nomeResponsavel &&
-                            json["Curso"] === Curso &&
-                            JSON.stringify(sale.total) === JSON.stringify(tax.total)) {
-                            await axios.delete(`https://api.contaazul.com/v1/sales/${sale.id}`, { headers: header })
-                            console.log("cópia deletada")
-                        }
-                    })
-
-                    const saleNotes = `
-Responsável: ${nomeResponsavel} 
-Aluno: ${nomeAluno}
-Idade: ${idadeAluno}
-Telefone para contato financeiro: ${CelularResponsavel}
-Email do responsável financeiro: ${Email}
-contrato: ${contrato}
-Vendedor: ${vendedor}
-
-
-Informações do plano financeiro:
-
-
-VALOR DO CURSO/MENSALIDADES:
-
-CAMPANHA: ${parcel?.campaign?.name ?? 'sem campanha'}
-DESCRIÇÃO DA CAMPANHA: ${parcel?.campaign?.description ?? 'sem campanha'}
-Valor total: ${parseCurrency(parcel.total)}
-Desconto total: ${parseCurrency(parcel.descount)}
-Forma de pagamento: ${formaPagamentoParcelas}
-
-DETALHAMENTO DAS PARCELAS: 
-
-Quantidade de parcelas: ${parcelas}
-Número de parcelas afetadas: ${parcel?.campaign?.affectedParcels ?? 'sem campanha'}
-Valor total da(s) parcelas(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
-Desconto da(s) parcela(s) afetadas: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(0, parcel?.campaign?.affectedParcels).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
-Número de parcelas restantes: ${parcel?.campaign?.affectedParcels ? parseInt(parcelas) - parseInt(parcel?.campaign?.affectedParcels) : 'sem campanha'}
-Valor total da(s) parcelas(s) restante(s):  ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
-Desconto da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item.descount, 0)) : 'sem campanha'}
-Valor líquido da(s) parcela(s) restantes: ${parcel?.campaign ? parseCurrency(parcel.parcels.splice(parcel?.campaign?.affectedParcels, parcelas).reduce((acc, item) => acc + item?.valor, 0)) : 'sem campanha'}
-Dia de vencimento: ${vencimentoPrimeiraParcela.split("/")[0]}
-Data de Vencimento da Primeira Parcela: ${vencimentoPrimeiraParcela}
-Data de vencimento da última parcela: ${vencimentoUltimaParcela}
-
-
-TAXA DE MATRÍCULA: 
-
-CAMPANHA: ${tax?.campaign?.name ?? 'sem campanha'}
-DESCRIÇÃO DA CAMPANHA: ${tax?.campaign?.description ?? 'sem campanha'}
-VALOR TOTAL: ${parseCurrency(350)}
-VALOR DO DESCONTO: ${parseCurrency(tax.descount)}
-VALOR LÍQUIDO: ${parseCurrency(tax.total)}
-FORMA DE PAGAMENTO: ${formaPagamentoTaxaMatricula}
-Vencimento: ${dataPagamentoTaxaMatricula}
-
-DETALHAMENTO DAS PARCELAS:
-
-Número de parcelas: ${parcelasTaxaMatricula}
-Valor da parcela: ${parseCurrency(tax.taxes[0]?.valor)}
-Desconto por parcela: ${parseCurrency(tax.total / tax.taxes.length)}
-
-
-MATERIAL DIDÁTICO/PRODUTOS:
-
-CAMPANHA: ${material?.campaign?.name ?? 'sem campanha'}
-DESCRIÇÃO DA CAMPANHA : ${material?.campaign?.description ?? 'sem campanha'}
-MATERIAL DIDÁTICO: ${materialDidatico}
-VALOR TOTAL: ${parseCurrency(material?.total) ?? 'sem campanha'}
-VALOR DO DESCONTO:${parseCurrency(material?.descount) ?? 'sem campanha'}
-VALOR LÍQUIDO: ${parseCurrency(material?.total)}
-FORMA DE PAGAMENTO: ${formaPagamentoMaterialDidatico}
-PRIMEIRO VENCIMENTO: ${vencimentoMaterialDidatico}
-
-DETALHAMENTO DAS PARCELAS:
-
-Número de parcelas: ${parcelasMaterial}
-Valor da parcela: ${parseCurrency(material.materials[0]?.valor) ?? "Sem material"}
-Desconto por parcela: ${parseCurrency(material.descount / material.materials.length)}
-Valor líquido por parcela: ${parseCurrency(material.materials[0]?.valor) ?? "Sem material"}
-
-
-Informações pedagógicas: 
-
-Data de início das aulas: ${dataPrimeiraAula} 
-Turma: ${dataPrimeiraAula} de ${horarioInicio} às ${horarioFim}
-Professor: ${Professor}
-Carga horária: ${cargaHoraria} 
-Unidade: ${Unidade}
-Observações pedagógicas: ${observacaoFinanceiro} 
-Observações financeiras:${observacaoPedagogico}
-id: ${id}
-serviço: taxa de matricula
-`
-                    let seller = vendedor.split(" ")[0]
-                    let related = sellers.data.find(res => res.name.includes(seller))
-
-                    const paymentType = {
-                        "Boleto": "BANKING_BILLET",
-                        "Cartão de crédito via link": "PAYMENT_LINK",
-                        "Boleto bancário": "BANKING_BILLET",
-                        "Cartão de crédito via outro bancos": "CREDIT_CARD",
-                        "Cartão de débito via outros bancos": "DEBIT_CARD",
-                        "Dinheiro": "CASH",
-                        "PIX - Pagamento Instantâneo": "INSTANT_PAYMENT",
-                        "Pix": "INSTANT_PAYMENT",
-                        "Pix cobrança": "PIX_CHARGE",
-                        "Sem pagamento": "WITHOUT_PAYMENT",
-                        "Isenção": "WITHOUT_PAYMENT",
-                        "Transferência bancária": "BANKING_TRANSFER",
-                        "Outros": "OTHER",
-
-                        "": "AUTOMATIC_DEBIT",
-                        "": "FIDELITY_PROGRAM",
-                        "": "DIGITAL_WALLET",
-                        "": "CASHBACK",
-                        "": "CHECK",
-                        "": "STORE_CREDIT",
-                        "": "VIRTUAL_CREDIT",
-                        "": "BANKING_DEPOSIT",
-                        "": "FOOD_VOUCHER",
-                        "": "FUEL_VOUCHER",
-                        "": "GIFT_VOUCHER",
-                        "": "MEAL_VOUCHER",
-                    }
-
-                    const financial_account = {
-                        "Boleto": 'Conta PJ Conta Azul',
-                        "Cartão de crédito via link": 'Conta PJ Conta Azul',
-                        "Cartão de débito via outros bancos": 'Rede',
-                        "Cartão de crédito via outro bancos": 'Rede',
-                        "Dinheiro": 'Caixa Físico',
-                        "Outros": 'Bolsas, isenções e outros meios indeterminados',
-                        "Pix": 'Inter_PJ',
-                        "Transferência bancária": 'Inter_PJ',
-                        "Pix cobrança": 'Conta PJ Conta Azul',
-                        "Sem pagamento": 'Bolsas, isenções e outros meios indeterminados',
-
-                        "": 'Amais Financeira',
-                        "": 'Azulzinha da Caixa',
-                        "": 'Bolsistas Integrais',
-                        "": 'BTG Pactual - PJ',
-                        "": 'Caixa Econômica Conta PJ',
-                        "": 'Caixa Excedente',
-                        "": 'Cartão Caixa',
-                        "": 'Cartão Inter PJ',
-                        "": 'Cartão PJ Santander 21',
-                        "": 'Cartão PJ Santander 26',
-                        "": 'Cartão Santander PJ 12',
-                        "": 'Itaú_PJ',
-                        "": 'Receba Fácil',
-                        "": 'Santander_PJ',
-                        "": 'ZOOP'
-
-                    }
-
-
-                    const installment = await installments(dataPagamentoTaxaMatricula, parcelasTaxaMatricula, tax?.total)
-                    const financialId = paymentMethods.data.find(p => p.name.includes(financial_account[formaPagamentoMaterialDidatico]))
-
-
-                    const taxCell = {
-                        "emission": new Date(),
-                        "status": "PENDING",
-                        "customer_id": data.data[0].id,
-                        "seller_id": related ? related.id : "",
-                        "services": [
-                            {
-                                "description": "Taxa de Matrícula",
-                                "quantity": 1,
-                                "service_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
-                                    "09a1a3f8-f75e-4b25-a2ce-e815514028de" : "682c4202-e0c2-4bab-a847-c8dbe89b80d9",
-                                "value": 350
-                            }
-                        ],
-                        "discount": {
-                            "measure_unit": "VALUE",
-                            "rate": tax.descount
-                        },
-                        "payment": {
-                            "type": "TIMES",
-                            "method": tax?.total > 0 ? paymentType[formaPagamentoTaxaMatricula] : paymentType["Sem pagamento"],
-                            "financial_account_id": financialId ? financialId.uuid : "",
-
-                            "installments": installment
-                            ,
-                        },
-                        "notes": saleNotes,
-                        "category_id": Unidade.includes("PTB") || Unidade.includes("Golfinho Azul") ?
-                            "8d697a13-88df-4330-ab1b-c55ecb841b37" : "edd792ee-86ce-44a8-817d-1a54ba5482b0"
-                    }
-
-                    await ContaAzulSender(taxCell)
-                }
-
-                if (data.data.length === 0) {
-                    return res.status(400).json({ message: `Erro no cpf digitado: ${CPF}` })
-                }
+            const newSale = await CreateSale({
+                unity: Unidade,
+                body: saleBody,
             })
+
+
+            return res.status(201).json(newSale)
 
         } catch (error) {
+
             console.log({
-                where: "[TAX]",
-                error
+                error,
+                where: "[CREATE SALE TO CONTA AZUL]"
+
             })
-
             await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[CA:FEE]: ${error}`, null, 2))
+            if ("errors" in error) return res.status(400).json({ message: error.errors })
 
-            return res.status(400).json({ message: `error` })
+            return res.status(400).json({ message: error })
+
         }
     }
 }
