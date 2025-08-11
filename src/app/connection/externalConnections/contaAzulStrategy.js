@@ -170,6 +170,7 @@ export const CreatePeople = async ({ unity, body }) => {
 }
 
 
+
 export const DeleteDuplicateSale = async ({ unity, personId, student }) => {
     const newToken = await getNewToken(unity);
     const headers = {
@@ -429,7 +430,7 @@ export async function CreateProducts({ unity, body }) {
                     }
                 )
                     .then(r => resolve(r))
-                    .catch(err => reject(err))
+                    .catch(err => reject(err.response.data))
 
 
             })
@@ -446,18 +447,18 @@ export async function CreateProducts({ unity, body }) {
             where: "[CREATE PRODUCTS CONTA AZUL]",
         })
 
-        throw (error.response?.data.errorMessage)
+        throw error
     }
 }
 
 export async function CreateServices({ unity, body }) {
 
-    const { code, description, priceSale, priceCost } = body;
+    const { code, name, priceSale, priceCost } = body;
 
     const newBody = {
         codigo: code,
         custo: priceCost,
-        descricao: description,
+        descricao: name,
         preco: priceSale,
         status: 'ATIVO',
         tipo_servico: 'PRESTADO'
@@ -466,132 +467,74 @@ export async function CreateServices({ unity, body }) {
     if (!Array.isArray(unity)) throw new Error("Formato de unidade inválido!");
 
     try {
-        const services = unity.map(async (uni) => {
 
+        const service = await new Promise((resolve, reject) => {
+
+            unity.map(async (uni) => {
+
+                const newToken = await getNewToken(uni);
+
+                await axios.post(
+                    `https://api-v2.contaazul.com/v1/servicos`,
+                    newBody,
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${newToken}`
+                        }
+                    }
+                )
+                    .then(r => resolve(r))
+                    .catch(err => reject(err.response.data))
+
+            })
+        }
+        )
+
+
+        return service;
+
+    } catch (error) {
+
+        console.error({
+            error,
+            where: "[CREATE SERVICES AT CONTA AZUL]",
+        });
+
+        throw error
+    }
+}
+
+export async function DeleteService({ unity, name }) {
+    if (!Array.isArray(unity)) throw new Error("Formato de unidade inválido!");
+
+
+    const DeletePromise = await new Promise((resolve, reject) => {
+        unity.map(async uni => {
             const newToken = await getNewToken(uni);
 
-            const { data } = await axios.post(
-                `https://api-v2.contaazul.com/v1/servicos`,
-                newBody,
+            const { services } = await GetDataForCreateSales({ unity: uni });
+            const service = services.find(serv => serv.nome === name);
+
+            if (!service) return resolve(true);
+
+            await axios.delete(
+                "https://api-v2.contaazul.com/v1/servicos",
+                { ids: [service.id] },
                 {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${newToken}`
                     }
                 }
-            );
-
-            return data;
+            )
+                .then(r => resolve(r))
+                .then(err => reject(err.response.data))
 
         })
 
-        return services;
+    })
 
-    } catch (error) {
-
-        console.error({
-            error,
-            where: "[CREATE SERVICES CONTA AZUL]",
-        });
-
-        return null
-    }
+    return DeletePromise;
 }
-
-
-// async function post(body) {
-//     const newToken = await getNewToken("PTB");
-
-//     const { name, sku, price } = body;
-
-//     const id = await v4()
-//     const resp = await fetch(
-//         `https://api-v2.contaazul.com/v1/contratos`,
-//         {
-//             method: 'POST',
-//             headers: {
-//                 'Content-Type': 'application/json',
-//                 Authorization: `Bearer ${newToken}`
-//             },
-//             body: JSON.stringify({
-//                 // "id_cliente": "dc8e19b2-85c3-4834-8dec-b9e9b9e6753f",
-//                 "data_emissao": new Date("2025-07-25").toISOString(),
-//                 "id_categoria": "e0d5c685-fd7e-4ff1-be7a-e75844983ef3",
-//                 "id_centro_custo": "dfc2738e-4ec7-11ee-a6e8-27bfd7200447",
-//                 "id_vendedor": "",
-//                 "observacoes_pagamento": "",
-//                 // "observacoes":
-//                 "termos": {
-//                     "tipo_frequencia": "MENSAL",
-//                     "tipo_expiracao": "DATA",
-//                     "data_inicio": new Date("2025-06-29").toISOString(),
-//                     "data_fim": new Date("2026-07-29").toISOString(),
-//                     // "intervalo_frequencia": 30,
-//                     // "dia_emissao_venda": 17,
-//                     "numero": 15
-//                 },
-//                 // "composicao_de_valor": {
-//                 //     "frete": 0,
-//                 //     "desconto": {
-//                 //         "tipo": "VALOR",
-//                 //         "valor": 0
-//                 //     }
-//                 // },
-//                 "condicao_pagamento": {
-//                     "tipo_pagamento": "PIX_COBRANCA",
-//                     "id_conta_financeira": "c2ce4ace-a9f6-447d-934d-23982d811193",
-//                     "dia_vencimento": 29,
-//                     "primeira_data_vencimento": new Date("2025-06-29").toISOString()
-//                 },
-//                 "itens": [
-//                     {
-//                         "id": "7c469594-868d-48ee-95fd-27af6256b64a",
-//                         "quantidade": 1,
-//                         "valor": 251
-//                     }
-//                 ]
-//             })
-//         }
-//     );
-
-//     const data = await resp.json();
-//     console.log(data);
-// }
-
-// post({
-//     name: "teste",
-//     price: 20,
-//     sku: "teste"
-// });
-
-
-
-// async function get() {
-//     const newToken = await getNewToken("PTB");
-
-//     const query = new URLSearchParams({
-//         pagina: '1',
-//         tamanho_pagina: '100',
-//         // campo_ordenacao: 'NOME',
-//         // direcao_ordenacao: 'ASC',
-//         termo_busca: 'teste',
-
-//     }).toString();
-
-//     const resp = await fetch(
-//         `https://api-v2.contaazul.com/v1/pessoa?${query}`,
-//         {
-//             method: 'GET',
-//             headers: {
-//                 Authorization: `Bearer ${newToken}`
-//             }
-//         }
-//     );
-
-//     const { itens, itens_totais } = await resp.json();
-//     console.log(itens);
-// }
-
-// get();
-
 

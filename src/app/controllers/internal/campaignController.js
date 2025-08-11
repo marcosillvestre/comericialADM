@@ -5,6 +5,85 @@ import prisma from '../../../database/database.js'
 import { getOptionsFromRdCustomFields, updateRdOptionsCustomFields } from '../../connection/externalConnections/rdStation.js'
 
 class CampaignController {
+
+    async index(req, res) {
+        const schema = yup.object().shape({
+
+            take: yup.string().required(),
+            skip: yup.string().required(),
+            orderFor: yup.string().required(),
+            orderBy: yup.string().required(),
+            typeFilter: yup.array().required(),
+
+        })
+
+        try {
+            await schema.validateSync(req.body, { abortEarly: false })
+
+            const { take, skip, orderBy, orderFor, typeFilter } = req.body;
+
+
+            const filters = typeFilter.map(res => {
+                const bools = {
+                    "Sim": true,
+                    "Não": false
+                }
+
+
+                if (res.label.includes("DATA")) {
+                    const [initialValue, finalValue] = res.value.split("~")
+
+                    return {
+                        [res.key]: {
+                            gte: HandleUTCDate(initialValue),
+                            lte: HandleUTCDate(finalValue)
+                        }
+                    }
+                }
+
+                return {
+                    [res.key]: {
+                        equals: bools[res.value] ?? res.value
+
+                    }
+                }
+            })
+
+            const [campaigns, total] = await prisma.$transaction([
+
+                prisma.campaign.findMany({
+                    orderBy: {
+                        [orderBy]: orderFor
+                    },
+                    take: parseInt(take),
+                    skip: parseInt(skip),
+                    where: {
+                        AND: [
+                            ...filters
+                        ]
+                    }
+                }),
+                prisma.campaign.count({
+                    where: {
+                        AND: [
+                            ...filters
+                        ]
+                    }
+                })
+            ])
+
+
+            return res.status(200).json({ campaigns, total });
+
+        } catch (error) {
+            console.log({
+                error,
+                where: '[CAMPAIGN.GET]',
+            })
+            return res.status(401).json(error)
+
+        }
+    }
     async store(req, res) {
 
         const schema = yup.object().shape({
@@ -67,25 +146,6 @@ class CampaignController {
 
     }
 
-    async index(req, res) {
-        try {
-
-            const campaigns = await prisma.campaign.findMany({
-                orderBy: {
-                    created_at: "asc"
-                }
-            })
-
-            return res.status(200).json(campaigns)
-        } catch (error) {
-            console.log({
-                where: '[CAMPAIGN.GET]',
-                error
-            })
-            return res.status(401).json(error)
-
-        }
-    }
 
     async update(req, res) {
         const { id } = req.params

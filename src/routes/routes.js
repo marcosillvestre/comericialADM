@@ -73,7 +73,7 @@ routes.get('/contrato-query/:unity', ContractsController.queryContracts)
 routes.get('/matricula/:id', PostConttroller.returnContract)
 
 routes.post("/campanha", CampaignController.store)
-routes.get("/campanha", CampaignController.index)
+routes.post("/campanhas", CampaignController.index)
 routes.put("/campanha/:id", CampaignController.update)
 routes.delete("/campanha/:id", CampaignController.delete)
 

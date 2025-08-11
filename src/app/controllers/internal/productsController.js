@@ -287,7 +287,9 @@ class ProductsController {
                 CreateProducts({ unity: ["Centro"], body: req.body })
             ])
 
-            if (promise.find(pr => pr.status === "rejected")) return res.status(401).json({ message: "Falhar ao criar produto no conta azul, verifique os dados" })
+            const rejected = promise.find(pr => pr.status === "rejected")
+
+            if (rejected) return res.status(401).json({ message: rejected.reason.error })
 
             const newProduct = await prisma.product.create({
                 data: body

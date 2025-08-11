@@ -230,29 +230,40 @@ curso: ${name}
 
         return data
     } catch (error) {
-        return new Error({
-            where: "[PRODUCT.CREATE]",
-            what: `${error}`
+
+        console.log({
+            error,
+            where: "[PRODUCT CREATE AT RD]",
         })
+
+        throw error.response.data
     }
 
 }
 
-export async function EditServicesAtRD(id, product) {
-
+export async function EditServicesAtRD({ service, product }) {
+    if (!service) return true;
     try {
-        const { data } = await axios.put(`https://crm.rdstation.com/api/v1/products/${id}?token=${process.env.RD_TOKEN}`, product)
+        const { id } = service;
+        const { data } = await axios.put(
+            `https://crm.rdstation.com/api/v1/products/${id}?token=${process.env.RD_TOKEN}`,
+            product
+        )
 
-        return data
+        return data;
+
     } catch (error) {
 
-        return new Error({
-            where: "[PRODUCT.EDIT]",
-            what: `${error}`
+        console.log({
+            what: error,
+            where: "[PRODUCT EDIT AT RD]",
         })
+
+        throw error
     }
 
 }
+
 export async function ReturnServiceAtRD(name) {
 
     try {
@@ -262,10 +273,12 @@ export async function ReturnServiceAtRD(name) {
 
     } catch (error) {
 
-        return new Error({
-            where: "[PRODUCT.GET]",
-            what: `${error}`
+        console.log({
+            error,
+            where: "[GET PRODUCT AT RD]",
         })
+
+        throw error.response.data
     }
 
 }

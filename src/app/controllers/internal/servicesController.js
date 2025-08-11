@@ -1,6 +1,6 @@
 import * as yup from 'yup';
 import prisma from '../../../database/database.js';
-import { CreateServices } from '../../connection/externalConnections/contaAzulStrategy.js';
+import { CreateServices, DeleteService } from '../../connection/externalConnections/contaAzulStrategy.js';
 import { CreateServicesAtRD, EditServicesAtRD, ReturnServiceAtRD } from '../../connection/externalConnections/rdStation.js';
 class ServicesController {
 
@@ -142,8 +142,26 @@ class ServicesController {
             const { name, code, active, workLoad, description, priceSale,
                 priceCost, modality, duration } = req.body;
 
+            const duplicate = await prisma.service.findFirst({
+                where: {
+                    OR: [
+                        {
+                            name: {
+                                equals: name
+                            }
+                        },
+                        {
+                            code: {
+                                equals: code
+                            }
+                        },
+                    ]
+                }
+            })
 
-            await Promise.allSettled([
+            if (duplicate) return res.status(401).json({ message: "Já existe um produto com este nome/código" })
+
+            const promise = await Promise.allSettled([
                 CreateServicesAtRD(req.body),
                 CreateServices({
                     unity: ["Centro", "PTB"],
@@ -151,6 +169,9 @@ class ServicesController {
                 })
             ])
 
+            const rejected = promise.find(pr => pr.status === "rejected")
+
+            if (rejected) return res.status(401).json({ message: rejected.reason.error })
 
             const newInsume = await prisma.service.create({
                 data: {
@@ -164,6 +185,7 @@ class ServicesController {
             });
 
             return res.status(201).json(newInsume);
+
 
         } catch (error) {
 
@@ -194,8 +216,6 @@ class ServicesController {
 
         })
 
-
-
         try {
             await schema.validateSync(req.body, { abortEarly: false });
 
@@ -204,50 +224,36 @@ class ServicesController {
             const { name, code, active, workLoad, description,
                 priceSale, priceCost, modality, duration } = req.body;
 
-            const { name: fName, status: fStatus } = await prisma.service.findUnique({
+            const { name: fName } = await prisma.service.findUnique({
                 where: {
                     id
                 }
             });
 
 
-            if (name !== fName || active !== fStatus) {
-                try {
-                    const { id } = await ReturnServiceAtRD(fName)
+            const serviceAtRd = await ReturnServiceAtRD(fName)
 
-                    if (!id) res.status(500).json({ message: 'Failed to update Insume' });
-
-                    const editBody = {
-                        name,
-                        visible: active,
-                        description: `
+            const editBody = {
+                name,
+                visible: active,
+                description: `
 sku: ${code},
 carga horária: ${workLoad},
 modalidade: ${modality},
 duração: ${duration},
 curso: ${name}
 `,
-                    }
-
-
-                    await EditServicesAtRD(id, editBody)
-
-                } catch (error) {
-                    console.log(error)
-                    return res.status(500).json({ message: 'Failed to update Insume' });
-
-                }
-
             }
 
+            await EditServicesAtRD({ product: editBody, service: serviceAtRd })
 
 
             const updatedInsume = await prisma.service.update({
                 where: { id: id },
                 data: {
-                    name, code, active, workLoad, description, priceSale,
+                    name, code, active,
+                    workLoad, description, priceSale,
                     priceCost, modality, duration,
-
                 },
             });
 
@@ -257,7 +263,7 @@ curso: ${name}
 
             console.error({
                 error,
-                where: "[CREATE SERVICES]"
+                where: "[EDIT SERVICES]"
             })
 
             if ("errors" in error) return res.status(400).json({ message: error.errors })
@@ -270,18 +276,17 @@ curso: ${name}
         const { id } = req.params;
 
         try {
-            const { name: fName } = await prisma.service.findUnique({ where: { id } });
-            const serviceAtRd = await ReturnServiceAtRD(fName);
+            const { name } = await prisma.service.findUnique({ where: { id } });
+            const serviceAtRd = await ReturnServiceAtRD(name);
 
-            if (serviceAtRd) {
-                const { id: idService } = serviceAtRd;
+            const promise = await Promise.allSettled([
+                EditServicesAtRD({ service: serviceAtRd, product: { visible: false, } }),
+                DeleteService({ name: name, unity: ["Centro, PTB"] })
+            ])
 
-                await EditServicesAtRD(idService, {
-                    visible: false,
-                })
+            const rejected = promise.find(pr => pr.status === "rejected")
 
-            }
-
+            if (rejected) return res.status(401).json({ message: rejected.reason.error })
 
             await prisma.service.delete({ where: { id } });
 
