@@ -24,7 +24,7 @@ class PostController {
             })
 
 
-            return res.status(200).json(newData)
+            return res.status(200).json({ funnels: newData, total: newData.length })
 
         } catch (error) {
             console.log(error)
