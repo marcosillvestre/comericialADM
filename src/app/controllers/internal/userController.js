@@ -72,12 +72,40 @@ class UserController {
 
             orderFor: yup.string().required(),
             orderBy: yup.string().required(),
+            typeFilter: yup.array().required(),
+
         })
 
         try {
             await schema.validateSync(req.body, { abortEarly: false })
 
-            const { take, skip, orderBy, orderFor } = req.body
+            const { take, skip, orderBy, orderFor, typeFilter } = req.body;
+
+            const filters = typeFilter.map(res => {
+                const bools = {
+                    "Sim": true,
+                    "Não": false
+                }
+
+
+                if (res.label.includes("DATA")) {
+                    const [initialValue, finalValue] = res.value.split("~")
+
+                    return {
+                        [res.key]: {
+                            gte: HandleUTCDate(initialValue),
+                            lte: HandleUTCDate(finalValue)
+                        }
+                    }
+                }
+
+                return {
+                    [res.key]: {
+                        equals: bools[res.value] ?? res.value
+
+                    }
+                }
+            })
 
             const [users, total] = await prisma.$transaction([
                 prisma.login.findMany({
@@ -86,8 +114,20 @@ class UserController {
                     orderBy: {
                         [orderBy]: orderFor
                     },
+                    where: {
+                        AND: [
+                            ...filters
+                        ]
+                    }
+
                 }),
-                prisma.login.count()
+                prisma.login.count({
+                    where: {
+                        AND: [
+                            ...filters
+                        ]
+                    }
+                })
 
             ])
 
