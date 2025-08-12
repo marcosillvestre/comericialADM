@@ -12,17 +12,43 @@ class BillingRulesController {
 
             orderFor: yup.string().required(),
             orderBy: yup.string().required(),
+            typeFilter: yup.array().required(),
 
         })
 
         try {
             await schema.validateSync(req.body, { abortEarly: false })
 
-            const { take, skip, orderBy, orderFor } = req.body
+            const { take, skip, orderBy, orderFor, typeFilter } = req.body
 
+            const filters = typeFilter.map(res => {
+                const bools = {
+                    "Sim": true,
+                    "Não": false
+                }
+
+
+                if (res.label.includes("DATA")) {
+                    const [initialValue, finalValue] = res.value.split("~")
+
+                    return {
+                        [res.key]: {
+                            gte: HandleUTCDate(initialValue),
+                            lte: HandleUTCDate(finalValue)
+                        }
+                    }
+                }
+
+                return {
+                    [res.key]: {
+                        equals: bools[res.value] ?? res.value
+
+                    }
+                }
+            })
 
             const [billing, total] = await prisma.$transaction([
-                prisma.billingRules.findMany({
+                prisma.billings.findMany({
                     orderBy: {
                         [orderBy]: orderFor
                     },
@@ -41,19 +67,37 @@ class BillingRulesController {
                                 name: true,
                             }
                         }
+                    },
+                    where: {
+                        AND: [
+                            ...filters
+                        ]
                     }
 
                 }),
-                prisma.billingRules.count()
+                prisma.billings.count({
+                    where: {
+                        AND: [
+                            ...filters
+                        ]
+                    }
+                })
             ])
 
 
             return res.status(200).json({
                 billing, total
             })
+
         } catch (error) {
-            console.log(error)
-            return res.status(500).json({ error })
+            console.log({
+                error,
+                where: "[GET INDEX BILLINGS]"
+            });
+
+            if ("errors" in error) return res.status(400).json({ message: error.errors })
+
+            return res.status(500).json({ message: "Erro para trazer os dados" })
         }
     }
 
@@ -88,7 +132,7 @@ class BillingRulesController {
 
             const relatedKey = category === 'Product' ? 'productsRelated' : 'servicesRelated'
 
-            const rule = await prisma.billingRules.create({
+            const rule = await prisma.billings.create({
                 data: {
                     name,
                     description,
@@ -144,7 +188,7 @@ class BillingRulesController {
 
             const relatedKey = category === 'Product' ? 'productsRelated' : 'servicesRelated'
 
-            const rule = await prisma.billingRules.update({
+            const rule = await prisma.billings.update({
                 where: {
                     id
                 },
@@ -163,7 +207,7 @@ class BillingRulesController {
                 },
 
             }).then(async () => {
-                await prisma.billingRules.update({
+                await prisma.billings.update({
                     where: {
                         id
                     },
@@ -196,7 +240,7 @@ class BillingRulesController {
         const { id } = req.params
 
         try {
-            await prisma.billingRules.update({
+            await prisma.billings.update({
                 where: { id },
                 data: {
                     productsRelated: {
@@ -209,7 +253,7 @@ class BillingRulesController {
             })
                 .then(async () => {
 
-                    await prisma.billingRules.delete({
+                    await prisma.billings.delete({
                         where: { id },
                     })
                 })
