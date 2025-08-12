@@ -220,7 +220,9 @@ export async function SendRematriculaToTrello(data, unity) {
         .then(async url => {
             let message = `${body.name} -- está a dois meses de vencer seu contrato, acesse o link do trello para começar o processo de rematrícula : ${url}`;
 
-            let chat = response.customFields["Unidade"] === "Centro" ? process.env.UMBLER_CHAT_REM_ID_CENTRO : process.env.UMBLER_CHAT_REM_ID_PTB
+            let chat = unity === "Centro" ?
+                process.env.UMBLER_CHAT_REM_ID_CENTRO :
+                process.env.UMBLER_CHAT_REM_ID_PTB
 
             if (url) await SendGroupAlerts(
                 message,
