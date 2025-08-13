@@ -26,18 +26,42 @@ export const bodyMakerForCustomFields = async (contractData) => {
     const materilFiltered = material[0] === "Outros" || material[0] === "Office" ?
         [] : material.map(res => { return res.split(" / ")[1] })
 
+    const convenio = await findYourValueForCustomFields("Tipo de Campanha / Convênio", deal.deal_custom_fields)
 
-    const [products] = await prisma.$transaction([
+    const [products, campaigns] = await prisma.$transaction([
         prisma.product.findMany({
             where: {
                 code: {
                     in: materilFiltered.filter(res => res !== undefined)
                 }
             }
+        }),
+        prisma.campaign.findMany({
+            select: {
+                id: true,
+                name: true,
+                value: true,
+                affectedParcels: true,
+                description: true,
+                descountType: true,
+                for: true
+            },
+            where: {
+                AND: [
+                    {
+                        name: {
+                            in: convenio
+                        },
+                    },
+                    {
+                        status: {
+                            equals: true
+                        }
+                    }
+                ]
+            }
         })
     ])
-
-    const convenio = await findYourValueForCustomFields("Tipo de Campanha / Convênio", deal.deal_custom_fields)
 
     const promocao = convenio && convenio.length > 0 ?
         "Sim" : "Não"
@@ -50,6 +74,7 @@ export const bodyMakerForCustomFields = async (contractData) => {
         id: deal.id,
         promocao,
         products,
+        campaigns,
         vendedor,
         CelularResponsavel: phone,
         valorCurso: deal.deal_products[0]?.total,
