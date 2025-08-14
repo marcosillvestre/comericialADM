@@ -30,9 +30,6 @@ const idList = {
     'Centro': "Centro"
 }
 
-
-////////////////////////////////////////////////////////////
-
 const parsed = (string) => {
     try {
         const match = string.match(/["']?serviço["']?:\s*(["']?)([^\n\r"']+)\1/i)

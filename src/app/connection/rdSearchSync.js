@@ -82,7 +82,7 @@ async function GetPipelineStage(id) {
 
 
 const getServiceByName = async (Param) => {
-    const response = await prisma.services.findFirst({
+    const response = await prisma.service.findFirst({
         where: {
             name: {
                 contains: Param,
