@@ -94,6 +94,14 @@ const getServiceByName = async (Param) => {
     return response
 
 }
+
+const getDateRD = (birthday) => {
+    if (!birthday) return "Data de nascimento não cadastrada";
+    const { day, month, year } = birthday
+
+    return month > 9 ? `${day}/${month}/${year}` : `${day}/0${month}/${year}`
+}
+
 export const gatheringDataForDatabase = async (deals) => {
     const data = []
     try {
@@ -125,7 +133,7 @@ export const gatheringDataForDatabase = async (deals) => {
                 }
 
                 if (result["Aluno é o próprio responsável?"] === "Sim" && contacts.birthday) {
-                    result["Data de nascimento do aluno"] = contacts.birthday ? `${contacts.birthday?.day}/0${contacts.birthday?.month}/${contacts.birthday?.year}` : undefined
+                    result["Data de nascimento do aluno"] = await getDateRD(contacts.birthday)
                     result["Nome do aluno (se não for responsável próprio))"] = contacts.name
                 }
 
@@ -158,7 +166,7 @@ export const gatheringDataForDatabase = async (deals) => {
                     Subclasse,
                     Unidade: splited[splited.length - 1],
                     Curso: course,
-                    "Data de nascimento do  responsável": contacts.birthday ? `${contacts.birthday?.day}/0${contacts.birthday?.month}/${contacts.birthday?.year}` : undefined,
+                    "Data de nascimento do  responsável": await getDateRD(contacts.birthday),
                     "Tipo/ modalidade": modality,
                     "Carga horário do curso": workLoad,
                     "Nome do responsável": contacts?.name ? contacts.name : undefined,

@@ -154,18 +154,16 @@ export const CreatePeople = async ({ unity, body }) => {
         const msg = error?.response?.data?.message || error.message || "Erro inesperado";
 
         console.error({
-            context: "[CREATEPEOPLE]",
+            context: "[CREATE PEOPLE]",
             status,
-            message: msg,
+            message: error.response,
             fullError: error?.response?.data || error,
         });
 
         if (msg === "O CPF digitado já está cadastrado") return body; // CPF já existe, retorna os dados recebidos
-        if (msg === "CEP inválido") throw new Error(`[CREATEPEOPLE] [${status || 'Erro'}] ${msg}`);
+        if (msg === "CEP inválido") throw (`[CREATEPEOPLE] [${status || 'Erro'}] ${msg}`);
 
         // Retorna erro padronizado para tratamento em nível superior
-
-        return null
     }
 }
 
