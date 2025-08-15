@@ -14,7 +14,7 @@ export const getDataFromCep = async (cep) => {
 
         console.log({
             where: "ViaCEP",
-            error: error.response.status
+            error: error.response
         })
 
         return null

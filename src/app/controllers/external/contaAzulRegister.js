@@ -204,9 +204,9 @@ class RegisterContaAzulController {
 
 
             const serviceFiltered = services.find(ser => ser.descricao.includes(servico));
-            const { id: idCategorie } = categories.find(cat => cat.nome.includes(categorieOrCost[servico]));
-            const { id: idCenterCost } = costs.find(cos => cos.nome.includes("Mensalidade"));
-            const { id: idFinancialAccount } = financialAccounts.find(fin => fin.nome.includes(financial_account[formaPagamentoParcelas]));
+            const Categorie = categories.find(cat => cat.nome.includes(categorieOrCost[servico]));
+            const CenterCost = costs.find(cos => cos.nome.includes("Mensalidade"));
+            const FinancialAccount = financialAccounts.find(fin => fin.nome.includes(financial_account[formaPagamentoParcelas]));
 
 
             let venc = await DateTransformer(vencimentoPrimeiraParcela);
@@ -215,10 +215,11 @@ class RegisterContaAzulController {
             let less25Days = venc.toLocaleDateString('pt-BR');
 
             const body = {
-                idCategorie,
-                idCenterCost,
+                idCategorie: Categorie?.id,
+                idCenterCost: CenterCost?.id,
+                idFinancialAccount: FinancialAccount?.id,
+
                 serviceFiltered,
-                idFinancialAccount,
                 idClient: persons?.uuid,
                 paymentType: paymentType[formaPagamentoParcelas],
                 contract: contrato,
@@ -414,9 +415,9 @@ class RegisterContaAzulController {
             if (product.find(pd => !pd.id)) return res.status(400).json({ message: `Material didático não está presente no conta azul da unidade ${Unidade}` })
 
 
-            const { id: idFinancialAccount } = financialAccounts.find(fin => fin.nome.includes(financial_account[formaPagamentoMaterialDidatico]));
-            const { id: idCategorie } = categories.find(cat => cat.nome.includes("Material Didático"));
-            const { id: idCenterCost } = costs.find(cos => cos.nome.includes("Material Didático"));
+            const FinancialAccount = financialAccounts.find(fin => fin.nome.includes(financial_account[formaPagamentoMaterialDidatico]));
+            const Categorie = categories.find(cat => cat.nome.includes("Material Didático"));
+            const CenterCost = costs.find(cos => cos.nome.includes("Material Didático"));
 
             const saleBody = {
                 notes: saleNotes,
@@ -429,9 +430,10 @@ class RegisterContaAzulController {
                 idClient: persons.uuid,
                 paymentType: paymentType[formaPagamentoMaterialDidatico],
 
-                idCategorie,
-                idCenterCost,
-                idFinancialAccount,
+                idCategorie: Categorie?.id,
+                idCenterCost: CenterCost?.id,
+                idFinancialAccount: FinancialAccount?.id,
+
             }
 
 
@@ -596,9 +598,9 @@ class RegisterContaAzulController {
             });
 
 
-            const { id: idFinancialAccount } = financialAccounts.find(fin => fin.nome.includes(financial_account[formaPagamentoTaxaMatricula]));
-            const { id: idCategorie } = categories.find(cat => cat.nome.includes("Taxa de Matrícula"));
-            const { id: idCenterCost } = costs.find(cos => cos.nome.includes("Taxa de Matrícula"));
+            const FinancialAccount = financialAccounts.find(fin => fin.nome.includes(financial_account[formaPagamentoTaxaMatricula]));
+            const Categorie = categories.find(cat => cat.nome.includes("Taxa de Matrícula"));
+            const CenterCost = costs.find(cos => cos.nome.includes("Taxa de Matrícula"));
 
             const itens = [{
                 "descricao": "Taxa de Matrícula",
@@ -609,15 +611,16 @@ class RegisterContaAzulController {
             }]
 
             const saleBody = {
+                idCategorie: Categorie?.id,
+                idCenterCost: CenterCost?.id,
+                idFinancialAccount: FinancialAccount?.id,
+
                 notes: saleNotes,
                 idClient: persons.uuid,
                 itens,
                 payment: { total: 350, descount: tax.descount },
                 dueDay: vencimentoMaterialDidatico,
                 paymentType: paymentType[formaPagamentoMaterialDidatico],
-                idCategorie,
-                idCenterCost,
-                idFinancialAccount,
                 parcels: 1,
 
             }
