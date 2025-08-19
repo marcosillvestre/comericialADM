@@ -232,9 +232,9 @@ class RegisterContaAzulController {
             }
 
             const newContract = await CreateContract({ unity: Unidade, body });
+            console.log("Contrato criada com sucesso")
 
-            return res.status(200).json(newContract)
-
+            return res.status(201).json(newContract)
 
         } catch (error) {
             console.error({
@@ -443,6 +443,8 @@ class RegisterContaAzulController {
                 body: saleBody,
             })
 
+            console.log("Venda criada com sucesso")
+
             return res.status(201).json(newSale)
 
         } catch (error) {
@@ -593,7 +595,7 @@ class RegisterContaAzulController {
                 'Observações pedagógicas': observacaoPedagogico,
                 'Observações financeiras': observacaoFinanceiro,
                 'id': id,
-                'serviço': 'material didatico'
+                'serviço': 'taxa de matricula'
 
             });
 
@@ -630,6 +632,7 @@ class RegisterContaAzulController {
                 body: saleBody,
             })
 
+            console.log("Taxa criada com sucesso")
 
             return res.status(201).json(newSale)
 

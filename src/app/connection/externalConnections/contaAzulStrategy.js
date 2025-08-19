@@ -154,10 +154,10 @@ export const CreatePeople = async ({ unity, body }) => {
         const msg = error?.response?.data?.message || error.message || "Erro inesperado";
 
         console.error({
-            context: "[CREATE PEOPLE]",
-            status,
-            message: error.response,
             fullError: error?.response?.data || error,
+            status,
+            message: error.response.data,
+            context: "[CREATE PEOPLE]",
         });
 
         if (msg === "O CPF digitado já está cadastrado") return body; // CPF já existe, retorna os dados recebidos
