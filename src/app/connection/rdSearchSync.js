@@ -153,7 +153,9 @@ export const gatheringDataForDatabase = async (deals) => {
 
                 const endDate = await installment[installment.length - 1]?.data_vencimento
 
-                const { course, workLoad, modality } = await getServiceByName(service.name)
+                const { workLoad, modality } = await getServiceByName(service.name)
+                const course = Classe.includes('Tecnologia') ? "Tecnologia" : Classe.includes('Español') ? "Espanhol" : "Inglês"
+
                 return await {
                     ...result,
                     Endereco: viaCepData['logradouro'],
