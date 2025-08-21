@@ -87,12 +87,12 @@ export const getSaleProducts = async (headers, id) => {
 }
 
 
-export const CreatePeople = async ({ unity, body }) => {
+export const CreatePeople = async ({ token, body }) => {
 
     const { cpf, phone, email, neighboor, cep,
         complement, name, birth, contract, role, address, number } = body;
     try {
-        const newToken = await getNewToken(unity);
+
         const birthDate = await ReOrderDate(birth);
         const cepData = await getDataFromCep(cep);
 
@@ -141,7 +141,7 @@ export const CreatePeople = async ({ unity, body }) => {
             {
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${newToken}`
+                    Authorization: `Bearer ${token}`
                 }
             }
         );
@@ -160,14 +160,17 @@ export const CreatePeople = async ({ unity, body }) => {
             context: "[CREATE PEOPLE]",
         });
 
-        if (msg === "O CPF digitado já está cadastrado") return body; // CPF já existe, retorna os dados recebidos
+        if (msg === "O CPF digitado já está cadastrado") {
+            const { persons } = await GetDataForCreateSales({ search: cpf, token })
+            return persons
+            // CPF já existe, retorna os dados recebidos
+        };
+
         if (msg === "CEP inválido") throw (`[CREATEPEOPLE] [${status || 'Erro'}] ${msg}`);
 
         // Retorna erro padronizado para tratamento em nível superior
     }
 }
-
-
 
 export const DeleteDuplicateSale = async ({ unity, personId, student }) => {
     const newToken = await getNewToken(unity);
@@ -196,13 +199,14 @@ export const DeleteDuplicateSale = async ({ unity, personId, student }) => {
 }
 
 
-export const GetDataForCreateSales = async ({ unity, search }) => {
-    const newToken = await getNewToken(unity);
+export const GetDataForCreateSales = async ({ token, unity, search }) => {
+    const newToken = token ?? await getNewToken(unity);
 
     const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${newToken}`
     }
+
     const queryForProducts = new URLSearchParams({ pagina: '1', tamanho_pagina: '100', status: "ATIVO" }).toString();
     const queryForCostumer = new URLSearchParams({ pagina: '1', tamanho_pagina: '1', 'documento[]': search, }).toString();
     const queryForCostCenter = new URLSearchParams({ pagina: '1', tamanho_pagina: '100', }).toString();
@@ -246,19 +250,17 @@ export const GetDataForCreateSales = async ({ unity, search }) => {
     }
 }
 
-export const CreateSale = async ({ unity, body }) => {
-    const newToken = await getNewToken(unity);
+export const CreateSale = async ({ token, body }) => {
 
     const { notes, idClient, itens, dueDay, payment,
         paymentType, idCategorie, idCenterCost, idFinancialAccount,
-        parcels
-    } = body;
+        parcels } = body;
 
 
     try {
         const { total, descount } = payment;
 
-        const installment = await installments(dueDay, parcels, total - descount);
+        const installment = await installments(dueDay, parseInt(parcels), total - descount);
         const numberSale = await randomNumber(1, 1000000);
         const emission = await ReOrderDate(dueDay);
 
@@ -279,7 +281,8 @@ export const CreateSale = async ({ unity, body }) => {
             condicao_pagamento: {
                 tipo_pagamento: paymentType,
                 id_conta_financeira: idFinancialAccount,
-                opcao_condicao_pagamento: installment.length === 1 ? 'À vista' : `${installment.length}X`,
+                opcao_condicao_pagamento: installment.length === 1 ?
+                    'À vista' : `${installment.length}x`,
                 parcelas: installment
             }
         }
@@ -290,7 +293,7 @@ export const CreateSale = async ({ unity, body }) => {
             {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${newToken}`
+                    'Authorization': `Bearer ${token}`
                 }
             }
         );
@@ -304,16 +307,17 @@ export const CreateSale = async ({ unity, body }) => {
         const msg = error?.response?.data?.message || error.message || "Erro inesperado";
 
         console.error({
-            context: "[CREATE SALE]",
             status,
             message: msg,
             fullError: error?.response?.data || error,
+            context: "[CREATE SALE]",
         });
 
         throw (`[CREATE SALE] [${status || 'Erro'}] ${msg}`);
     }
 }
-export const CreateContract = async ({ unity, body }) => {
+
+export const CreateContract = async ({ token, body }) => {
 
     const { start, end, idClient, emissionDate, idCategorie,
         idCenterCost, serviceFiltered, notes, idFinancialAccount, dueDay,
@@ -321,7 +325,6 @@ export const CreateContract = async ({ unity, body }) => {
     } = body;
 
     try {
-        const newToken = await getNewToken(unity);
 
         const startDate = await ReOrderDate(start);
         const endDate = await ReOrderDate(end);
@@ -365,7 +368,7 @@ export const CreateContract = async ({ unity, body }) => {
             {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${newToken}`
+                    'Authorization': `Bearer ${token}`
                 }
             }
         );

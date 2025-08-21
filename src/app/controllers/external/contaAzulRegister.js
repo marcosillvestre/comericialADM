@@ -6,6 +6,7 @@ import { createComment } from '../../../utils/functions/serializerStrings.js';
 import { categorieOrCost, financial_account, paymentType } from '../../../utils/services/matches/index.js';
 import { CreateContract, CreatePeople, CreateSale, GetDataForCreateSales } from '../../connection/externalConnections/contaAzulStrategy.js';
 import { SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
+import { getNewToken } from '../../core/getToken.js';
 
 class RegisterContaAzulController {
 
@@ -69,6 +70,11 @@ class RegisterContaAzulController {
             'Unidade': yup.string().required("O campo Unidade não preenchido corretamente, verifique os dados"),
             'parcel': yup.object().required("Dados sobre a parcela não foram preenchidos da maneira correta, verifique os dados"),
             'Forma de pagamento da parcela': yup.string().required("Forma de pagamento da parcela é um campo obrigatório"),
+            CelularResponsavel: yup.string().transform((curr) => curr.replace(" ", "")).required("CelularResponsavel é um campo obrigatório"),
+            Email: yup.string().transform((curr) => curr.replace(" ", "")).email().required("Email é um campo obrigatório"),
+            CEP: yup.string().transform((curr) => curr.replace(" ", "")).min(8, "O número válido mínimo para o CEP são 8 números").required("CEP é um campo obrigatório"),
+            'Nome do responsável': yup.string().transform((curr) => curr.replace(" ", "")).required("Nome do responsável é um campo obrigatório"),
+            'Data de nascimento do  responsável': yup.string().transform((curr) => curr.replace(" ", "")).required("Data de nascimento do  responsável é um campo obrigatório"),
 
         })
 
@@ -76,9 +82,12 @@ class RegisterContaAzulController {
         try {
             await schema.validateSync(req.body, { abortEarly: false })
 
-            const { id, promocao, valorCurso,
-                CPF, Curso, Unidade,
-
+            const { id, Bairro, CEP,
+                Complemento, Unidade, CPF,
+                ['Data de nascimento do  responsável']: nascimentoResponsavel,
+                ['Profissão']: profissao,
+                ['Endereco']: endereco,
+                ['Número']: numero,
                 material,
                 parcel,
                 tax,
@@ -113,10 +122,30 @@ class RegisterContaAzulController {
                 ['Horário de fim']: horarioFim,
             } = req.body;
 
+            const newToken = await getNewToken(Unidade);
 
-            const { persons, services, costs, categories, financialAccounts } = await GetDataForCreateSales({ search: CPF, unity: Unidade })
+            const { services, costs, categories, financialAccounts } = await GetDataForCreateSales({
+                search: CPF, token: newToken
+            })
 
-            if (!persons) return res.status(400).json({ message: "CPF inválido, cliente não encontrado no conta azul" });
+            const bodyPerson = {
+                cpf: CPF,
+                phone: CelularResponsavel,
+                email: Email,
+                neighboor: Bairro,
+                cep: CEP,
+                complement: Complemento,
+                name: nomeResponsavel,
+                birth: nascimentoResponsavel,
+                contract: contrato,
+                role: profissao,
+                address: endereco,
+                number: numero,
+            }
+
+            const newPeople = await CreatePeople({ token: newToken, body: bodyPerson });
+
+            if (!newPeople) return res.status(400).json({ message: "CPF inválido, cliente não encontrado no conta azul" });
 
             const saleNotes = await createComment({
                 'Responsável': nomeResponsavel,
@@ -220,7 +249,7 @@ class RegisterContaAzulController {
                 idFinancialAccount: FinancialAccount?.id,
 
                 serviceFiltered,
-                idClient: persons?.uuid,
+                idClient: newPeople?.uuid,
                 paymentType: paymentType[formaPagamentoParcelas],
                 contract: contrato,
                 start: vencimentoPrimeiraParcela,
@@ -231,7 +260,7 @@ class RegisterContaAzulController {
                 dueDay: parseInt(vencimentoPrimeiraParcela.split("/")[0]),
             }
 
-            const newContract = await CreateContract({ unity: Unidade, body });
+            const newContract = await CreateContract({ token: newToken, body });
             console.log("Contrato criada com sucesso")
 
             return res.status(201).json(newContract)
@@ -270,16 +299,17 @@ class RegisterContaAzulController {
             await schema.validateSync(req.body, { abortEarly: false })
 
             const {
-                id, promocao, valorCurso, CPF, Curso, Unidade,
-
-                material,
-                parcel,
-                tax,
+                id, promocao, valorCurso, CPF, Curso, Unidade, Bairro, CEP, Complemento,
+                material, parcel, tax,
 
                 Email,
                 Professor,
                 CelularResponsavel,
                 vendedor,
+                ['Endereco']: endereco,
+                ['Número']: numero,
+                ['Data de nascimento do  responsável']: nascimentoResponsavel,
+                ['Profissão']: profissao,
                 ['service']: servico,
                 ['Nome do responsável']: nomeResponsavel,
                 ['Nome do aluno (se não for responsável próprio))']: nomeAluno,
@@ -309,9 +339,28 @@ class RegisterContaAzulController {
 
             } = req.body;
 
-            const { persons, costs, categories, financialAccounts, products } = await GetDataForCreateSales({ unity: Unidade, search: CPF })
+            const newToken = await getNewToken(Unidade);
+            const { costs, categories, financialAccounts, products } = await GetDataForCreateSales({ token: newToken, search: CPF })
 
-            if (!persons) return res.status(400).json({ message: "CPF inválido, cliente não encontrado no conta azul" });
+            const bodyPerson = {
+                cpf: CPF,
+                phone: CelularResponsavel,
+                email: Email,
+                neighboor: Bairro,
+                cep: CEP,
+                complement: Complemento,
+                name: nomeResponsavel,
+                birth: nascimentoResponsavel,
+                contract: contrato,
+                role: profissao,
+                address: endereco,
+                number: numero,
+            }
+
+            const newPeople = await CreatePeople({ token: newToken, body: bodyPerson });
+
+
+            if (!newPeople) return res.status(400).json({ message: "CPF inválido, cliente não encontrado no conta azul" });
 
             const saleNotes = await createComment({
                 'Responsável': nomeResponsavel,
@@ -427,7 +476,7 @@ class RegisterContaAzulController {
                 dueDay: vencimentoMaterialDidatico,
                 payment: material,
 
-                idClient: persons.uuid,
+                idClient: newPeople?.uuid,
                 paymentType: paymentType[formaPagamentoMaterialDidatico],
 
                 idCategorie: Categorie?.id,
@@ -436,10 +485,8 @@ class RegisterContaAzulController {
 
             }
 
-
-
             const newSale = await CreateSale({
-                unity: Unidade,
+                token: newToken,
                 body: saleBody,
             })
 
@@ -474,8 +521,13 @@ class RegisterContaAzulController {
         try {
             await schema.validateSync(req.body, { abortEarly: false })
 
-            const { id, promocao, valorCurso, CPF, Curso,
-                Unidade, tax, material, parcel,
+            const { id, promocao, valorCurso, CPF, Curso, Bairro, CEP, Complemento, Unidade,
+                tax, material, parcel,
+                ['Endereco']: endereco,
+                ['Número']: numero,
+                ['Data de nascimento do  responsável']: nascimentoResponsavel,
+                ['Profissão']: profissao,
+
 
                 ['Valor do Desconto na Taxa de Matrícula']: descontoTaxaMatricula,
                 ['service']: servico,
@@ -510,9 +562,31 @@ class RegisterContaAzulController {
 
             } = req.body
 
-            const { persons, costs, categories, financialAccounts } = await GetDataForCreateSales({ unity: Unidade, search: CPF })
+            const newToken = await getNewToken(Unidade);
 
-            if (!persons) return res.status(400).json({ message: "CPF inválido, cliente não encontrado no conta azul" });
+            const { costs, categories, financialAccounts } = await GetDataForCreateSales({
+                token: newToken,
+                search: CPF
+            })
+
+            const bodyPerson = {
+                cpf: CPF,
+                phone: CelularResponsavel,
+                email: Email,
+                neighboor: Bairro,
+                cep: CEP,
+                complement: Complemento,
+                name: nomeResponsavel,
+                birth: nascimentoResponsavel,
+                contract: contrato,
+                role: profissao,
+                address: endereco,
+                number: numero,
+            }
+
+            const newPeople = await CreatePeople({ token: newToken, body: bodyPerson });
+
+            if (!newPeople) return res.status(400).json({ message: "CPF inválido, cliente não encontrado no conta azul" });
 
             const saleNotes = await createComment({
                 'Responsável': nomeResponsavel,
@@ -618,7 +692,7 @@ class RegisterContaAzulController {
                 idFinancialAccount: FinancialAccount?.id,
 
                 notes: saleNotes,
-                idClient: persons.uuid,
+                idClient: newPeople?.uuid,
                 itens,
                 payment: { total: 350, descount: tax.descount },
                 dueDay: vencimentoMaterialDidatico,
@@ -628,7 +702,7 @@ class RegisterContaAzulController {
             }
 
             const newSale = await CreateSale({
-                unity: Unidade,
+                token: newToken,
                 body: saleBody,
             })
 
@@ -643,7 +717,8 @@ class RegisterContaAzulController {
                 where: "[CREATE SALE TO CONTA AZUL]"
 
             })
-            await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[CA:FEE]: ${error}`, null, 2))
+            await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[CA:FEE]: ${error}`, null, 2));
+
             if ("errors" in error) return res.status(400).json({ message: error.errors })
 
             return res.status(400).json({ message: error })
