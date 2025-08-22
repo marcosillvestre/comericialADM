@@ -147,7 +147,7 @@ export const gatheringDataForDatabase = async (deals) => {
 
                 const installment = await installments(
                     result["Data de Vencimento da Primeira Parcela"],
-                    result["Número de parcelas do curso"],
+                    parseInt(result["Número de parcelas do curso"]),
                     0
                 )
 
