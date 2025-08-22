@@ -271,7 +271,7 @@ class BillingRulesExec {
         for (let index = 0; index < typesTrigger.length; index++) {
             const element = typesTrigger[index];
 
-            const rules = await prisma.billingRules.findMany({
+            const rules = await prisma.billings.findMany({
                 include: {
                     productsRelated: {
                         select: {
