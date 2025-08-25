@@ -278,10 +278,9 @@ class RegisterContaAzulController {
                 JSON.stringify(`[CONTRACT]: ${error}`, null, 2)
             );
 
-            if (error.includes("Internal Server Error") ||
-                error.includes("[500]")) return res.status(400).json({
-                    message: typeof error === 'string' ? error : "Erro no servidor, dados incompatíveis"
-                })
+            if (typeof error === 'string') return res.status(400).json({
+                message: error
+            })
 
             if ("errors" in error) return res.status(400).json({ message: error.errors })
 
@@ -526,10 +525,9 @@ class RegisterContaAzulController {
                 JSON.stringify(`[SALE]: ${error}`, null, 2)
             );
 
-            if (error.includes("Internal Server Error") ||
-                error.includes("[500]")) return res.status(400).json({
-                    message: typeof error === 'string' ? error : "Erro no servidor, dados incompatíveis"
-                })
+            if (typeof error === 'string') return res.status(400).json({
+                message: error
+            })
 
             if ("errors" in error) return res.status(400).json({ message: error.errors })
 
@@ -751,10 +749,9 @@ class RegisterContaAzulController {
                 JSON.stringify(`[FEE]: ${error}`, null, 2)
             );
 
-            if (error.includes("Internal Server Error") ||
-                error.includes("[500]")) return res.status(400).json({
-                    message: typeof error === 'string' ? error : "Erro no servidor, dados incompatíveis"
-                })
+            if (typeof error === 'string') return res.status(400).json({
+                message: error
+            })
 
             if ("errors" in error) return res.status(400).json({ message: error.errors })
 
