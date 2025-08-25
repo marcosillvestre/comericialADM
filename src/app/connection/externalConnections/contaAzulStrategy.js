@@ -2,6 +2,7 @@ import axios from "axios"
 import { getNewToken } from "../../core/getToken.js"
 
 import { v4 } from "uuid"
+import prisma from "../../../database/database.js"
 import { ReOrderDate } from "../../../utils/functions/DateTransformer.js"
 import { installments } from "../../../utils/functions/installments.js"
 import { randomNumber } from "../../../utils/functions/serializeNumbers.js"
@@ -323,7 +324,7 @@ export const CreateContract = async ({ token, body }) => {
 
     const { start, end, idClient, emissionDate, idCategorie,
         idCenterCost, serviceFiltered, notes, idFinancialAccount, dueDay,
-        firstDayToPay, paymentType } = body;
+        firstDayToPay, paymentType, payment } = body;
 
     try {
 
@@ -332,6 +333,7 @@ export const CreateContract = async ({ token, body }) => {
         const emission = await ReOrderDate(emissionDate);
         const payDay = await ReOrderDate(firstDayToPay);
         const numberSale = await randomNumber(1, 1000000);
+        const { total, descount, parcels } = payment;
 
         const newBody = {
             id_cliente: idClient,
@@ -354,7 +356,7 @@ export const CreateContract = async ({ token, body }) => {
                 {
                     id: serviceFiltered?.id,
                     quantidade: 1,
-                    valor: serviceFiltered?.preco,
+                    valor: (total - descount) / parcels.length,
                 }
             ],
             data_emissao: emission,
@@ -540,3 +542,14 @@ export async function DeleteService({ unity, name }) {
     return DeletePromise;
 }
 
+
+const f = await prisma.product.findMany({
+    where: {
+        code: {
+
+            in: ['SH1SB1BK', 'SH1WB1BK']
+        }
+    }
+})
+
+console.log(f)
