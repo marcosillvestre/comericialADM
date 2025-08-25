@@ -12,7 +12,53 @@ export const findYourValueForCustomFields = (customFieldLabel, deal_custom_field
     return value
 }
 
+const getCampaignAndProducts = async ({ campArray, prodArray }) => {
 
+    try {
+        const [products, campaigns] = await prisma.$transaction([
+            prisma.product.findMany({
+                where: {
+                    code: {
+                        in: prodArray
+                    }
+                }
+            }),
+            prisma.campaign.findMany({
+                select: {
+                    id: true,
+                    name: true,
+                    value: true,
+                    affectedParcels: true,
+                    description: true,
+                    descountType: true,
+                    for: true
+                },
+                where: {
+                    AND: [
+                        {
+                            name: {
+                                in: campArray
+                            },
+                        },
+                        {
+                            status: {
+                                equals: true
+                            }
+                        }
+                    ]
+                }
+            })
+        ])
+
+        return { products, campaigns }
+
+    } catch (error) {
+
+        console.log({ error, where: '[gather product and campaigns]' })
+        return { products: [], campaigns: [] }
+
+    }
+}
 
 
 export const bodyMakerForCustomFields = async (contractData) => {
@@ -28,40 +74,8 @@ export const bodyMakerForCustomFields = async (contractData) => {
 
     const convenio = await findYourValueForCustomFields("Tipo de Campanha / Convênio", deal.deal_custom_fields)
 
-    const [products, campaigns] = await prisma.$transaction([
-        prisma.product.findMany({
-            where: {
-                code: {
-                    in: materilFiltered.filter(res => res !== undefined)
-                }
-            }
-        }),
-        prisma.campaign.findMany({
-            select: {
-                id: true,
-                name: true,
-                value: true,
-                affectedParcels: true,
-                description: true,
-                descountType: true,
-                for: true
-            },
-            where: {
-                AND: [
-                    {
-                        name: {
-                            in: convenio
-                        },
-                    },
-                    {
-                        status: {
-                            equals: true
-                        }
-                    }
-                ]
-            }
-        })
-    ])
+
+    const { products, campaigns } = await getCampaignAndProducts({ campArray: convenio, prodArray: materilFiltered })
 
     const promocao = convenio && convenio.length > 0 ?
         "Sim" : "Não"
