@@ -91,12 +91,13 @@ export const CreatePeople = async ({ token, body }) => {
 
     const { cpf, phone, email, neighboor, cep,
         complement, name, birth, contract, role, address, number } = body;
-    try {
 
+    try {
         const birthDate = await ReOrderDate(birth);
         const cepData = await getDataFromCep(cep);
 
-        if (!cepData) throw new Error("CEP inválido");
+        if (!cepData) throw ("CEP inválido");
+        if (!birthDate) throw ("Data de nascimento inválida");
 
         const { estado } = cepData;
 
@@ -163,12 +164,10 @@ export const CreatePeople = async ({ token, body }) => {
         if (msg === "O CPF digitado já está cadastrado") {
             const { persons } = await GetDataForCreateSales({ search: cpf, token })
             return persons
-            // CPF já existe, retorna os dados recebidos
         };
 
-        if (msg === "CEP inválido") throw (`[CREATEPEOPLE] [${status || 'Erro'}] ${msg}`);
+        if (msg === "CEP inválido") throw (`[CREATE PEOPLE] [${status || 'Erro'}] ${msg}`);
 
-        // Retorna erro padronizado para tratamento em nível superior
     }
 }
 
@@ -313,6 +312,9 @@ export const CreateSale = async ({ token, body }) => {
             context: "[CREATE SALE]",
         });
 
+        if (msg.includes('(quantidade × preço unitário) + frete − desconto'))
+            throw (msg)
+
         throw (`[CREATE SALE] [${status || 'Erro'}] ${msg}`);
     }
 }
@@ -321,8 +323,7 @@ export const CreateContract = async ({ token, body }) => {
 
     const { start, end, idClient, emissionDate, idCategorie,
         idCenterCost, serviceFiltered, notes, idFinancialAccount, dueDay,
-        firstDayToPay, paymentType
-    } = body;
+        firstDayToPay, paymentType } = body;
 
     try {
 
@@ -382,10 +383,10 @@ export const CreateContract = async ({ token, body }) => {
         const msg = error?.response?.data?.message || error.message || "Erro inesperado";
 
         console.error({
-            context: "[CREATE CONTRACT]",
             status,
             message: msg,
             fullError: error?.response?.data || error,
+            context: "[CREATE CONTRACT]",
         });
 
         throw (`[CREATE CONTRACT] [${status || 'Erro'}] ${msg}`);

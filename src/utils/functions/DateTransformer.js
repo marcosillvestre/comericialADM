@@ -1,4 +1,6 @@
 export const ReOrderDate = (string) => {
+
+    if (!string || !string.includes("/")) return null
     let [day, month, year] = string.split('/');
 
     // Reorganiza para o formato "YYYY-MM-DD"

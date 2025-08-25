@@ -261,6 +261,7 @@ class RegisterContaAzulController {
             }
 
             const newContract = await CreateContract({ token: newToken, body });
+
             console.log("Contrato criada com sucesso")
 
             return res.status(201).json(newContract)
@@ -270,6 +271,17 @@ class RegisterContaAzulController {
                 error,
                 where: "[CREATE CONTRACT]",
             })
+
+            await SendSimpleWpp(
+                "marcos",
+                process.env.MARCOS,
+                JSON.stringify(`[CONTRACT]: ${error}`, null, 2)
+            );
+
+            if (error.includes("Internal Server Error") ||
+                error.includes("[500]")) return res.status(400).json({
+                    message: typeof error === 'string' ? error : "Erro no servidor, dados incompatíveis"
+                })
 
             if ("errors" in error) return res.status(400).json({ message: error.errors })
 
@@ -291,6 +303,7 @@ class RegisterContaAzulController {
             'Unidade': yup.string().required("O campo Unidade não preenchido corretamente, verifique os dados"),
             'tax': yup.object().required("Dados sobre a parcela não foram preenchidos da maneira correta, verifique os dados"),
             'Forma de pagamento da parcela': yup.string().required("Forma de pagamento da parcela é um campo obrigatório"),
+            'Data de nascimento do  responsável': yup.string().required("A data de nascimento não foi preenchido corretamente, verifique os dados"),
 
         })
 
@@ -357,10 +370,14 @@ class RegisterContaAzulController {
                 number: numero,
             }
 
-            const newPeople = await CreatePeople({ token: newToken, body: bodyPerson });
+            const newPeople = await CreatePeople({
+                token: newToken,
+                body: bodyPerson
+            });
 
-
-            if (!newPeople) return res.status(400).json({ message: "CPF inválido, cliente não encontrado no conta azul" });
+            if (!newPeople) return res.status(400).json({
+                message: "CPF inválido, cliente não encontrado no conta azul"
+            });
 
             const saleNotes = await createComment({
                 'Responsável': nomeResponsavel,
@@ -450,18 +467,21 @@ class RegisterContaAzulController {
             const product = materialDidatico.map(teachMaterial => {
                 let splited = teachMaterial.split(" / ")[1].replace(/\s+/g, "")
 
-                let product = products.find(data => data.codigo_sku === splited ?? teachMaterial)
+                let product = products.find(
+                    data => data.codigo_sku === splited ?? teachMaterial)
 
                 return {
                     "descricao": product?.nome,
                     "quantidade": 1,
-                    "valor": parseInt(product?.valor_venda === 0) ? parseInt(product?.valor_venda + 1) : parseInt(product?.valor_venda),
+                    "valor": parseFloat(product?.valor_venda === 0) ?
+                        parseFloat(product?.valor_venda + 1) : parseFloat(product?.valor_venda),
                     "id": product?.id,
                 }
-
             })
 
-            if (product.find(pd => !pd.id)) return res.status(400).json({ message: `Material didático não está presente no conta azul da unidade ${Unidade}` })
+            if (product.find(pd => !pd.id)) return res.status(400).json({
+                message: `Material didático não está presente no conta azul da unidade ${Unidade}`
+            })
 
 
             const FinancialAccount = financialAccounts.find(fin => fin.nome.includes(financial_account[formaPagamentoMaterialDidatico]));
@@ -482,7 +502,6 @@ class RegisterContaAzulController {
                 idCategorie: Categorie?.id,
                 idCenterCost: CenterCost?.id,
                 idFinancialAccount: FinancialAccount?.id,
-
             }
 
             const newSale = await CreateSale({
@@ -501,6 +520,16 @@ class RegisterContaAzulController {
                 where: "[CREATE SALE TO CONTA AZUL]"
 
             })
+            await SendSimpleWpp(
+                "marcos",
+                process.env.MARCOS,
+                JSON.stringify(`[SALE]: ${error}`, null, 2)
+            );
+
+            if (error.includes("Internal Server Error") ||
+                error.includes("[500]")) return res.status(400).json({
+                    message: typeof error === 'string' ? error : "Erro no servidor, dados incompatíveis"
+                })
 
             if ("errors" in error) return res.status(400).json({ message: error.errors })
 
@@ -673,7 +702,6 @@ class RegisterContaAzulController {
 
             });
 
-
             const FinancialAccount = financialAccounts.find(fin => fin.nome.includes(financial_account[formaPagamentoTaxaMatricula]));
             const Categorie = categories.find(cat => cat.nome.includes("Taxa de Matrícula"));
             const CenterCost = costs.find(cos => cos.nome.includes("Taxa de Matrícula"));
@@ -715,9 +743,18 @@ class RegisterContaAzulController {
             console.log({
                 error,
                 where: "[CREATE SALE TO CONTA AZUL]"
-
             })
-            await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[CA:FEE]: ${error}`, null, 2));
+
+            await SendSimpleWpp(
+                "marcos",
+                process.env.MARCOS,
+                JSON.stringify(`[FEE]: ${error}`, null, 2)
+            );
+
+            if (error.includes("Internal Server Error") ||
+                error.includes("[500]")) return res.status(400).json({
+                    message: typeof error === 'string' ? error : "Erro no servidor, dados incompatíveis"
+                })
 
             if ("errors" in error) return res.status(400).json({ message: error.errors })
 
