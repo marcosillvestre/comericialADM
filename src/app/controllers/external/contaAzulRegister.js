@@ -245,7 +245,7 @@ class RegisterContaAzulController {
                 idCategorie: Categorie?.id,
                 idCenterCost: CenterCost?.id,
                 idFinancialAccount: FinancialAccount?.id,
-                payment: parcel,
+                payment: { ...parcel, quantityParcels: parcelas },
                 serviceFiltered,
                 idClient: newPeople?.uuid,
                 paymentType: paymentType[formaPagamentoParcelas],
