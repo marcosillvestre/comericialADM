@@ -355,7 +355,7 @@ export const CreateContract = async ({ token, body }) => {
                 {
                     id: serviceFiltered?.id,
                     quantidade: 1,
-                    valor: (total - descount) / quantityParcels,
+                    valor: total / quantityParcels,
                 }
             ],
             data_emissao: emission,
