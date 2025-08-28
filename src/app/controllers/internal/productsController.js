@@ -284,7 +284,7 @@ class ProductsController {
 
             const promise = await Promise.allSettled([
                 UpdateCustomFields({ value: name, sku: code, id: '64bee4fa5ccd17001cec1e12' }),
-                CreateProducts({ unity: ["Centro"], body: req.body })
+                CreateProducts({ unity: ["PTB", "Centro"], body: req.body })
             ])
 
             const rejected = promise.find(pr => pr.status === "rejected")
