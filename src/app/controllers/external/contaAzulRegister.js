@@ -184,8 +184,8 @@ class RegisterContaAzulController {
                 'CAMPANHA': tax?.campaign?.name ?? 'sem campanha',
                 'DESCRIÇÃO DA CAMPANHA': tax?.campaign?.description ?? 'sem campanha',
                 'VALOR TOTAL': parseCurrency(350),
-                'VALOR DO DESCONTO': parseCurrency(tax.descount),
-                'VALOR LÍQUIDO': parseCurrency(tax.total),
+                'VALOR DO DESCONTO': parseCurrency(tax?.descount),
+                'VALOR LÍQUIDO': parseCurrency(tax?.total),
                 'FORMA DE PAGAMENTO': formaPagamentoTaxaMatricula,
                 'Vencimento': dataPagamentoTaxaMatricula,
 
@@ -194,7 +194,7 @@ class RegisterContaAzulController {
 
                 'Número de parcelas': parcelasTaxaMatricula,
                 'Valor da parcela': parseCurrency(tax.taxes[0]?.valor),
-                'Desconto por parcela': parseCurrency(tax.total / tax.taxes.length),
+                'Desconto por parcela': parseCurrency(tax?.total / tax.taxes.length),
 
 
                 'MATERIAL DIDÁTICO / PRODUTOS': '\n',

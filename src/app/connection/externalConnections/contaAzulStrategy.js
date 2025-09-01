@@ -129,7 +129,7 @@ export const CreatePeople = async ({ token, body }) => {
                     numero: number,
                     complemento: complement,
                     bairro: neighboor,
-                    cidade: localidade,
+                    // cidade: localidade,
                     estado,
                 }
             ],
@@ -158,7 +158,7 @@ export const CreatePeople = async ({ token, body }) => {
         console.error({
             fullError: error?.response?.data || error,
             status,
-            message: error.response,
+            message: error.response?.data?.message,
             context: "[CREATE PEOPLE]",
         });
 

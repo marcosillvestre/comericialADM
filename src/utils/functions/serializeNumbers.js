@@ -15,6 +15,7 @@ export const parseNumber = (number) => {
 
 
 export const parseCurrency = (number) => {
+    if (!number) return 0
 
     const currency = (value) => value.toLocaleString('pt-BR', {
         style: 'currency',
@@ -41,3 +42,4 @@ export const parseCurrency = (number) => {
 export const randomNumber = (min, max) => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
