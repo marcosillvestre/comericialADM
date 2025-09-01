@@ -162,7 +162,7 @@ export const CreatePeople = async ({ token, body }) => {
             context: "[CREATE PEOPLE]",
         });
 
-        if (msg === "O CPF digitado já está cadastrado") {
+        if (msg.includes("digitado já está cadastrado")) {
             const { persons } = await GetDataForCreateSales({ search: cpf, token })
             return persons
         };
