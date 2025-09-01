@@ -250,7 +250,7 @@ class RegisterContaAzulController {
                 idClient: newPeople?.uuid,
                 paymentType: paymentType[formaPagamentoParcelas],
                 contract: contrato,
-                start: vencimentoPrimeiraParcela,
+                start: less25Days,
                 end: vencimentoUltimaParcela,
                 emissionDate: less25Days,
                 notes: saleNotes,
