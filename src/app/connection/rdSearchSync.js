@@ -96,7 +96,7 @@ const getServiceByName = async (Param) => {
 }
 
 const getDateRD = (birthday) => {
-    if (!birthday) return "Data de nascimento não cadastrada";
+    if (!birthday) return null;
     const { day, month, year } = birthday
 
     return month > 9 ? `${day}/${month}/${year}` : `${day}/0${month}/${year}`

@@ -74,7 +74,7 @@ class RegisterContaAzulController {
             Email: yup.string().transform((curr) => curr.replace(" ", "")).email().required("Email é um campo obrigatório"),
             CEP: yup.string().transform((curr) => curr.replace(" ", "")).min(8, "O número válido mínimo para o CEP são 8 números").required("CEP é um campo obrigatório"),
             'Nome do responsável': yup.string().transform((curr) => curr.replace(" ", "")).required("Nome do responsável é um campo obrigatório"),
-            'Data de nascimento do  responsável': yup.string().transform((curr) => curr.replace(" ", "")).required("Data de nascimento do  responsável é um campo obrigatório"),
+            'Data de nascimento do  responsável': yup.string().transform((curr) => curr && curr.replace(" ", "")).required("Data de nascimento do responsável é um campo obrigatório"),
 
         })
 
