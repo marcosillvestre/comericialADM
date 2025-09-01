@@ -99,7 +99,7 @@ export const CreatePeople = async ({ token, body }) => {
         if (!cepData) throw ("CEP inválido");
         if (!birthDate) throw ("Data de nascimento inválida");
 
-        const { estado } = cepData;
+        const { estado, localidade } = cepData;
 
         const doc = cpf.length > 11 ? "JURIDICA" : "FISICA"
         const typeDoc = cpf.length > 11 ? "cnpj" : "cpf"
@@ -129,7 +129,8 @@ export const CreatePeople = async ({ token, body }) => {
                     numero: number,
                     complemento: complement,
                     bairro: neighboor,
-                    estado
+                    cidade: localidade,
+                    estado,
                 }
             ],
 
@@ -157,7 +158,7 @@ export const CreatePeople = async ({ token, body }) => {
         console.error({
             fullError: error?.response?.data || error,
             status,
-            message: error.response.data,
+            message: error.response,
             context: "[CREATE PEOPLE]",
         });
 
