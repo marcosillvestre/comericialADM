@@ -119,6 +119,127 @@ class ServicesController {
         }
     }
 
+
+    async query(req, res) {
+        const schema = yup.object().shape({
+
+            skip: yup.string().required(),
+            take: yup.string().required(),
+
+            orderFor: yup.string().required(),
+            orderBy: yup.string().required(),
+            query: yup.string().required(),
+
+            typeFilter: yup.array().required(),
+
+        })
+
+
+        try {
+            await schema.validateSync(req.body, { abortEarly: false });
+
+            const { take, skip, orderBy, typeFilter, orderFor, query } = req.body;
+
+
+            const filters = typeFilter.map(res => {
+                const bools = {
+                    "Sim": true,
+                    "Não": false
+                }
+
+
+                if (res.label.includes("DATA")) {
+                    const [initialValue, finalValue] = res.value.split("~")
+
+                    return {
+                        [res.key]: {
+                            gte: HandleUTCDate(initialValue),
+                            lte: HandleUTCDate(finalValue)
+                        }
+                    }
+                }
+
+                return {
+                    [res.key]: {
+                        equals: bools[res.value] ?? res.value
+
+                    }
+                }
+            })
+            console.log({ query })
+            const [services, total] = await prisma.$transaction([
+                prisma.service.findMany({
+                    where: {
+                        AND: [
+                            ...filters,
+                            {
+                                OR: [
+                                    {
+                                        name: {
+                                            contains: query,
+                                            mode: "insensitive"
+                                        }
+                                    },
+                                    {
+                                        code: {
+                                            contains: query,
+                                            mode: "insensitive"
+                                        }
+                                    }
+                                ]
+                            }
+                        ],
+                    },
+                    take: parseInt(take),
+                    skip: parseInt(skip),
+                    orderBy: {
+                        [orderBy]: orderFor
+                    }
+                }),
+                prisma.service.count({
+                    where: {
+                        AND: [
+                            ...filters,
+                            {
+                                OR: [
+                                    {
+                                        name: {
+                                            contains: query,
+                                            mode: "insensitive"
+                                        }
+                                    },
+                                    {
+                                        code: {
+                                            contains: query,
+                                            mode: "insensitive"
+                                        }
+                                    }
+                                ]
+                            }
+                        ],
+                    },
+                })
+
+            ])
+
+
+            return res.status(200).json({
+                services,
+                total
+            });
+
+        } catch (error) {
+
+            console.log({
+                error,
+                where: "[GET QUERY services]"
+            })
+            if ("errors" in error) return res.status(400).json({ message: error.errors })
+
+            return res.status(500).json({ error: 'Failed to fetch services' });
+        }
+    }
+
     async store(req, res) {
 
         const schema = yup.object().shape({
@@ -178,8 +299,7 @@ class ServicesController {
                     name,
                     code, active, workLoad,
                     description, priceSale,
-                    priceCost, modality, duration,
-
+                    priceCost, modality, duration: parseInt(duration),
                     category: "Service"
                 }
             });
@@ -245,7 +365,7 @@ curso: ${name}
 `,
             }
 
-            await EditServicesAtRD({ product: editBody, service: serviceAtRd })
+            await EditServicesAtRD({ service: editBody, service: serviceAtRd })
 
 
             const updatedInsume = await prisma.service.update({
@@ -280,7 +400,7 @@ curso: ${name}
             const serviceAtRd = await ReturnServiceAtRD(name);
 
             const promise = await Promise.allSettled([
-                EditServicesAtRD({ service: serviceAtRd, product: { visible: false, } }),
+                EditServicesAtRD({ service: serviceAtRd, service: { visible: false, } }),
                 DeleteService({ name: name, unity: ["Centro, PTB"] })
             ])
 
