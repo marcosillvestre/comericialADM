@@ -6,6 +6,33 @@ import { getOptionsFromRdCustomFields, updateRdOptionsCustomFields } from '../..
 
 class CampaignController {
 
+    async indexFilter(req, res) {
+
+        try {
+
+            const [campaigns, total] = await prisma.$transaction([
+
+                prisma.campaign.findMany({
+                    orderBy: {
+                        name: 'asc'
+                    },
+                }),
+                prisma.campaign.count()
+            ])
+
+
+            return res.status(200).json({ campaigns, total });
+
+        } catch (error) {
+            console.log({
+                error,
+                where: '[CAMPAIGN GET ALL]',
+            })
+
+            return res.status(401).json(error)
+
+        }
+    }
     async index(req, res) {
         const schema = yup.object().shape({
 
