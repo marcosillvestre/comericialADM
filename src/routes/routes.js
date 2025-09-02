@@ -72,12 +72,14 @@ routes.get('/contrato-query/:unity', ContractsController.queryContracts)
 
 routes.get('/matricula/:id', PostConttroller.returnContract)
 
+routes.get("/campanhas-totais", CampaignController.indexFilter)
 routes.post("/campanha", CampaignController.store)
 routes.post("/campanhas", CampaignController.index)
 routes.put("/campanha/:id", CampaignController.update)
 routes.delete("/campanha/:id", CampaignController.delete)
 
 routes.get("/servicos-totais", ServicesController.indexFilter)
+routes.post("/servico-query", ServicesController.query)
 routes.post("/servico", ServicesController.store)
 routes.post("/servicos", ServicesController.index)
 routes.put("/servicos/:id", ServicesController.update)
