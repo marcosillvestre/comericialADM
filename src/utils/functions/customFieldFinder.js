@@ -12,10 +12,10 @@ export const findYourValueForCustomFields = (customFieldLabel, deal_custom_field
     return value
 }
 
-const getCampaignAndProducts = async ({ campArray, prodArray }) => {
+const getCampaignAndProducts = async ({ campArray, prodArray, serviceArray }) => {
 
     try {
-        const [products, campaigns] = await prisma.$transaction([
+        const [products, campaigns, services] = await prisma.$transaction([
             prisma.product.findMany({
                 where: {
                     code: {
@@ -47,10 +47,17 @@ const getCampaignAndProducts = async ({ campArray, prodArray }) => {
                         }
                     ]
                 }
+            }),
+            prisma.service.findMany({
+                where: {
+                    name: {
+                        in: serviceArray
+                    }
+                }
             })
         ])
 
-        return { products, campaigns }
+        return { products, campaigns, services }
 
     } catch (error) {
 
@@ -75,16 +82,17 @@ export const bodyMakerForCustomFields = async (contractData) => {
     const convenio = await findYourValueForCustomFields("Tipo de Campanha / Convênio", deal.deal_custom_fields)
 
 
-    const { products, campaigns } = await getCampaignAndProducts({ campArray: convenio, prodArray: materilFiltered })
+    const { products, campaigns, services } = await getCampaignAndProducts({
+        campArray: convenio,
+        prodArray: materilFiltered,
+        serviceArray: deal.deal_products.map(res => res.name)
+    })
 
     const promocao = convenio && convenio.length > 0 ?
         "Sim" : "Não"
 
     const vendedor = findYourValueForCustomFields("Vendedor", deal.deal_custom_fields) ?
         findYourValueForCustomFields("Vendedor", deal.deal_custom_fields) : deal.user.name
-
-
-    console.log(deal.deal_products)
 
     return {
         ...data?.customFields,
@@ -96,7 +104,7 @@ export const bodyMakerForCustomFields = async (contractData) => {
         CelularResponsavel: phone,
         valorCurso: deal.deal_products[0]?.total,
         service: deal.deal_products[0]?.name,
-        services: deal.deal_products
+        services
     }
 
 }
