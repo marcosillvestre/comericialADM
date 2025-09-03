@@ -370,20 +370,41 @@ ${url}`
                         gte: new Date(firstDay),
                         lte: new Date(lastDay),
                     },
-                    customFields: {
-                        path: ["Unidade"],
-                        string_contains: "Centro"
-                    }
+                    AND: [
+                        {
+                            customFields: {
+                                path: ["Unidade"],
+                                string_contains: "Centro"
+                            }
+                        },
+                        {
+                            customFields: {
+                                path: ["Background do Aluno"],
+                                string_contains: "Novo aluno"
+                            }
+                        }
+                    ]
                 })
+
                 const countPTB = await registerFindMany({
                     created_at: {
                         gte: new Date(firstDay),
                         lte: new Date(lastDay),
                     },
-                    customFields: {
-                        path: ["Unidade"],
-                        string_contains: "PTB"
-                    }
+                    AND: [
+                        {
+                            customFields: {
+                                path: ["Unidade"],
+                                string_contains: "PTB"
+                            }
+                        },
+                        {
+                            customFields: {
+                                path: ["Background do Aluno"],
+                                string_contains: "Novo aluno"
+                            }
+                        }
+                    ]
                 })
 
                 let comercialMessage = `
@@ -406,11 +427,10 @@ Centro: ${countCentro?.length}
                 let chat = customFields["Unidade"] === "Centro" ?
                     process.env.UMBLER_CHAT_REM_ID_CENTRO : process.env.UMBLER_CHAT_REM_ID_PTB
 
-                await Promise.all([
-                    SendGroupAlerts(message, chat),
-                    SendGroupAlerts(comercialMessage, process.env.UMBLER_COMERCIAL),
+                await SendGroupAlerts(message, chat);
 
-                ])
+                customFields["Background do Aluno"] !== 'Rematrícula' &&
+                    await SendGroupAlerts(comercialMessage, process.env.UMBLER_COMERCIAL)
 
             })
 
