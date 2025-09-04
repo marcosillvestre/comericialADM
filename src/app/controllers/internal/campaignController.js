@@ -118,7 +118,7 @@ class CampaignController {
             description: yup.string().required(),
             descountType: yup.string().required(),
             affectedParcels: yup.number().required(),
-            destiny: yup.string().required(),
+            for: yup.string().required(),
             value: yup.number().required(),
             status: yup.bool().required(),
         })
@@ -126,11 +126,11 @@ class CampaignController {
         try {
             await schema.validateSync(req.body, { abortEarly: false })
 
-            const { name, affectedParcels, descountType, description, value, destiny, status } = req.body
+            const { name, affectedParcels, descountType, description, value, for: destiny, status } = req.body
 
             const storeCampaign = async (name, affectedParcels, descountType, description, value, destiny) => {
 
-                await prisma.campaign.create({
+                const newCampaign = await prisma.campaign.create({
                     data: {
                         name,
                         affectedParcels,
@@ -160,7 +160,7 @@ class CampaignController {
                 })
 
 
-            return res.status(201).json("Criado com sucesso")
+            return res.status(201).json(newCampaign)
 
         } catch (error) {
             console.log({
@@ -177,11 +177,6 @@ class CampaignController {
     async update(req, res) {
         const { id } = req.params
 
-        const {
-            name, description, affectedParcels, value, descountType,
-            for: destiny, status
-        } = req.body
-
         const schema = yup.object().shape({
             name: yup.string().required(),
             description: yup.string().required(),
@@ -193,28 +188,31 @@ class CampaignController {
         })
 
 
-
-        const { name: storedName, status: storedStatus } = await prisma.campaign.findFirst({
-            where: {
-                id: id
-            }
-        })
-
-
-
-        if (storedName !== name || storedStatus !== status) {
-
-            const options = await getOptionsFromRdCustomFields(process.env.CAMPAIGN_ID)
-            const newOptions = options.filter(r => r !== name)
-            await updateRdOptionsCustomFields(process.env.CAMPAIGN_ID, status === false ? newOptions : options.concat(name))
-        }
-
-
-
         try {
+
             await schema.validateSync(req.body, { abortEarly: false })
 
-            await prisma.campaign.update({
+            const {
+                name, description, affectedParcels, value, descountType,
+                for: destiny, status
+            } = req.body;
+
+            const { name: storedName, status: storedStatus } = await prisma.campaign.findFirst({
+                where: {
+                    id: id
+                }
+            })
+
+            if (storedName !== name || storedStatus !== status) {
+
+                const options = await getOptionsFromRdCustomFields(process.env.CAMPAIGN_ID)
+                const newOptions = options.filter(r => r !== name)
+                await updateRdOptionsCustomFields(process.env.CAMPAIGN_ID, status === false ? newOptions : options.concat(name))
+            }
+
+
+
+            const updated = await prisma.campaign.update({
                 where: {
                     id
                 },
@@ -230,7 +228,7 @@ class CampaignController {
             })
 
 
-            return res.status(200).json("Editado com successo")
+            return res.status(200).json(updated)
 
         } catch (error) {
             console.log({
