@@ -38,8 +38,8 @@ class ContractsController {
         } catch (error) {
 
             console.log({
-                where: '[getrecent]',
-                error
+                error,
+                where: '[GETRECENT]',
             })
 
             return res.status(400).json(error)
@@ -80,7 +80,7 @@ class ContractsController {
         } catch (error) {
 
             console.log({
-                where: '[getrecent]',
+                where: '[GETRECENT]',
                 error
             })
 
