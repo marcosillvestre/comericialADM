@@ -19,8 +19,8 @@ class ProductsController {
                     },
                     omit: {
                         // tenantId: true,
-                        created_at: true,
-                        updated_at: true,
+                        createdAt: true,
+                        updatedAt: true,
                         priceCost: true,
                         ean: true,
                         unit: true,
