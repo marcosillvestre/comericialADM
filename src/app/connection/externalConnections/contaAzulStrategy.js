@@ -253,14 +253,13 @@ export const GetDataForCreateSales = async ({ token, unity, search }) => {
 export const CreateSale = async ({ token, body }) => {
 
     const { notes, idClient, itens, dueDay, payment,
-        paymentType, idCategorie, idCenterCost, idFinancialAccount,
-        parcels } = body;
+        paymentType, idCategorie, idCenterCost, idFinancialAccount } = body;
 
 
     try {
-        const { total, descount } = payment;
+        const { total, descount, quantity_parcels } = payment;
 
-        const installment = await installments(dueDay, parseInt(parcels), total - descount);
+        const installment = await installments(dueDay, parseInt(quantity_parcels), total - descount);
         const numberSale = await randomNumber(1, 1000000);
         const emission = await ReOrderDate(dueDay);
 
@@ -281,8 +280,8 @@ export const CreateSale = async ({ token, body }) => {
             condicao_pagamento: {
                 tipo_pagamento: paymentType,
                 id_conta_financeira: idFinancialAccount,
-                opcao_condicao_pagamento: installment.length === 1 ?
-                    'À vista' : `${installment.length}x`,
+                opcao_condicao_pagamento: quantity_parcels === '1' ?
+                    'À vista' : `${quantity_parcels}x`,
                 parcelas: installment
             }
         }
@@ -322,9 +321,9 @@ export const CreateSale = async ({ token, body }) => {
 
 export const CreateContract = async ({ token, body }) => {
 
-    const { start, end, idClient, emissionDate, idCategorie,
+    const { start, idClient, emissionDate, idCategorie,
         idCenterCost, serviceFiltered, notes, idFinancialAccount, dueDay,
-        firstDayToPay, paymentType, payment } = body;
+        firstDayToPay, paymentType, payment, end } = body;
 
     try {
 
@@ -333,7 +332,7 @@ export const CreateContract = async ({ token, body }) => {
         const emission = await ReOrderDate(emissionDate);
         const payDay = await ReOrderDate(firstDayToPay);
         const numberSale = await randomNumber(1, 1000000);
-        const { total, descount, quantityParcels } = payment;
+        const { total, descount, quantity_parcels, } = payment;
 
         const newBody = {
             id_cliente: idClient,
@@ -356,7 +355,7 @@ export const CreateContract = async ({ token, body }) => {
                 {
                     id: serviceFiltered?.id,
                     quantidade: 1,
-                    valor: total / quantityParcels,
+                    valor: total / quantity_parcels,
                 }
             ],
             data_emissao: emission,
