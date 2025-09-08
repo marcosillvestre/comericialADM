@@ -20,7 +20,6 @@ class CampaignController {
                         tenantId: true,
                         created_at: true,
                         updated_at: true,
-
                     }
                 }),
                 prisma.campaign.count()
