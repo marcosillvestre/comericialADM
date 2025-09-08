@@ -21,6 +21,16 @@ const getCampaignAndProducts = async ({ campArray, prodArray, serviceArray }) =>
                     code: {
                         in: prodArray
                     }
+                },
+                omit: {
+                    tenantId: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    priceCost: true,
+                    ean: true,
+                    unit: true,
+                    minStock: true,
+                    maxStock: true,
                 }
             }),
             prisma.campaign.findMany({
@@ -53,6 +63,15 @@ const getCampaignAndProducts = async ({ campArray, prodArray, serviceArray }) =>
                     name: {
                         in: serviceArray
                     }
+                },
+                omit: {
+                    tenantId: true,
+                    created_at: true,
+                    updated_at: true,
+                    priceCost: true,
+                    duration: true,
+                    modality: true,
+                    workLoad: true,
                 }
             })
         ])
@@ -62,7 +81,7 @@ const getCampaignAndProducts = async ({ campArray, prodArray, serviceArray }) =>
     } catch (error) {
 
         console.log({ error, where: '[gather product and campaigns]' })
-        return { products: [], campaigns: [] }
+        return { products: [], campaigns: [], services: [] }
 
     }
 }
@@ -88,8 +107,6 @@ export const bodyMakerForCustomFields = async (contractData) => {
         serviceArray: deal.deal_products.map(res => res.name)
     })
 
-    const promocao = convenio && convenio.length > 0 ?
-        "Sim" : "Não"
 
     const vendedor = findYourValueForCustomFields("Vendedor", deal.deal_custom_fields) ?
         findYourValueForCustomFields("Vendedor", deal.deal_custom_fields) : deal.user.name
@@ -97,14 +114,16 @@ export const bodyMakerForCustomFields = async (contractData) => {
     return {
         ...data?.customFields,
         id: deal.id,
-        promocao,
         products,
         campaigns,
         vendedor,
         CelularResponsavel: phone,
         valorCurso: deal.deal_products[0]?.total,
         service: deal.deal_products[0]?.name,
-        services
+        services,
+        newService: {},
+        newProduct: {},
+        newTax: {},
     }
 
 }

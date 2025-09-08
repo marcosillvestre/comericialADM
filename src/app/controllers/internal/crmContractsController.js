@@ -9,14 +9,14 @@ class ContractsController {
         const { unity } = req.params
         const { take, skip, orderFor, orderBy } = req.query
 
-        const { deal_stages } = await Funnels(unity)
-
-        const { id } = deal_stages.find(res =>
-            res.name.toLowerCase() === "matrícula" ||
-            res.name.toLowerCase() === "contratos a renovar");
-
-
         try {
+            const { deal_stages } = await Funnels(unity)
+
+            const { id } = deal_stages.find(res =>
+                res.name.toLowerCase() === "matrícula" ||
+                res.name.toLowerCase() === "contratos a renovar");
+
+
             await axios.get(`https://crm.rdstation.com/api/v1/deals?limit=1000&token=${process.env.RD_TOKEN}&deal_pipeline_id=${unity}&deal_stage_id=${id}&page=${skip}&limit=${take}&order=${orderBy}&direction=${orderFor}`)
                 .then(async (response) => {
                     const array = []

@@ -7,16 +7,34 @@ class ProductsController {
 
     async indexFilter(req, res) {
         try {
-
-
             const [products, count] = await prisma.$transaction([
                 prisma.product.findMany({
-
+                    where: {
+                        active: {
+                            equals: true
+                        }
+                    },
                     orderBy: {
                         name: "asc"
+                    },
+                    omit: {
+                        tenantId: true,
+                        created_at: true,
+                        updated_at: true,
+                        priceCost: true,
+                        ean: true,
+                        unit: true,
+                        minStock: true,
+                        maxStock: true,
                     }
                 }),
-                prisma.product.count()
+                prisma.product.count({
+                    where: {
+                        active: {
+                            equals: true
+                        }
+                    },
+                })
 
             ])
 

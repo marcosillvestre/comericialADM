@@ -1,6 +1,8 @@
 import { DateTransformer } from "./DateTransformer.js";
 
 export const installments = async (date, parcels, value) => {
+    if (typeof parcels !== "number") throw "Invalid parcel quantity value";
+
     const base = Math.floor((value / parcels) * 100) / 100;
     let parcelas = Array(parcels).fill(base);
 

@@ -10,9 +10,14 @@ class ServicesController {
 
             const [services, count] = await prisma.$transaction([
                 prisma.service.findMany({
-
                     orderBy: {
                         name: "asc"
+                    },
+                    omit: {
+                        tenantId: true,
+                        created_at: true,
+                        updated_at: true,
+                        category: true,
                     }
                 }),
                 prisma.service.count()

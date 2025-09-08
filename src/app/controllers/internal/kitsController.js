@@ -27,7 +27,7 @@ class KitsController {
             });
 
         } catch (error) {
-            console.log({ error })
+            console.log({ error, where: "[INDEX GET ALL]" })
             return res.status(500).json({ error: 'Failed to fetch kits' });
         }
     }
@@ -128,7 +128,7 @@ class KitsController {
             });
 
         } catch (error) {
-            console.log({ error })
+            console.log({ error, where: "[KITS INDEX]" })
             return res.status(500).json({ error: 'Failed to fetch kits' });
         }
     }

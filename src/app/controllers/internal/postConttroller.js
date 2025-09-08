@@ -27,7 +27,10 @@ class PostController {
             return res.status(200).json({ funnels: newData, total: newData.length })
 
         } catch (error) {
-            console.log(error)
+            console.log({
+                error,
+                where: '[RETURN FUNNELS]'
+            })
             return res.status(400).json(error)
 
         }
@@ -50,7 +53,11 @@ class PostController {
 
 
         } catch (error) {
-            console.log(error)
+            console.log({
+                error,
+                where: '[RETURN CONTRACT]'
+            })
+
             return res.status(400).json("Erro")
         }
     }
@@ -200,7 +207,7 @@ class PostController {
                 return register
             }
 
-            const register = await prisma.registers.findFirst({
+            const register = await prisma.registers.findUnique({
                 where: {
                     id
                 }
@@ -456,7 +463,7 @@ acabou de assinar o contrato de ${newUser.customFields['Background do Aluno']}`
                 where: "[comissiondata.get]",
                 error
             })
-            return res.status(400).json({ Erro: "Tente novamente mais tarde, se o erro persistir entre em contato com o suporte " })
+            return res.status(500).json({ Erro: "Tente novamente mais tarde, se o erro persistir entre em contato com o suporte " })
         }
     }
 
