@@ -65,13 +65,14 @@ const getCampaignAndProducts = async ({ campArray, prodArray, serviceArray }) =>
                     }
                 },
                 omit: {
-                    tenantId: true,
+                    // tenantId: true,
                     created_at: true,
                     updated_at: true,
                     priceCost: true,
                     duration: true,
                     modality: true,
                     workLoad: true,
+
                 }
             })
         ])
