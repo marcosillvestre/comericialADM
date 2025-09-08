@@ -17,7 +17,7 @@ class CampaignController {
                         name: 'asc'
                     },
                     omit: {
-                        tenantId: true,
+                        // tenantId: true,
                         created_at: true,
                         updated_at: true,
                     }

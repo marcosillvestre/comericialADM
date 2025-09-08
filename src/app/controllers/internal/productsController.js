@@ -18,7 +18,7 @@ class ProductsController {
                         name: "asc"
                     },
                     omit: {
-                        tenantId: true,
+                        // tenantId: true,
                         created_at: true,
                         updated_at: true,
                         priceCost: true,
