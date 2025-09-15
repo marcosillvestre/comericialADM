@@ -70,7 +70,7 @@ routes.get('/contrato-query/:unity', ContractsController.queryContracts)
 
 
 
-routes.get('/matricula/:id', PostConttroller.returnContract)
+routes.post('/matricula/:id', PostConttroller.returnContract)
 
 routes.post("/campanha-query", CampaignController.query)
 routes.post("/campanhas", CampaignController.index)
