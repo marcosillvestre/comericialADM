@@ -38,6 +38,7 @@ class CampaignController {
 
         }
     }
+
     async index(req, res) {
         const schema = yup.object().shape({
 
@@ -116,6 +117,114 @@ class CampaignController {
 
         }
     }
+
+    async query(req, res) {
+        const schema = yup.object().shape({
+
+            skip: yup.string().required(),
+            take: yup.string().required(),
+
+            orderFor: yup.string().required(),
+            orderBy: yup.string().required(),
+            query: yup.string().required(),
+
+            typeFilter: yup.array().required(),
+
+        })
+
+        try {
+            await schema.validateSync(req.body, { abortEarly: false });
+
+            const { take, skip, orderBy, typeFilter, orderFor, query } = req.body;
+
+
+            const filters = typeFilter.map(res => {
+                const bools = {
+                    "Sim": true,
+                    "Não": false
+                }
+
+
+                if (res.label.includes("DATA")) {
+                    const [initialValue, finalValue] = res.value.split("~")
+
+                    return {
+                        [res.key]: {
+                            gte: HandleUTCDate(initialValue),
+                            lte: HandleUTCDate(finalValue)
+                        }
+                    }
+                }
+
+                return {
+                    [res.key]: {
+                        equals: bools[res.value] ?? res.value
+
+                    }
+                }
+            })
+
+            const [campaigns, total] = await prisma.$transaction([
+                prisma.campaign.findMany({
+                    where: {
+                        AND: [
+                            ...filters,
+                            {
+                                OR: [
+                                    {
+                                        name: {
+                                            contains: query,
+                                            mode: "insensitive"
+                                        }
+                                    }
+                                ]
+                            }
+                        ],
+                    },
+                    take: parseInt(take),
+                    skip: parseInt(skip),
+                    orderBy: {
+                        [orderBy]: orderFor
+                    }
+                }),
+                prisma.campaign.count({
+                    where: {
+                        AND: [
+                            ...filters,
+                            {
+                                OR: [
+                                    {
+                                        name: {
+                                            contains: query,
+                                            mode: "insensitive"
+                                        }
+                                    }
+                                ]
+                            }
+                        ],
+                    },
+                })
+
+            ])
+
+
+            return res.status(200).json({
+                campaigns,
+                total
+            });
+
+        } catch (error) {
+
+            console.log({
+                error,
+                where: "[GET QUERY CAMPAIGNS]"
+            })
+            if ("errors" in error) return res.status(400).json({ message: error.errors })
+
+            return res.status(500).json({ error: 'Failed to fetch campaigns' });
+        }
+    }
+
     async store(req, res) {
 
         const schema = yup.object().shape({
@@ -131,38 +240,31 @@ class CampaignController {
         try {
             await schema.validateSync(req.body, { abortEarly: false })
 
-            const { name, affectedParcels, descountType, description, value, for: destiny, status } = req.body
-
-            const storeCampaign = async (name, affectedParcels, descountType, description, value, destiny) => {
-
-                const newCampaign = await prisma.campaign.create({
-                    data: {
-                        name,
-                        affectedParcels,
-                        descountType,
-                        description,
-                        value,
-                        for: destiny,
-                        status
-
-                    }
-                })
-            }
+            const { name, affectedParcels, descountType, description, value, for: destiny, status } = req.body;
 
 
+            const { data } = await axios.get(`https://crm.rdstation.com/api/v1/custom_fields/${process.env.CAMPAIGN_ID}?token=${process.env.RD_TOKEN}`);
 
-            await axios.get(`https://crm.rdstation.com/api/v1/custom_fields/${process.env.CAMPAIGN_ID}?token=${process.env.RD_TOKEN}`)
-                .then(async res => {
+            const options = data.opts
 
-                    const options = res.data.opts
+            const response = await axios.put(`https://crm.rdstation.com/api/v1/custom_fields/${process.env.CAMPAIGN_ID}?token=${process.env.RD_TOKEN}`, {
+                opts: options.concat(name)
+            })
 
-                    const response = await axios.put(`https://crm.rdstation.com/api/v1/custom_fields/${process.env.CAMPAIGN_ID}?token=${process.env.RD_TOKEN}`, {
-                        opts: options.concat(name)
-                    })
+            if (!response) return res.status(401).json({ message: "Erro ao criar o dado" });
 
-                    if (response) storeCampaign(name, affectedParcels, descountType, description, value, destiny)
+            const newCampaign = await prisma.campaign.create({
+                data: {
+                    name,
+                    affectedParcels,
+                    descountType,
+                    description,
+                    value,
+                    for: destiny,
+                    status
 
-                })
+                }
+            })
 
 
             return res.status(201).json(newCampaign)
@@ -178,7 +280,6 @@ class CampaignController {
 
     }
 
-
     async update(req, res) {
         const { id } = req.params
 
@@ -191,7 +292,7 @@ class CampaignController {
             for: yup.string().required(),
             status: yup.bool().required(),
         })
-
+            ;
 
         try {
 
@@ -243,6 +344,7 @@ class CampaignController {
             return res.status(401).json(error)
         }
     }
+
     async delete(req, res) {
         const { id } = req.params
 
