@@ -91,40 +91,44 @@ const getCampaignAndProducts = async ({ campArray, prodArray, serviceArray }) =>
 export const bodyMakerForCustomFields = async (contractData) => {
 
     const { deal, phone, contacts } = contractData
+    try {
 
-    const [data] = await gatheringDataForDatabase([{ ...deal, contacts }])
+        const [data] = await gatheringDataForDatabase([{ ...deal, contacts }])
 
-    const material = findYourValueForCustomFields("Material didático", deal.deal_custom_fields)
+        const material = findYourValueForCustomFields("Material didático", deal.deal_custom_fields)
 
-    const materilFiltered = material[0] === "Outros" || material[0] === "Office" ?
-        [] : material.map(res => { return res.split(" / ")[1] })
+        const materilFiltered = material[0] === "Outros" || material[0] === "Office" ?
+            [] : material.map(res => { return res.split(" / ")[1] })
 
-    const convenio = await findYourValueForCustomFields("Tipo de Campanha / Convênio", deal.deal_custom_fields)
-
-
-    const { products, campaigns, services } = await getCampaignAndProducts({
-        campArray: convenio,
-        prodArray: materilFiltered,
-        serviceArray: deal.deal_products.map(res => res.name)
-    })
+        const convenio = await findYourValueForCustomFields("Tipo de Campanha / Convênio", deal.deal_custom_fields)
 
 
-    const vendedor = findYourValueForCustomFields("Vendedor", deal.deal_custom_fields) ?
-        findYourValueForCustomFields("Vendedor", deal.deal_custom_fields) : deal.user.name
+        const { products, campaigns, services } = await getCampaignAndProducts({
+            campArray: convenio,
+            prodArray: materilFiltered,
+            serviceArray: deal.deal_products.map(res => res.name)
+        })
 
-    return {
-        ...data?.customFields,
-        id: deal.id,
-        products,
-        campaigns,
-        vendedor,
-        CelularResponsavel: phone,
-        valorCurso: deal.deal_products[0]?.total,
-        service: deal.deal_products[0]?.name,
-        services,
-        newService: {},
-        newProduct: {},
-        newTax: {},
+
+        const vendedor = findYourValueForCustomFields("Vendedor", deal.deal_custom_fields) ?
+            findYourValueForCustomFields("Vendedor", deal.deal_custom_fields) : deal.user.name
+
+        return {
+            ...data?.customFields,
+            id: deal.id,
+            products,
+            campaigns,
+            vendedor,
+            CelularResponsavel: phone,
+            valorCurso: deal.deal_products[0]?.total,
+            service: deal.deal_products[0]?.name,
+            services,
+            newService: {},
+            newProduct: {},
+            newTax: {},
+        }
+    } catch (error) {
+        throw error
     }
 
 }

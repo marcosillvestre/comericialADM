@@ -201,11 +201,18 @@ export const gatheringDataForDatabase = async (deals) => {
             })
 
         }
-        return data
+
+        return data;
+
     } catch (error) {
-        console.log({ where: "[GATHERINGDATABASEDATA]", error })
-        await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[GATHERINGDATAFORDATABASE]: ${error}`, null, 2))
-        return []
+        console.log({ error, where: "[GATHERINGDATABASEDATA]" })
+
+        await SendSimpleWpp(
+            "marcos",
+            process.env.MARCOS,
+            JSON.stringify(`[GATHERINGDATAFORDATABASE]: ${error}`, null, 2))
+
+        throw error
     }
 }
 

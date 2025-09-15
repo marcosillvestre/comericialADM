@@ -58,7 +58,7 @@ class PostController {
                 where: '[RETURN CONTRACT]'
             })
 
-            return res.status(400).json("Erro")
+            return res.status(400).json({ message: error })
         }
     }
 
