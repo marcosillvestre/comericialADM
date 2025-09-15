@@ -274,14 +274,31 @@ class ProductsController {
         })
 
         const { name, code, priceSale, priceCost, ean, unit,
-            description, minStock, maxStock, active, categorieName,
-        } = req.body;
+            description, minStock, maxStock, active, categorieName } = req.body;
 
         if (minStock >= maxStock) return res.status(500).json({ message: 'Estoque máximo deve ser maior que o mínimo' });
 
         try {
             await schema.validateSync(req.body, { abortEarly: false });
 
+            const duplicate = await prisma.product.findFirst({
+                where: {
+                    OR: [
+                        {
+                            name: {
+                                equals: name
+                            }
+                        },
+                        {
+                            code: {
+                                equals: code
+                            }
+                        },
+                    ]
+                }
+            })
+
+            if (duplicate) return res.status(401).json({ message: "Já existe um produto com este nome/código" })
 
             const body = {
                 name,
@@ -307,7 +324,7 @@ class ProductsController {
 
             const rejected = promise.find(pr => pr.status === "rejected")
 
-            if (rejected) return res.status(401).json({ message: rejected.reason.error })
+            if (rejected) return res.status(401).json({ message: rejected.reason.error || rejected.reason.errorMessage })
 
             const newProduct = await prisma.product.create({
                 data: body

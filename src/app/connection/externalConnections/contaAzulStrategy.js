@@ -446,7 +446,7 @@ export async function CreateProducts({ unity, body }) {
     } catch (error) {
 
         console.log({
-            error: error.response.data,
+            error: error.errorMessage ?? error,
             where: "[CREATE PRODUCTS CONTA AZUL]",
         })
 
