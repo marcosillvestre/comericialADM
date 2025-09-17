@@ -137,20 +137,29 @@ export const bodyMakerForCustomFields = async (contractData) => {
 export const bodyFilterCustomFields = async (deal) => {
 
     const { id, deal_custom_fields, deal_products: [service], contacts, created_at } = deal
+    try {
 
-    const serviceName = service?.name;
-    const Subclasse = serviceName.includes('-') ? serviceName.split(' - ')[1] : serviceName;
+        const serviceName = service?.name ?? '';
+        const Subclasse = serviceName.includes('-') ? serviceName.split(' - ')[1] : serviceName;
 
 
-    return {
-        created_at,
-        id,
-        name: contacts[0]?.name || " ",
-        student: findYourValueForCustomFields("Nome do aluno (se não for responsável próprio))", deal_custom_fields),
-        createdDate: findYourValueForCustomFields("Data de emissão da venda", deal_custom_fields),
-        phone: contacts[0]?.phones[0]?.phone || " ",
-        subclass: Subclasse,
-        seller: findYourValueForCustomFields("Vendedor", deal_custom_fields),
-        convenio: findYourValueForCustomFields("Tipo de Campanha / Convênio", deal.deal_custom_fields)
+        return {
+            created_at,
+            id,
+            name: contacts[0]?.name || " ",
+            student: findYourValueForCustomFields("Nome do aluno (se não for responsável próprio))", deal_custom_fields),
+            createdDate: findYourValueForCustomFields("Data de emissão da venda", deal_custom_fields),
+            phone: contacts[0]?.phones[0]?.phone || " ",
+            subclass: Subclasse,
+            seller: findYourValueForCustomFields("Vendedor", deal_custom_fields),
+            convenio: findYourValueForCustomFields("Tipo de Campanha / Convênio", deal.deal_custom_fields)
+        }
+
+    } catch (error) {
+
+        console.log({
+            error,
+            where: "[FILTERDATA]"
+        })
     }
 }
