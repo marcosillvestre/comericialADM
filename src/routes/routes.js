@@ -36,7 +36,7 @@ const upload = multer({ storage: storage })
 
 
 
-routes.post('/contrato', parser, PostConttroller.sender)
+routes.post('/contrato', webhookToken, PostConttroller.sender)
 
 
 routes.post('/webhook-trello', webhookToken, TrelloWebhook.capture)

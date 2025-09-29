@@ -16,7 +16,8 @@ export default (req, res, next) => {
         }
 
 
-        return next()
+        return next();
+
     } catch (error) {
         return res.status(401).json({ error: "token invalid" })
     }

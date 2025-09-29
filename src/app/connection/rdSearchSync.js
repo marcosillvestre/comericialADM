@@ -104,6 +104,7 @@ const getDateRD = (birthday) => {
 
 export const gatheringDataForDatabase = async (deals) => {
     const data = []
+
     try {
 
         for (const deal of deals) {
@@ -113,12 +114,12 @@ export const gatheringDataForDatabase = async (deals) => {
 
             const { phone, email, contacts } = await getContactsWithId(id)
 
-            if (!service || !contacts) continue
+            if (!contacts) continue
 
             const { name: pipeName } = await GetPipelineStage(deal_stage.id)
             const CEP = await findYourValueForCustomFields('CEP', deal_custom_fields)
 
-            const viaCepData = await getDataFromCep(CEP)
+            const viaCepData = await getDataFromCep(CEP);
 
             const customFields = async () => {
                 const cf = await prisma.customFields.findMany()
@@ -139,7 +140,7 @@ export const gatheringDataForDatabase = async (deals) => {
 
 
                 const splited = pipeName.split(" ")
-                const [Classe, Subclasse] = service.name.split(' - ');
+                const [Classe, Subclasse] = service?.name.split(' - ');
 
                 const code = await codeContractMaker(result["Vendedor"])
 

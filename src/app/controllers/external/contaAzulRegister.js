@@ -55,7 +55,8 @@ class RegisterContaAzulController {
             return res.status(201).json(newPeople);
 
         } catch (error) {
-            if ("errors" in error) return res.status(400).json({ message: `Campos inválidos: ${error.errors}` })
+            if ("errors" in error) return res.status(400).json({ message: error.errors.map(err => `\n${err}`) })
+
 
             return res.status(400).json({ message: error })
         }
@@ -75,7 +76,7 @@ class RegisterContaAzulController {
             'newService': yup.object().shape({
                 data: yup.array(),
                 parcels: yup.array(),
-                quantity_parcels: yup.string().required(),
+                quantity_parcels: yup.string().required("Quantidade de parcelas do curso é um campo obrigatório"),
                 total: yup.number().transform((curr) => parseFloat(curr)),
                 descount: yup.number().transform((curr) => parseFloat(curr)),
                 payment_date: yup.string().required("Data de vencimento do produto é obrigatório"),
@@ -294,7 +295,7 @@ class RegisterContaAzulController {
                     "Erro ao enviar esse contrato ao conta azul, dados incompatíveis" : error
             })
 
-            if ("errors" in error) return res.status(400).json({ message: error.errors })
+            if ("errors" in error) return res.status(400).json({ message: error.errors.map(err => `\n${err}`) })
 
             return res.status(400).json({ message: error })
 
@@ -542,7 +543,8 @@ class RegisterContaAzulController {
                     "Erro ao enviar este produto ao conta azul, dados incompatíveis" : error
             })
 
-            if ("errors" in error) return res.status(400).json({ message: error.errors })
+            if ("errors" in error) return res.status(400).json({ message: error.errors.map(err => `\n${err}`) })
+
 
             return res.status(400).json({ message: error })
 
@@ -558,12 +560,12 @@ class RegisterContaAzulController {
             'newTax': yup.object().shape({
                 data: yup.array(),
                 parcels: yup.array(),
-                quantity_parcels: yup.string().required(),
+                quantity_parcels: yup.string().required("Quantidade de parcelas é um campo obrigatório para envio da taxa de matrícula"),
                 total: yup.number().transform((curr) => parseFloat(curr)),
                 descount: yup.number().transform((curr) => parseFloat(curr)),
-                payment_date: yup.string().required("Data de vencimento do produto é obrigatório"),
-                payment_type: yup.string().required("Forma de pagamento do produto é obrigatório"),
-            }).required("Dados sobre os produtos imcompatíveis, verifique os dados"),
+                payment_date: yup.string().required("Data de vencimento do produto é um campo obrigatório para envio da taxa de matrícula"),
+                payment_type: yup.string().required("Forma de pagamento do produto é um campo obrigatório para envio da taxa de matrícula"),
+            })
         })
 
         try {
@@ -770,7 +772,8 @@ class RegisterContaAzulController {
                     "Erro ao enviar esta venda ao conta azul, dados incompatíveis" : error
             })
 
-            if ("errors" in error) return res.status(400).json({ message: error.errors })
+            if ("errors" in error) return res.status(400).json({ message: error.errors.map(err => `\n${err}`) })
+
 
             return res.status(400).json({ message: error })
 

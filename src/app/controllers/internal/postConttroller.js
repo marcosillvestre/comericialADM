@@ -117,7 +117,7 @@ class PostController {
 
                 const usersSigned = signatures.map(sign => {
                     return sign.link !== null && {
-                        responsible: sign.user.name,
+                        responsible: sign?.user?.name ?? sign?.name,
                         information: {
                             field: "assinaturaContratoStatus",
                             text: "O status do contrato foi alterado para assinado",
@@ -304,6 +304,12 @@ acabou de assinar o contrato de ${newUser.customFields['Background do Aluno']}`
             return res.status(200).json({ message: "Success" })
 
         } catch (error) {
+
+            console.log({
+                error,
+                where: '[SENDER:CONTRACTS]'
+            })
+
             await SendSimpleWpp("marcos", process.env.MARCOS, JSON.stringify(`[SENDER:CONTRACTS]: ${error}`, null, 2))
             return res.status(200).json({ message: "Success" })
 
