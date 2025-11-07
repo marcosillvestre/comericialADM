@@ -553,8 +553,6 @@ class RegisterContaAzulController {
 
     async storeEnrollmentFee(req, res) {
         const schema = yup.object().shape({
-            'Forma de pagamento TM': yup.string().required("Data de vencimento da primeira parcela é um campo obrigatório"),
-            'Data de pagamento TM': yup.string().required("Data de pagamento da taxa de matrícula é um campo obrigatório, verifique seus dados"),
             'CPF': yup.string().required("CPF é um campo obrigatório").min(11, "O número de caracteres não corresponde a um CPF válido"),
             'Unidade': yup.string().required("O campo Unidade não preenchido corretamente, verifique os dados"),
             'newTax': yup.object().shape({

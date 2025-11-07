@@ -45,12 +45,11 @@ export const getCustomerData = async (header, id) => {
 
         return data
     } catch (error) {
-        console.log({ error, where: "[CUSTOMERDATA]" })
+        console.log({ error: error.response.data, where: "[CUSTOMERDATA]" })
         throw new Error("Error looking for customer");
 
     }
 }
-
 
 export const getItemId = async (item, headers) => {
     const { data } = await axios.get(`https://api.contaazul.com/v1/sales/${item}/items?Type=Product`, { headers: headers })
@@ -87,8 +86,152 @@ export const getSaleProducts = async (headers, id) => {
 }
 
 
-export const CreatePeople = async ({ token, body }) => {
+/**
+{
 
+  data: {
+    id: 'd7c16183-a8d7-4441-8f3e-2de67ac0238c',
+    id_legado: 703854531,
+    data: '2025-11-03',
+    criado_em: '2025-11-03 15:32:57.178',
+    id_legado: 703854531,
+    data: '2025-11-03',
+    criado_em: '2025-11-03 15:32:57.178',
+    criado_em: '2025-11-03 15:32:57.178',
+    tipo: 'SALE',
+    itens: 'SERVICE',
+    condicao_pagamento: true,
+    total: 100,
+    numero: 390045,
+    cliente: {
+      id: '4a59a92b-0e9a-443f-80c7-19076a9fd9fa',
+      email: 'alexdiasmoreira921@gmail.com',
+      uuid_legado: 'bcb36b2e-1142-4082-b9bc-007fe3b4a2f1',
+      nome: 'Alex Moreira Dias'
+    },
+    versao: 2,
+    situacao: { nome: 'APROVADO', descricao: 'Aprovado' }
+  }
+ */
+
+///////// NEW ENDPOINT
+
+export const getSalesContaAzul = async (headers, page, daysBackward, daysForward) => {
+    const start = new Date()
+    start.setDate(start.getDate() - daysBackward)
+    start.setUTCHours(0, 0, 0, 0)
+
+    const end = new Date()
+    end.setDate(end.getDate() + daysForward)
+    end.setUTCHours(23, 59, 59, 59)
+
+    const query = new URLSearchParams({
+        pagina: page,
+        tamanho_pagina: 100,
+        pendente: false,
+        // data_criacao_de: await simplifyDates(start),
+        // data_criacao_ate: await simplifyDates(end),
+        // campo_ordenado_ascendente: 'numero',
+        // campo_ordenado_descendente: 'numero',
+
+        // // data_criacao_de: '2023-12-30',
+        // // data_criacao_ate: '2023-12-31',
+
+        // // situacoes: 'string',
+        // // tipos: 'string',
+
+    }).toString();
+
+    try {
+
+        const { data } = await axios.get(
+            `https://api-v2.contaazul.com/v1/venda/busca?${query}`,
+            { headers }
+        )
+
+        const { itens } = data;
+
+        return {
+            data: itens,
+            has_more: itens.length === 100
+        }
+
+    } catch (error) {
+        console.log(error.response.data)
+        return null
+
+    }
+}
+
+export const getSaleItem = async (saleId, headers) => {
+    const query = new URLSearchParams({
+        pagina: '1',
+        tamanho_pagina: '10'
+    }).toString();
+
+    try {
+        const { data } = await axios.get(
+            `https://api-v2.contaazul.com/v1/venda/${saleId}/itens?${query}`,
+            { headers })
+
+        const { itens } = data;
+
+        return itens;
+    } catch (error) {
+
+        console.log({
+            error: error.response.data,
+            where: "[get sale item]"
+        })
+
+        return null
+    }
+}
+
+export const getSaleData = async (saleId, headers) => {
+
+    try {
+        const { data } = await axios.get(
+            `https://api-v2.contaazul.com/v1/venda/${saleId}`,
+            { headers })
+
+        const { venda: { condicao_pagamento }, vendedor } = data;
+        return { venda: condicao_pagamento, vendedor }
+
+    } catch (error) {
+
+        console.log({
+            error: error.response.data,
+            where: "[get sale data]"
+        })
+
+        return null
+    }
+}
+
+export const getClienteData = async (id, headers) => {
+
+    try {
+        const { data } = await axios.get(
+            `https://api-v2.contaazul.com/v1/pessoas/${id}`,
+            { headers })
+
+        return data
+
+    } catch (error) {
+
+        console.log({
+            error: error.response,
+            where: "[get cliente data]"
+        })
+
+        return null
+    }
+}
+
+/////// JUST DONE
+
+export const CreatePeople = async ({ token, body }) => {
     const { cpf, phone, email, neighboor, cep,
         complement, name, birth, contract, role, address, number } = body;
 
@@ -101,13 +244,13 @@ export const CreatePeople = async ({ token, body }) => {
 
         const { estado, localidade } = cepData;
 
-        const doc = cpf.length > 11 ? "JURIDICA" : "FISICA"
+        const doc = cpf.length > 11 ? "Jurídica" : "Física"
         const typeDoc = cpf.length > 11 ? "cnpj" : "cpf"
 
         const newBody = {
             perfis: [
                 {
-                    tipo_perfil: 'CLIENTE'
+                    tipo_perfil: 'Cliente'
                 }
             ],
             tipo_pessoa: doc,
@@ -131,6 +274,7 @@ export const CreatePeople = async ({ token, body }) => {
                     bairro: neighboor,
                     // cidade: localidade,
                     estado,
+                    pais: "Brasil",
                 }
             ],
 
@@ -138,7 +282,7 @@ export const CreatePeople = async ({ token, body }) => {
 
 
         const { data } = await axios.post(
-            `https://api-v2.contaazul.com/v1/pessoa`,
+            `https://api-v2.contaazul.com/v1/pessoas`,
             newBody,
             {
                 headers: {
@@ -153,16 +297,16 @@ export const CreatePeople = async ({ token, body }) => {
 
     } catch (error) {
         const status = error?.response?.status;
-        const msg = error?.response?.data?.message || error.message || "Erro inesperado";
+        const msg = error?.response?.data?.error || error.error || "Erro inesperado";
 
         console.error({
             fullError: error?.response?.data || error,
             status,
-            message: error.response?.data?.message,
+            message: error.response?.data?.error,
             context: "[CREATE PEOPLE]",
         });
 
-        if (msg.includes("digitado já está cadastrado")) {
+        if (msg.includes("Já existe uma pessoa cadastrada")) {
             const { persons } = await GetDataForCreateSales({ search: cpf, token })
             return persons
         };
@@ -197,7 +341,6 @@ export const DeleteDuplicateSale = async ({ unity, personId, student }) => {
     }
 
 }
-
 
 export const GetDataForCreateSales = async ({ token, unity, search }) => {
     const newToken = token ?? await getNewToken(unity);
@@ -303,7 +446,7 @@ export const CreateSale = async ({ token, body }) => {
     } catch (error) {
 
         const status = error?.response?.status;
-        const msg = error?.response?.data?.message || error.message || "Erro inesperado";
+        const msg = error?.response?.data?.error || error.error || "Erro inesperado";
 
         console.error({
             status,
@@ -331,7 +474,7 @@ export const CreateContract = async ({ token, body }) => {
         const endDate = await ReOrderDate(end);
         const emission = await ReOrderDate(emissionDate);
         const payDay = await ReOrderDate(firstDayToPay);
-        const numberSale = await randomNumber(1, 1000000);
+        const numberSale = await randomNumber(1, 1000000);  // lancaram um jeito de saber o ultimo numero na api nova verificar dps
         const { total, descount, quantity_parcels, } = payment;
 
         const newBody = {
@@ -381,7 +524,7 @@ export const CreateContract = async ({ token, body }) => {
     } catch (error) {
 
         const status = error?.response?.status;
-        const msg = error?.response?.data?.message || error.message || "Erro inesperado";
+        const msg = error?.response?.data?.error || error.error || "Erro inesperado";
 
         console.error({
             status,
@@ -460,9 +603,9 @@ export async function CreateServices({ unity, body }) {
 
     const newBody = {
         codigo: code,
-        custo: priceCost,
+        custo: parseFloat(priceCost),
         descricao: name,
-        preco: priceSale,
+        preco: parseFloat(priceSale),
         status: 'ATIVO',
         tipo_servico: 'PRESTADO'
     }
