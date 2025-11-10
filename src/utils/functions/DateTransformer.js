@@ -4,7 +4,7 @@ export const ReOrderDate = (string) => {
     let [day, month, year] = string.split('/');
 
     // Reorganiza para o formato "YYYY-MM-DD"
-    let isoDate = `${year}-${month}-${day}`;
+    let isoDate = day.length === 1 ? `${year}-${month}-0${day}` : `${year}-${month}-${day}`;
 
     return isoDate
 }
@@ -22,4 +22,12 @@ export function HandleUTCDate(date) {
     let newDate = new Date(date).setUTCHours(0)
 
     return new Date(newDate)
+}
+
+
+export function simplifyDates(date) {
+
+    const newDate = new Date(date).toISOString();
+    const parsedDate = newDate.split("T")[0];
+    return parsedDate
 }
