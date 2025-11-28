@@ -110,8 +110,7 @@ export const bodyMakerForCustomFields = async (contractData) => {
         })
 
 
-        const vendedor = findYourValueForCustomFields("Vendedor", deal.deal_custom_fields) ?
-            findYourValueForCustomFields("Vendedor", deal.deal_custom_fields) : deal.user.name
+        const vendedor = findYourValueForCustomFields("Vendedor", deal.deal_custom_fields) ?? deal.user.name;
 
         return {
             ...data?.customFields,

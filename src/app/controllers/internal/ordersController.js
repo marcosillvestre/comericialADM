@@ -323,6 +323,7 @@ class OrderController {
                 where: '[ORDERS.STOREMANY]',
                 error
             })
+
             throw new Error(error);
 
             // return res.status(400).json({ message: error })

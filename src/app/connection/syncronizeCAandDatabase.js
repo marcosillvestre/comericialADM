@@ -1,18 +1,15 @@
 import axios from "axios"
 import prisma from "../../database/database.js"
-import { Historic } from "../../database/historic/properties.js"
 import { RegisterFinder } from "../../database/registers/register.find.js"
-import { StringsMethods } from "../../utils/functions/serializerStrings.js"
 import ordersController from "../controllers/internal/ordersController.js"
-import { getToken } from "../core/getToken.js"
-import { getAllSales, getSaleProducts } from "./externalConnections/contaAzulStrategy.js"
+import { getNewToken } from "../core/getToken.js"
+import { customerShoppings, getFinancialDataFromContaAzul, getSaleItem } from "./externalConnections/contaAzulStrategy.js"
 import { getContactsWithId } from "./externalConnections/rdStation.js"
 import { CompleteCheckPointOnTrello, CreateCommentOnTrello } from "./externalConnections/trello.js"
 import { SendGroupAlerts, SendSimpleWpp } from "./externalConnections/wpp.js"
 
-const historic = new Historic()
-const { spacesAndLowerCase } = new StringsMethods()
 const { registerFinder, registerFindMany } = new RegisterFinder()
+const delay = ms => new Promise(res => setTimeout(res, ms));
 
 
 const routesRegister = {
@@ -30,23 +27,23 @@ const idList = {
     'Centro': "Centro"
 }
 
-const parsed = (string) => {
-    try {
-        const match = string.match(/["']?serviço["']?:\s*(["']?)([^\n\r"']+)\1/i)
-        const matchStudent = string.match(/["']?Aluno["']?:\s*(["']?)([^\n\r"']+)\1/i)
-        const service = match ? match[2].trim() : null;
-        const student = matchStudent ? matchStudent[2].trim() : null;
+// const parsed = (string) => {
+//     try {
+//         const match = string.match(/["']?serviço["']?:\s*(["']?)([^\n\r"']+)\1/i)
+//         const matchStudent = string.match(/["']?Aluno["']?:\s*(["']?)([^\n\r"']+)\1/i)
+//         const service = match ? match[2].trim() : null;
+//         const student = matchStudent ? matchStudent[2].trim() : null;
 
-        return {
-            service,
-            student
-        }
+//         return {
+//             service,
+//             student
+//         }
 
-    } catch (error) {
+//     } catch (error) {
 
-        return "error aqui"
-    }
-}
+//         return "error aqui"
+//     }
+// }
 
 class associationDatabaseAndCas {
     constructor({ unity, header, registers }) {
@@ -56,47 +53,60 @@ class associationDatabaseAndCas {
         this.unity = unity;
     }
 
-    async orderRegisterForDatabaseSales(idSale, name, material, unity, phone, student) {
+    async orderRegisterForDatabaseSales(sale, userData) {
 
-        const { data } = await axios.get(
-            "https://api.contaazul.com/v1/products?size=10000",
-            { headers: this.header }
-        )
+        const { customFields, phone, name } = userData;
+        const body = [];
 
-        const body = material.map((res, index) => {
-            let splited = res.split(" / ")
+        for (const [index, res] of sale.entries()) {
 
-            const code = splited[1].replace(/(\r\n|\n|\r|\\[rn])/g, '')
+            const query = new URLSearchParams({
+                pagina: '1',
+                tamanho_pagina: '10',
+                busca: res.nome
+            }).toString();
 
+            const { data } = await axios.get(
+                `https://api-v2.contaazul.com/v1/produtos?${query}`,
+                { headers: this.header }
+            );
 
-            const pdFiltered = data.filter(res => res.code.includes(code))
-            const id = idSale.concat(`-${index}`)
+            const { items: [product] } = data;
 
-            if (pdFiltered.length > 0) return {
-                id,
-                sku: splited[1],
-                name,
-                phone,
-                student,
-                link: "",
-                value: pdFiltered[0].value,
-                removedBy: "",
-                book: splited[0],
+            if (!product) {
+                body.push(null);
+                continue;
             }
 
-        })
+            const { codigo, nome: nameProduct } = product;
+
+            body.push({
+                id: res.id + '-' + index,
+                sku: codigo,
+                name,
+                phone,
+                student: customFields["Nome do aluno (se não for responsável próprio))"] ?? name,
+                link: "",
+                value: res.valor,
+                removedBy: "",
+                book: nameProduct,
+            });
+        }
+
+
         /////analisar essa validação daqui 
         if (body.some(res => res ?? res)) await SendSimpleWpp(
             "marcos",
             process.env.MARCOS,
-            `um desses materiais não foi encontrado :${material}`
+            `um desses materiais não foi encontrado`
         )
 
-        return body.filter(res => res)
+        return body
 
     }
 
-    async EchoRegister(response, where, saleId) {
+    async EchoRegister(response, where, sale) {
+        // console.log({ where, sale })
 
         let messages = {
             "materialDidaticoStatus": `> *${response.name}*
@@ -137,35 +147,28 @@ Professor: *${response.customFields["Professor"]}*
             process.env.UMBLER_CHAT_PAYS_CENTRO :
             process.env.UMBLER_CHAT_PAYS_PTB
 
-        await SendGroupAlerts(
+        1 > 2 && await SendGroupAlerts(
             messages[where],
             chat
         )
-        console.log({ where })
+
 
         if (where === "materialDidaticoStatus") {
+            const { phone } = await getContactsWithId(response.id);
 
-            const rdPhoneData = await getContactsWithId(response.id)
-
-            if (!(response.customFields["Material didático"]
-                .find(r => r === "Outros" || r === "Office"))) {
-
-                let bodyOrder = {
-                    body: {
-                        orders: await this.orderRegisterForDatabaseSales(
-                            saleId,
-                            response.name,
-                            response.customFields["Material didático"],
-                            response.customFields["Unidade"],
-                            rdPhoneData?.phone,
-                            response.customFields["Nome do aluno (se não for responsável próprio))"] ?? response.name
-                        ),
-                        unity: idList[response.customFields["Unidade"]]
-                    }
+            let bodyOrder = {
+                body: {
+                    orders: await this.orderRegisterForDatabaseSales(
+                        sale,
+                        { ...response, phone }
+                    ),
+                    unity: idList[response.customFields["Unidade"]]
                 }
-                await ordersController.storeMany(bodyOrder)
-
             }
+
+            await ordersController.storeMany(bodyOrder)
+
+
         }
 
         let checkup = {
@@ -207,45 +210,88 @@ Professor: *${response.customFields["Professor"]}*
             "materialDidaticoStatus": "Status do pagamento do material didático",
         }
 
+        console.log({ params: params.length })
+
+        // const param = params.splice(0, 3)
 
         for (let index = 0; index < params.length; index++) {
             const element = params[index];
 
-            const { userData, sales } = element;
-            const keys = Object.keys(sales);
+            const { userData, sales: sale } = element;
+            console.time(`[sync]: search sales... ${userData.name}`);
 
-            const validating = await registerFinder(
-                userData.id,
-                {
-                    AND: [
-                        {
-                            assinaturaContratoStatus: "Ok"
-                        },
-                        {
-                            OR: [
-                                {
-                                    pagamentoPrimeiraParcelaStatus: {
-                                        contains: "Ok",
-                                        mode: "insensitive"
+            const [validating, purchases] = await Promise.all([
+                registerFinder(
+                    userData.id,
+                    {
+                        AND: [
+                            {
+                                assinaturaContratoStatus: "Ok"
+                            },
+                            {
+                                OR: [
+                                    {
+                                        pagamentoPrimeiraParcelaStatus: {
+                                            contains: "Ok",
+                                            mode: "insensitive"
+                                        },
                                     },
-                                },
-                                {
-                                    taxaMatriculaStatus: {
-                                        contains: "Ok",
-                                        mode: "insensitive"
+                                    {
+                                        taxaMatriculaStatus: {
+                                            contains: "Ok",
+                                            mode: "insensitive"
+                                        }
                                     }
-                                }
-                            ]
-                        }
-                    ]
+                                ]
+                            }
+                        ]
+                    }
+                ),
+                customerShoppings(sale[0].cliente.id, this.header)
+            ])
+            await delay(7000);
+            console.timeEnd(`[sync]: search sales... ${userData.name}`);
+            if (!purchases) continue;
+            const { data } = purchases;
+            console.log({ purchases })
+
+            const filteredPaid = data.filter(res => res.condicao_pagamento === true);
+            const filteredPaidProduct = filteredPaid.find(res => res.itens === 'PRODUCT');
+
+            const imutable = {};
+
+            if (filteredPaidProduct) imutable["pagamentoPrimeiraParcelaStatus"] = "Ok";
+
+            const vistos = new Set();
+            const keys = [];
+            console.time(`[sync]: match sales... ${userData.name}`);
+
+            for (const item of filteredPaid) {
+                if (!vistos.has(item.total)) {
+                    vistos.add(item.total);
+
+                    const saleItem = await getSaleItem(item.id, this.header);
+                    if (saleItem.find(r => r.nome === 'Taxa de Matrícula')) {
+                        keys.push({ name: 'taxa de matricula', item: saleItem[0] })
+                        continue
+                    }
+                    if (saleItem.find(r => r.tipo === 'PRODUTO')) {
+                        keys.push({ name: 'material didatico', item: saleItem })
+                        continue
+                    }
+
+                    keys.push({ name: 'parcela', item: saleItem[0] })
+
                 }
-            )
+            }
+            await delay(7000)
+            console.timeEnd(`[sync]: match sales... ${userData.name}`);
 
             console.log({ keys })
 
             keys.map(async (res) => {
 
-                const where = routesRegister[res];
+                const where = routesRegister[res.name];
                 const imutable = {
                     [where]: "Ok",
                     [registerDates[where]]: date,
@@ -276,10 +322,13 @@ Professor: *${response.customFields["Professor"]}*
                 })
                     .then(async (response) => {
                         console.log(`${response.name} success / ${where} / ${response.customFields["Unidade"]}`)
-                        await this.EchoRegister(response, where, sales[res].id)
+                        await this.EchoRegister(response, where, res.item)
                     })
 
             })
+
+
+
         }
     }
 
@@ -370,101 +419,58 @@ Professor: *${response.customFields["Professor"]}*
 
     }
 
-    async filterAcquitedData(data) {
-        const newData = [];
-
-        for (let index = 0; index < data.length; index++) {
-            const eachSale = data[index];
-
-            const { notes, payment, customer, id } = eachSale;
-
-            const products = await getSaleProducts(this.header, id)
-
-            if (notes === "" && payment.method === "WITHOUT_PAYMENT") {
-                this.orderRegisterForContaAzulSales(eachSale, products);
-                continue
-            }
-
-            if (notes === "" && payment.installments[0]?.status === "ACQUITTED") {
-                this.orderRegisterForContaAzulSales(eachSale, products);
-                continue
-            }
-
-            const { service, student } = await parsed(notes)
-            const { name, id: idCustomer } = customer;
-
-            const deliverData = {
-                id,
-                student,
-                customer: {
-                    name: name.split(" -")[0],
-                    id: idCustomer
-                },
-                service,
-                payment: payment.installments[0] ?? payment.method,
-                products
-            }
-
-            if (payment.method === "WITHOUT_PAYMENT" || payment.installments[0]?.status === "ACQUITTED") {
-                newData.push(deliverData)
-            }
-
-        }
-        console.log({ newData: newData.length })
-        return await newData
-    }
 
     async associateDatabaseAndSale(sales) {
         const data = [];
 
         for (const user of this.registers) {
-            const salesUsers = await sales.filter(res => res.customer.name === user.name)
+            const salesUsers = await sales.filter(res => res.cliente.nome === user.name)
 
-            if (salesUsers.length === 0) continue
+            if (salesUsers.length === 0) continue;
 
-            const foundedSales = {}
+            data.push({
+                userData: user,
+                sales: salesUsers
+            })
 
-            for (const sale of salesUsers) {
-                if (user.pendents.find(pd => pd === routesRegister[sale.service])) {
-                    foundedSales[sale.service] = sale
-                }
-            }
-
-            Object.keys(foundedSales).length > 0 &&
-                data.push({
-                    userData: user,
-                    sales: foundedSales
-                })
         }
 
         return await data;
     }
 
-    async getDataContaAzulData(pages) {
-        const data = await getAllSales(this.header, pages, 150, 60)
+    async getDataContaAzulData(page) {
+        const initialDate = new Date()
+        initialDate.setDate(initialDate.getDate() - 25)
+        initialDate.setUTCHours(0, 0, 0, 0)
+
+        const finalDate = new Date()
+        finalDate.setDate(finalDate.getDate() + 30)
+        finalDate.setUTCHours(23, 59, 59, 59)
+
+
+        const data = await getFinancialDataFromContaAzul(
+            this.header, page, initialDate, finalDate, 'RECEBIDO')
 
         return data
     }
 
-    async init(pages) {
+    async init() {
         try {
-            const allSales = await this.getDataContaAzulData(pages)
+            const allSales = await this.getDataContaAzulData(1)
             if (!allSales) throw new Error("Init data came as null");
 
-            console.log({ pages })
 
-            const { data, has_more } = allSales
-
-            const acquittedData = await this.filterAcquitedData(data);
-            const gathered = await this.associateDatabaseAndSale(acquittedData);
+            const { data, has_more, total } = allSales
+            const gathered = await this.associateDatabaseAndSale(data);
 
 
             gathered.length > 0 &&
                 await this.updateOnDatabaseRegister(gathered);
 
-            has_more && this.init(pages + 1);
+            // has_more && this.init(pages + 1);
 
             console.log("[DATABASE AND C.A. UPDATED]")
+            return
 
         } catch (error) {
             console.log(error)
@@ -546,26 +552,39 @@ async function reorganizeDatabaseData(unity) {
 
 const SyncronizeSalesAndRegisters = async () => {
 
-    ["PTB", "Centro"].forEach(async unity => {
+    ["PTB",
+        // "Centro"
+    ].forEach(async unity => {
 
         try {
-            const token = await getToken(unity, 'refresh');
-            const registers = await reorganizeDatabaseData(unity)
+            // const token = await getToken(unity, 'refresh');
+            const [token] = await Promise.all([getNewToken(unity)])
+
+            const registers = await reorganizeDatabaseData(unity);
+
+            const header = { "Authorization": `Bearer ${token}` }
 
             const startBilling = new associationDatabaseAndCas({
-                header: { "Authorization": `Bearer ${token}` },
+                header,
                 unity,
                 registers
             })
 
+
+            console.time(`Process [sync]: ${unity}`);
+
             startBilling.init(0);
 
+            console.timeEnd(`Process [sync]: ${unity}`);
         } catch (error) {
             console.log(error)
         }
 
     });
 }
+
+
+SyncronizeSalesAndRegisters()
 
 export default SyncronizeSalesAndRegisters
 

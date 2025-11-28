@@ -163,7 +163,12 @@ export async function CreateCommentOnTrello(name, unity, message) {
     const { id } = await GotIdFromCardOnList(name, unity)
 
     if (!id) {
-        await SendSimpleWpp("Marcos", `${process.env.MARCOS}`, `${name} --> não foi encontrado no trello.`)
+        await SendSimpleWpp(
+            "Marcos",
+            `${process.env.MARCOS}`,
+            `${name} --> não foi encontrado no trello.`
+        )
+
         return "Não encontrado no Trello";
     }
 
@@ -365,52 +370,26 @@ ${url}`
                 const firstDay = new Date(`${date.getFullYear()}-${date.getMonth() + 1}-1`).setUTCHours(0)
                 const lastDay = new Date(`${date.getFullYear()}-${date.getMonth() + 1}-31`).setUTCHours(0)
 
-                const countCentro = await registerFindMany({
+                const counter = await registerFindMany({
                     created_at: {
                         gte: new Date(firstDay),
                         lte: new Date(lastDay),
                     },
-                    AND: [
-                        {
-                            customFields: {
-                                path: ["Unidade"],
-                                string_contains: "Centro"
-                            }
-                        },
-                        {
-                            customFields: {
-                                path: ["Background do Aluno"],
-                                string_contains: "Novo aluno"
-                            }
+                    AND: [{
+                        customFields: {
+                            path: ["Background do Aluno"],
+                            string_contains: "Novo aluno"
                         }
-                    ]
+                    }]
                 })
 
-                const countPTB = await registerFindMany({
-                    created_at: {
-                        gte: new Date(firstDay),
-                        lte: new Date(lastDay),
-                    },
-                    AND: [
-                        {
-                            customFields: {
-                                path: ["Unidade"],
-                                string_contains: "PTB"
-                            }
-                        },
-                        {
-                            customFields: {
-                                path: ["Background do Aluno"],
-                                string_contains: "Novo aluno"
-                            }
-                        }
-                    ]
-                })
+                const countPTB = counter.filter(res => res.customFields['Unidade'] === 'PTB');
+                const countCentro = counter.filter(res => res.customFields['Unidade'] === 'Centro');
 
                 let comercialMessage = `
 NOVO ALUNO, UHUULL!!🥳🤩
 
-> *${body.name}*
+> *${body.name.trim()}*
 
 Nome aluno: *${customFields["Nome do aluno (se não for responsável próprio))"]}*
 Vendedor: *${customFields["Vendedor"]}*
@@ -421,8 +400,11 @@ Tipo: *${customFields["Formato de Aula"]}*
 
 +1 para o *${customFields["Unidade"]}*
 
-PTB: ${countPTB?.length}
-Centro: ${countCentro?.length}
+*PTB*: ${countPTB?.length}
+*Centro*: ${countCentro?.length}
+
+Ranking mensal:
+
                 `
                 let chat = customFields["Unidade"] === "Centro" ?
                     process.env.UMBLER_CHAT_REM_ID_CENTRO : process.env.UMBLER_CHAT_REM_ID_PTB
@@ -439,4 +421,9 @@ Centro: ${countCentro?.length}
         console.log(error)
         throw new Error(error)
     }
+}
+
+
+async (params) => {
+    console.log("first")
 }

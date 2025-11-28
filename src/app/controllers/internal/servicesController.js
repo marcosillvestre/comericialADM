@@ -248,15 +248,15 @@ class ServicesController {
     async store(req, res) {
 
         const schema = yup.object().shape({
-            name: yup.string().required(),
-            code: yup.string().required(),
-            description: yup.string().required(),
-            priceSale: yup.string().required(),
-            priceCost: yup.string().required(),
-            modality: yup.string().required(),
-            workLoad: yup.string().required(),
+            name: yup.string().required("Nome do serviço é obrigatório"),
+            code: yup.string().required("Código(sku) é obrigatório"),
+            description: yup.string().nullable(),
+            priceSale: yup.number().transform((curr) => parseFloat(curr)).required("Preço de venda é obrigatório"),
+            priceCost: yup.number().transform((curr) => parseFloat(curr)).required("Preço de custo é obrigatório"),
+            modality: yup.string().required("Modalidade é obrigatório"),
+            workLoad: yup.string().required("Carga horária é obrigatório"),
 
-            duration: yup.number().required(),
+            duration: yup.number().transform((curr) => parseFloat(curr)).required("Duração do serviço é obrigatório"),
             active: yup.bool(),
         })
 
@@ -350,9 +350,7 @@ class ServicesController {
                 priceSale, priceCost, modality, duration } = req.body;
 
             const { name: fName } = await prisma.service.findUnique({
-                where: {
-                    id
-                }
+                where: { id }
             });
 
 
@@ -402,10 +400,11 @@ curso: ${name}
 
         try {
             const { name } = await prisma.service.findUnique({ where: { id } });
-            const serviceAtRd = await ReturnServiceAtRD(name);
+            const rdService = await ReturnServiceAtRD(name);
+
 
             const promise = await Promise.allSettled([
-                EditServicesAtRD({ service: serviceAtRd, service: { visible: false, } }),
+                EditServicesAtRD({ service: rdService, product: { visible: false, } }),
                 DeleteService({ name: name, unity: ["Centro, PTB"] })
             ])
 

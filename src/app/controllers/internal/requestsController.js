@@ -142,8 +142,7 @@ class RequestsController {
         try {
             await schema.validateSync(req.body, { abortEarly: false })
 
-            const { take, skip, orderBy, query, dates, orderFor, typeFilter } = req.body
-
+            const { take, skip, orderBy, query, dates, orderFor, typeFilter } = req.body;
             const [initial, final] = dates.split("~")
 
             const skipParsed = parseInt(skip)
@@ -183,6 +182,8 @@ class RequestsController {
                     skip: skipParsed,
                     include: {
                         orders: true,
+                        unity: true,
+                        suplier: true,
                     },
                     where: {
                         AND: [

@@ -2,7 +2,7 @@ import axios from "axios"
 import { getNewToken } from "../../core/getToken.js"
 
 import { v4 } from "uuid"
-import { ReOrderDate } from "../../../utils/functions/DateTransformer.js"
+import { ReOrderDate, simplifyDates } from "../../../utils/functions/DateTransformer.js"
 import { installments } from "../../../utils/functions/installments.js"
 import { randomNumber } from "../../../utils/functions/serializeNumbers.js"
 import { getDataFromCep } from "./viaCep.js"
@@ -86,60 +86,33 @@ export const getSaleProducts = async (headers, id) => {
 }
 
 
-/**
-{
-
-  data: {
-    id: 'd7c16183-a8d7-4441-8f3e-2de67ac0238c',
-    id_legado: 703854531,
-    data: '2025-11-03',
-    criado_em: '2025-11-03 15:32:57.178',
-    id_legado: 703854531,
-    data: '2025-11-03',
-    criado_em: '2025-11-03 15:32:57.178',
-    criado_em: '2025-11-03 15:32:57.178',
-    tipo: 'SALE',
-    itens: 'SERVICE',
-    condicao_pagamento: true,
-    total: 100,
-    numero: 390045,
-    cliente: {
-      id: '4a59a92b-0e9a-443f-80c7-19076a9fd9fa',
-      email: 'alexdiasmoreira921@gmail.com',
-      uuid_legado: 'bcb36b2e-1142-4082-b9bc-007fe3b4a2f1',
-      nome: 'Alex Moreira Dias'
-    },
-    versao: 2,
-    situacao: { nome: 'APROVADO', descricao: 'Aprovado' }
-  }
- */
-
 ///////// NEW ENDPOINT
 
-export const getSalesContaAzul = async (headers, page, daysBackward, daysForward) => {
-    const start = new Date()
-    start.setDate(start.getDate() - daysBackward)
-    start.setUTCHours(0, 0, 0, 0)
 
-    const end = new Date()
-    end.setDate(end.getDate() + daysForward)
-    end.setUTCHours(23, 59, 59, 59)
+// id: '9aef2d79-9705-453f-b569-0c1fdc518047',
+//     status: 'OVERDUE',
+//     total: 251,
+//     descricao: 'Venda 974289',
+//     data_vencimento: '2025-10-15',
+//     status_traduzido: 'ATRASADO',
+//     nao_pago: 251,
+//     pago: 0,
+//     data_criacao: '2025-05-16T16:53:15.870895',
+//     data_alteracao: '2025-09-20T02:23:59.741041',
+//     cliente: {
+//       id: '9b4b24e0-474c-4edd-a476-ed05ad67e901',
+//       nome: 'Soraya da Silva Pereira'
+//     },
+
+
+
+export const customerShoppings = async (idCustomer, headers, type) => {
 
     const query = new URLSearchParams({
-        pagina: page,
+        pagina: 1,
         tamanho_pagina: 100,
-        pendente: false,
-        // data_criacao_de: await simplifyDates(start),
-        // data_criacao_ate: await simplifyDates(end),
-        // campo_ordenado_ascendente: 'numero',
-        // campo_ordenado_descendente: 'numero',
-
-        // // data_criacao_de: '2023-12-30',
-        // // data_criacao_ate: '2023-12-31',
-
-        // // situacoes: 'string',
-        // // tipos: 'string',
-
+        ids_clientes: idCustomer,
+        // type
     }).toString();
 
     try {
@@ -149,19 +122,170 @@ export const getSalesContaAzul = async (headers, page, daysBackward, daysForward
             { headers }
         )
 
-        const { itens } = data;
+
+        const { itens, total_itens } = data;
+        if (!itens) throw new Error("Data errror, API out of system")
 
         return {
             data: itens,
-            has_more: itens.length === 100
+            has_more: total_itens === 100
         }
 
     } catch (error) {
-        console.log(error.response.data)
+        console.log({
+            error,
+            where: "[ get sales customer by filters ]"
+        })
         return null
 
     }
 }
+
+// export const getSalesContaAzul = async (headers, page, daysBackward, daysForward) => {
+//     const start = new Date()
+//     start.setDate(start.getDate() - daysBackward)
+//     start.setUTCHours(0, 0, 0, 0)
+
+//     const end = new Date()
+//     end.setDate(end.getDate() + daysForward)
+//     end.setUTCHours(23, 59, 59, 59)
+
+//     console.log({
+//         data_inicio: await simplifyDates(start),
+//         data_fim: await simplifyDates(end),
+//     })
+
+//     const query = new URLSearchParams({
+//         pagina: page,
+//         tamanho_pagina: 100,
+//         pendente: false,
+//         // data_inicio: await simplifyDates(start),
+//         // data_fim: await simplifyDates(end),
+//         ids_clientes: 'c4cf83aa-b929-442e-ace6-d0507a09319c'
+
+//     }).toString();
+
+//     try {
+
+//         const { data } = await axios.get(
+//             `https://api-v2.contaazul.com/v1/venda/busca?${query}`,
+//             { headers }
+//         )
+
+//         const { itens } = data;
+
+//         return {
+//             data: itens,
+//             has_more: itens.length === 100
+//         }
+
+//     } catch (error) {
+//         console.log({
+//             error: error.response.data,
+//             where: "[ get sales by filters ]"
+//         })
+//         return null
+
+//     }
+// }
+
+export const getFinancialDataFromContaAzul = async (headers, page, initialDate, finalDate, status) => {
+
+    console.log({
+        venc_de: await simplifyDates(initialDate),
+        venc_ate: await simplifyDates(finalDate),
+    })
+
+
+    const query = new URLSearchParams({
+        pagina: page,
+        tamanho_pagina: 100,
+        data_vencimento_de: await simplifyDates(initialDate),
+        data_vencimento_ate: await simplifyDates(finalDate),
+        status
+        // campo_ordenado_descendente: 'data_vencimento',
+        // campo_ordenado_ascendente: 'nome',
+        // status: 'ATRASADO', // 'EM_ABERTO'
+    }).toString();
+
+    try {
+
+        const { data } = await axios.get(
+            `https://api-v2.contaazul.com/v1/financeiro/eventos-financeiros/contas-a-receber/buscar?${query}`,
+            { headers }
+        )
+
+        const { itens, itens_totais } = data;
+
+        return {
+            data: itens,
+            has_more: itens.length === 100,
+            total: itens_totais
+
+        }
+
+    } catch (error) {
+        console.log({
+            error: error.response.data,
+            where: "[ get financial by filters ]"
+        })
+
+        return null
+
+    }
+}
+// export const getFinancialDataFromContaAzul = async (headers, page, daysBackward, daysForward) => {
+//     const start = new Date()
+//     start.setDate(start.getDate() - daysBackward)
+//     start.setUTCHours(0, 0, 0, 0)
+
+//     const end = new Date()
+//     end.setDate(end.getDate() + daysForward)
+//     end.setUTCHours(23, 59, 59, 59)
+
+//     console.log({
+//         data_inicio: await simplifyDates(start),
+//         data_fim: await simplifyDates(end),
+//     })
+//     const query = new URLSearchParams({
+//         pagina: page,
+//         tamanho_pagina: 100,
+//         data_vencimento_de: await simplifyDates(start),
+//         data_vencimento_ate: await simplifyDates(end),
+//         status: ['ATRASADO', 'EM_ABERTO']
+
+//         // campo_ordenado_descendente: 'data_vencimento',
+//         // campo_ordenado_ascendente: 'nome',
+//         // status: 'ATRASADO', // 'EM_ABERTO'
+
+
+//     }).toString();
+
+//     try {
+
+//         const { data } = await axios.get(
+//             `https://api-v2.contaazul.com/v1/financeiro/eventos-financeiros/contas-a-receber/buscar?${query}`,
+//             { headers }
+//         )
+
+//         const { itens, itens_totais } = data;
+
+//         return {
+//             data: itens,
+//             has_more: itens.length === 100,
+//             total: itens_totais
+
+//         }
+
+//     } catch (error) {
+//         console.log({
+//             error: error.response.data,
+//             where: "[ get financial by filters ]"
+//         })
+//         return null
+
+//     }
+// }
 
 export const getSaleItem = async (saleId, headers) => {
     const query = new URLSearchParams({
@@ -180,7 +304,7 @@ export const getSaleItem = async (saleId, headers) => {
     } catch (error) {
 
         console.log({
-            error: error.response.data,
+            error: error.response.data.error,
             where: "[get sale item]"
         })
 
@@ -201,7 +325,7 @@ export const getSaleData = async (saleId, headers) => {
     } catch (error) {
 
         console.log({
-            error: error.response.data,
+            error: error.reponse,
             where: "[get sale data]"
         })
 

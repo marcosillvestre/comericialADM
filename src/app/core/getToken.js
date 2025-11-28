@@ -47,8 +47,6 @@ async function refreshToken(id, token) {
     }
 }
 
-
-
 export const getToken = async (unity, action) => {
 
     const { id, refresh_token, access_token } =
@@ -83,7 +81,7 @@ async function Run({ code, refresh_token }) {
 
         const { data } = await axios.post(
             "https://auth.contaazul.com/oauth2/token",
-            new URLSearchParams(body),
+            body,
             { headers: headerTest }
         )
 
@@ -128,15 +126,17 @@ export const getNewToken = async (unity) => {
 }
 
 // async function getData() {
-
+//     let unity = 'PTB'
 //     const token = await getNewToken(unity)
 
 //     const query = new URLSearchParams({
 //         pagina: '1',
 //         tamanho_pagina: '1',
 
-//         tipo_perfil: 'FORNECEDOR',
-//         status: 'ATIVO'
+//         // tipo_perfil: 'CLIENTE',
+//         status: 'ATIVO',
+//         ids: "a71f5c0f-7be8-445b-80c2-277688191389",
+//         nome: "1001"
 //     }).toString();
 
 //     const resp = await fetch(

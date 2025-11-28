@@ -258,13 +258,13 @@ class ProductsController {
 
     async store(req, res) {
         const schema = yup.object().shape({
-            name: yup.string().required(),
-            code: yup.string().required(),
+            name: yup.string().required("Nome é um campo obrigatório"),
+            code: yup.string().required("Código(sku) é um campo obrigatório"),
             unit: yup.string().required(),
-            priceSale: yup.number().nullable(),
-            priceCost: yup.number().nullable(),
-            minStock: yup.number().nullable(),
-            maxStock: yup.number().nullable(),
+            priceSale: yup.number().transform((curr) => parseFloat(curr)).nullable(),
+            priceCost: yup.number().transform((curr) => parseFloat(curr)).nullable(),
+            minStock: yup.number().transform((curr) => parseFloat(curr)).required("Mínimo estoque é um campo obrigatório"),
+            maxStock: yup.number().transform((curr) => parseFloat(curr)).required("Máximo estoque é um campo obrigatório"),
 
             ean: yup.string().nullable(),
             description: yup.string().nullable(),

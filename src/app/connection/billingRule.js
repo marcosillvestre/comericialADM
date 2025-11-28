@@ -1,8 +1,8 @@
 import prisma from "../../database/database.js";
-import { getToken } from "../core/getToken.js";
-import { getAllSales, getCustomerData, getItemId } from "./externalConnections/contaAzulStrategy.js";
+import { getNewToken } from "../core/getToken.js";
+import { customerShoppings, getClienteData, getFinancialDataFromContaAzul, getSaleData, getSaleItem } from "./externalConnections/contaAzulStrategy.js";
 import { SendMail } from "./externalConnections/emailService.js";
-import { SendSimpleWpp } from "./externalConnections/wpp.js";
+import { SendGroupAlerts, SendSimpleWpp } from "./externalConnections/wpp.js";
 
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
@@ -12,13 +12,14 @@ const messages = ({ nameCustomer, payment, idSale, message, product_or_service_r
 
     const possibilities = {
         "nome-cliente": nameCustomer,
-        "valor-cheio": product_or_service_related.value.toLocaleString("pt-BR", { style: 'currency', currency: 'brl' }),
-        "data-vencimento": new Date(payment.installment.due_date).toLocaleDateString('pt-BR'),
+        "valor-cheio": payment['value'].toLocaleString("pt-BR", { style: 'currency', currency: 'brl' }),
+        "data-vencimento": new Date(payment['due_date']).toLocaleDateString('pt-BR'),
         "link-pagamento": " https://app.contaazul.com/pub/#/invoice/v2/" + idSale + "  ",
         "produto-servico-relacionado": product_or_service_related.name,
         "quebra-linha": "\n",
         "pula-linha": "\n\n",
     };
+
     const keys = Object.keys(possibilities);
 
     for (let index = 0; index < keys.length; index++) {
@@ -52,19 +53,17 @@ const calculateDates = (initialDate, toIncrease, type) => {
 
 }
 
-const findDates = async (data, dateToFind) => {
-    const paymentDate = new Date(dateToFind).toISOString().split(".")[0]
+const dispatchReminders = async ({ billingAplied, reminderMethod, message, unity, date }) => {
 
+    let chat = unity === "Centro" ?
+        process.env.UMBLER_CHAT_REM_ID_CENTRO : process.env.UMBLER_CHAT_REM_ID_PTB
 
-    const filtered = data.filter(res => {
-        if (res.payment.installments[0]) return res.payment.installments[0].due_date === paymentDate && res
+    console.log({
+        date,
+        unity,
+        b: billingAplied.map(res => { return { name: res.nameCustomer, payment: res.payment.due_date } }),
     })
 
-    return filtered
-}
-
-
-const dispatchReminders = async ({ billingAplied, reminderMethod, message, where, date }) => {
 
     for (let index = 0; index < billingAplied.length; index++) {
         const sale = billingAplied[index];
@@ -74,7 +73,6 @@ const dispatchReminders = async ({ billingAplied, reminderMethod, message, where
             business_phone, email
         } = sale
 
-
         if (nameCustomer.includes("CANCELADO")) continue
 
         const messageCustomized = await messages({
@@ -83,12 +81,9 @@ const dispatchReminders = async ({ billingAplied, reminderMethod, message, where
 
         const { whatsapp, email: emailReminder } = reminderMethod;
 
-        if (whatsapp) await SendSimpleWpp(
-            nameCustomer,
-            business_phone,
-            messageCustomized,
-            ['automação', 'cobranças']
-        );
+        if (!business_phone) await SendGroupAlerts(
+            `${nameCustomer} está sem número de contato cadastrado`,
+            chat);
 
         if (emailReminder) await SendMail({
             subject: "Lembrete de pagamento",
@@ -96,126 +91,169 @@ const dispatchReminders = async ({ billingAplied, reminderMethod, message, where
             text: messageCustomized
         });
 
-        await delay(3000);
+
+        if (whatsapp) await SendSimpleWpp(
+            nameCustomer,
+            business_phone,
+            messageCustomized,
+            ['automação', 'cobranças']
+        );
+
+        await delay(5000);
     }
 }
-
 
 class BillingRulesExec {
 
 
-    constructor(header) {
+    constructor(header, unity, page) {
         this.header = header;
+        this.unity = unity;
+        this.page = page
         Object.freeze(this.header);
     }
 
     async filterForServiceOrProductSelected(data, rulesProducts) {
-        const ruleAplied = []
-
+        const ruleAplied = [];
 
         for (let index = 0; index < data.length; index++) {
             const eachSale = data[index];
 
-            const { id: idSale, payment, customer, service_discount, product_discount } = eachSale;
 
-            const { id: idCustomer, name: nameCustomer } = customer
+            const { cliente, total } = eachSale;
+            const { id: idCustomer, nome: nameCustomer } = cliente;
 
-            const [customerData, relatedItemToSale] = await Promise.all([
-                getCustomerData(this.header, idCustomer),
-                getItemId(idSale, this.header)
+            try {
 
-            ])
+                const [customerData, customerSales] = await Promise.all([
+                    getClienteData(idCustomer, this.header),
+                    customerShoppings(idCustomer, this.header)
+
+                ])
+
+                if (!customerSales) continue;
+
+                const { data: sales } = customerSales;
+
+                if (sales?.length === 0) {
+
+                    console.log({
+                        sales,
+                        error: "Sem venda cadastrada para essa parcela."
+                    })
+
+                    continue
+                }
 
 
-            const related = rulesProducts.find(
-                res => res.name === relatedItemToSale[0]?.item.name
-            )
+                const sale = sales.find(res => res.total === total);
+                if (!sale) continue;
 
-            const { value } = relatedItemToSale.find(res =>
-                res => res.name === related.name
-            )
+                const [relatedItemToSale, saleData] = await Promise.all([
+                    getSaleItem(sale?.id, this.header),
+                    getSaleData(sale?.id, this.header)
+                ])
+
+                if (!customerData || !relatedItemToSale || !saleData) {
+
+                    console.log({
+                        errorData:
+                            relatedItemToSale ?? saleData,
+                        error: "Sem venda cadastrada para essa parcela.",
 
 
-            if (!customerData || !related) continue
+                        nameCustomer,
+                        page: this.page, unity: this.unity
+                    })
 
-            const { business_phone, email } = customerData
-            const { installments, method } = payment
+                    continue
+                }
+
+                const related = rulesProducts.find(
+                    res => res.name === relatedItemToSale[0]?.nome
+                )
+
+                const { telefone_comercial, telefone_celular, email } = customerData;
+                const { venda, observacoes_pagamento: _, vendedor: __ } = saleData;
+
+                if (!related) continue;
+
+                console.time(`processo ${nameCustomer} - ${index}`);
+
+                const { valor } = relatedItemToSale.find(
+                    res => res.nome === related?.name
+                )
 
 
-            if (installments[0] &&
-                installments[0].status === 'PENDING') ruleAplied.push({
-                    idSale,
+                const payment = {
+                    method: venda.tipo_pagamento,
+                    quantity_parcels: venda.opcao_condicao_pagamento,
+                    due_date: venda.parcelas[0]?.data_vencimento,
+                    value: venda.parcelas[0]?.valor
+                }
+
+                await delay(7000)
+                console.timeEnd(`processo ${nameCustomer} - ${index}`)
+
+                ruleAplied.push({
+                    idSale: sale?.id,
                     nameCustomer,
-                    service_discount,
-                    product_discount,
-                    business_phone,
+                    business_phone: telefone_comercial || telefone_celular,
                     email,
                     product_or_service_related: {
                         ...related,
-                        value
+                        value: valor
                     },
-                    payment: {
-                        method,
-                        installment: installments[0],
-                    }
+                    payment,
                 })
 
-            await delay(2000)
+            } catch (error) {
+                console.log({ error, eachSale })
+                continue
+            }
+
         }
 
         return ruleAplied
     }
 
-    async before(rules, data) {
+    async aplyRule(rules, page) {
+
         const today = new Date().setUTCHours(0, 0, 0, 0)
 
         for (let index = 0; index < rules.length; index++) {
             const element = rules[index];
 
             const { reminderMethod, daysToAction, category,
-                productsRelated, servicesRelated, message } = element;
+                productsRelated, servicesRelated, message, typeTrigger } = element;
 
-            const increasedDate = await calculateDates(today, daysToAction, 'increase')
+            const triggerType = {
+                'AT': '',
+                'BEFORE': 'increase',
+                'AFTER': 'decrease'
+            }
 
-            const toAplie = await findDates(data, increasedDate)
+            const atDay = await calculateDates(today, daysToAction, triggerType[typeTrigger]);
+            const filteredData = await this.getContaAzulData(page, atDay, atDay);
 
-            const billingAplied = await this.filterForServiceOrProductSelected(
-                toAplie,
-                category === 'Product' ?
-                    productsRelated : servicesRelated
-            )
+            console.log({ daysToAction, filteredData })
 
 
-            billingAplied.length > 0 &&
-                await dispatchReminders({
-                    where: "before",
-                    date: increasedDate,
-                    billingAplied,
-                    reminderMethod,
-                    message,
-                })
-        }
-    }
+            if (!filteredData) {
+                // await updatePage(idUni, pages)
+                throw new Error("Init data came as null")
+            };
 
-    async at(rules, data) {
-        const today = new Date().setUTCHours(0, 0, 0, 0)
-
-        for (let index = 0; index < rules.length; index++) {
-            const element = rules[index];
-
-            const { reminderMethod, daysToAction, category,
-                productsRelated, servicesRelated, message } = element;
-
-            const atDay = await calculateDates(today, daysToAction, '')
-
-            const toAplie = await findDates(data, atDay)
+            const { data, has_more, total } = filteredData;
+            if (data.length === 0) continue;
 
             const billingAplied = await this.filterForServiceOrProductSelected(
-                toAplie,
+                data,
                 category === 'Product' ?
                     productsRelated : servicesRelated
             );
 
+            if (billingAplied.length === 0) continue;
 
             billingAplied.length > 0 &&
                 await dispatchReminders({
@@ -224,47 +262,20 @@ class BillingRulesExec {
                     billingAplied,
                     reminderMethod,
                     message,
+                    unity: this.unity
+
                 })
+
+            if (has_more) await this.aplyRule(rules, this.page + 1)
         }
+
     }
 
-    async after(rules, data) {
-        const today = new Date().setUTCHours(0, 0, 0, 0)
-
-        for (let index = 0; index < rules.length; index++) {
-            const element = rules[index];
-
-            const { reminderMethod, daysToAction, category,
-                productsRelated, servicesRelated, message } = element;
-
-            const decreasedDate = await calculateDates(today, daysToAction, 'decrease')
-
-            const toAplie = await findDates(data, decreasedDate)
-
-            const billingAplied = await this.filterForServiceOrProductSelected(
-                toAplie,
-                category === 'Product' ?
-                    productsRelated : servicesRelated
-            )
-
-
-            billingAplied.length > 0 &&
-                await dispatchReminders({
-                    where: "after",
-                    date: decreasedDate,
-                    billingAplied,
-                    reminderMethod,
-                    message,
-                })
-        }
-    }
-
-
-    async GatheringDatabaseBillingRules(data) {
+    async GatheringDatabaseBillingRules() {
 
         const typesTrigger = [
+            // 'AT',
             'BEFORE',
-            'AT',
             'AFTER'
         ]
 
@@ -292,32 +303,28 @@ class BillingRulesExec {
                 }
             })
 
-            if (element === 'BEFORE') await this.before(rules, data)
-            if (element === 'AT') await this.at(rules, data)
-            if (element === 'AFTER') await this.after(rules, data)
+            console.log({
+                type: element,
+                length: rules.length,
+            })
+
+
+            await this.aplyRule(rules, 1);
         }
-
-
     }
 
-    async getDataContaAzulData(pages) {
-        const data = await getAllSales(this.header, pages, 120, 60)
+    async getContaAzulData(page, initialDate, finalDate) {
+        // const data = await getSalesContaAzul(this.header, pages, 100, 50);
+        const data = await getFinancialDataFromContaAzul(
+            this.header, page, initialDate, finalDate, ['ATRASADO', 'EM_ABERTO'])
 
         return data
     }
 
     async init(pages) {
         try {
-            const contracts = await this.getDataContaAzulData(pages)
-            if (!contracts) throw new Error("Init data came as null");
-
-            const { data, has_more } = contracts
-            console.log({
-                pages,
-            })
-            await this.GatheringDatabaseBillingRules(data);
-
-            has_more && this.init(pages + 1);
+            this.page = pages;
+            await this.GatheringDatabaseBillingRules();
 
         } catch (error) {
             console.log(error)
@@ -330,25 +337,37 @@ class BillingRulesExec {
 
 const chargingBillingRules = () => {
 
-    ["PTB", "Centro"].forEach(async unity => {
+    ['PTB', 'Centro'].forEach(async unity => {
 
         try {
-            const token = await getToken(unity, 'refresh')
 
+            const [token] = await Promise.all([getNewToken(unity)])
 
-            const startBilling = new BillingRulesExec({
+            const header = {
                 "Authorization": `Bearer ${token}`
-            })
+            }
 
-            console.log(`[CHARGEBILLING: ${unity}]`);
+            const startBilling = await new BillingRulesExec(
+                header,
+                unity,
+            )
 
-            await startBilling.init(0);
+            console.time(`Process [bills]: ${unity}`);
+
+            await startBilling.init(parseInt(1));
+
+            console.timeEnd(`Process [bills]: ${unity}`);
+
+
+            // 5 ptb
+            // 6 centro
+
         } catch (error) {
-            console.log(error)
+            console.log({ error })
         }
 
     });
 }
-
+// chargingBillingRules()
 
 export default chargingBillingRules
