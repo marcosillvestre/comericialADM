@@ -1,6 +1,9 @@
 import axios from "axios";
 import 'dotenv/config';
 import FormData from 'form-data';
+import prisma from "../../../database/database.js";
+import { StartCicleWhenNewRegisterIsCreated } from "./trello.js";
+
 
 export const GetDocument = async (params) => {
     try {
@@ -82,4 +85,97 @@ export const GetDocument = async (params) => {
         console.log(error)
     }
 
+}
+
+export const createRegisterWhenDocumentSigned = async (data, signatures, link) => {
+
+    const usersSigned = signatures.map(sign => {
+        return sign.link !== null && {
+            responsible: sign?.user?.name ?? sign?.name,
+            information: {
+                field: "assinaturaContratoStatus",
+                text: "O status do contrato foi alterado para assinado",
+                from: data.id,
+            }
+        }
+    })
+
+    const register = await prisma.registers.create({
+        data: {
+            ...data,
+            assinaturaContratoStatus: "Ok",
+            files: {
+                create: {
+                    contentType: "link",
+                    key: link,
+                    name: "Link do documento assinado"
+                }
+            },
+            historic: {
+                createMany: {
+                    data: [
+                        {
+                            responsible: "Automação",
+                            information: {
+                                field: "created_at",
+                                text: "Dia de criação do registro",
+                                from: "1",
+                            }
+                        },
+                        ...usersSigned.filter(res => res !== false)
+                    ]
+                }
+            }
+        }
+    })
+
+    await StartCicleWhenNewRegisterIsCreated(register)
+    return register
+}
+
+export const updateRegisterWhenDocumentSigned = async (data, responsible, link) => {
+    const imutable = {
+        ...data,
+        assinaturaContratoStatus: "Ok",
+        files: {
+            create: {
+                contentType: "link",
+                key: link,
+                name: "Link do documento assinado"
+            }
+        },
+        historic: {
+            create: {
+                responsible: responsible,
+                information: {
+                    field: "assinaturaContratoStatus",
+                    text: `O status do contrato foi alterado para assinado`,
+                    from: data.id,
+                }
+            }
+        }
+    }
+
+    const validated = {
+        ...imutable,
+        comissaoStatus: "Pré-aprovado"
+    }
+
+
+    const validating =
+        data.pagamentoPrimeiraParcelaStatus === 'Ok' &&
+        data.taxaMatriculaStatus === 'Ok'
+
+
+    const register = await prisma.registers.update({
+        where: {
+            id: data.id
+        },
+        data: validating ?
+            validated :
+            imutable
+
+    })
+
+    return register
 }

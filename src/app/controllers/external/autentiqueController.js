@@ -4,16 +4,19 @@ import 'dotenv/config';
 import FormData from 'form-data';
 import fs from 'fs';
 import { SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
+import { winADeal } from '../../connection/externalConnections/rdStation.js';
+import { gatheringDataForDatabase } from '../../connection/rdSearchSync.js';
+import { createRegisterWhenDocumentSigned } from '../../connection/externalConnections/autentique.js';
 class AutentiqueController {
     async store(req, res) {
         const { name, number } = req.body
 
         try {
 
-            const pdfPath = req.file.path;
+            const { path, originalname } = req.file;
 
             // Ler o arquivo PDF como stream
-            const fileStream = fs.createReadStream(pdfPath);
+            const fileStream = fs.createReadStream(path);
 
             // Criar um FormData para enviar o arquivo via GraphQL mutation
             const formData = new FormData();
@@ -39,7 +42,7 @@ class AutentiqueController {
         }
             `,
                 variables: {
-                    "document": { "name": `${req.file.originalname.replace(".pdf", "").replace(/(\d+)(\s*\([^)]*\))?(\.[^\s]+)?$/g, '$1')}` },
+                    "document": { "name": `${originalname.replace(".pdf", "").replace(/(\d+)(\s*\([^)]*\))?(\.[^\s]+)?$/g, '$1')}` },
                     "signers": [{ "name": `${name}`, 'action': "SIGN" },
                     { "name": "Victor", 'action': "SIGN" },
                     ],
@@ -48,7 +51,7 @@ class AutentiqueController {
                 }
             }));
             formData.append('map', JSON.stringify({ '0': ['variables.file'] }));
-            formData.append('0', fileStream, req.file.originalname);
+            formData.append('0', fileStream, originalname);
 
             var config = {
                 method: 'post',
@@ -63,9 +66,11 @@ class AutentiqueController {
             // return res.status(200).json({})
 
             await axios(config)
-                .then(function (response) {
-                    const customerLink = response.data.data.createDocument.signatures[1].link.short_link
-                    const school = response.data.data.createDocument.signatures[2].link.short_link
+                .then(async function (response) {
+                    const { signatures, name } = response.data.data.createDocument;
+
+                    const customerLink = signatures[1].link.short_link
+                    const school = signatures[2].link.short_link
 
                     Promise.all([
                         SendSimpleWpp(
@@ -79,13 +84,22 @@ Qualquer problema você pode entrar em contato com seu consultor responsável(pa
 `,
                             ['automação']
                         ),
-                        ,
                         SendSimpleWpp("Victor", `${process.env.VICTOR}`,
                             `🆕🆕🆕🆕🆕🆕🆕
 Victor, novo contrato para você assinar em nome de *${name}* neste link:
 ${school}`
-                        )
+                        ),
+
                     ])
+
+                    const [_, id] = name.split("+");
+                    const registerExists = await prisma.registers.findUnique({ where: { id } });
+
+                    if (!registerExists) {
+                        const dealWin = await winADeal(id);
+                        const [deal] = await gatheringDataForDatabase([dealWin]);
+                        await createRegisterWhenDocumentSigned(deal, signatures, customerLink);
+                    }
 
                     return res.status(200).json({
                         message: {
@@ -99,7 +113,7 @@ ${school}`
 
                 })
                 .finally(() => {
-                    fs.unlink(pdfPath, (err) => {
+                    fs.unlink(path, (err) => {
                         if (err) throw err;
                         console.log('path was deleted');
                     })
@@ -116,7 +130,7 @@ ${school}`
         const { name, number } = req.body
 
         try {
-            const pdfPath = req.file.path;
+            const path = req.file.path;
 
             // Ler o arquivo PDF como stream
             const fileStream = fs.createReadStream(pdfPath);
@@ -145,7 +159,7 @@ ${school}`
         }
             `,
                 variables: {
-                    "document": { "name": `${req.file.originalname.replace(".pdf", "").replace(/(\d+)(\s*\([^)]*\))?(\.[^\s]+)?$/g, '$1')}` },
+                    "document": { "name": `${originalname.replace(".pdf", "").replace(/(\d+)(\s*\([^)]*\))?(\.[^\s]+)?$/g, '$1')}` },
                     "signers": [
                         { "name": `${name}`, 'action': "SIGN" },
                     ],
@@ -154,7 +168,7 @@ ${school}`
                 }
             }));
             formData.append('map', JSON.stringify({ '0': ['variables.file'] }));
-            formData.append('0', fileStream, req.file.originalname);
+            formData.append('0', fileStream, originalname);
 
             var config = {
                 method: 'post',

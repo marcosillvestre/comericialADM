@@ -8,6 +8,7 @@ import orderBooks from "../connection/orderingBooks.js";
 import NewSearchSync from "../connection/rdSearchSync.js";
 import renewContracts from '../connection/searchEndContractsRd.js';
 import SyncronizeSalesAndRegisters from '../connection/syncronizeCAandDatabase.js';
+import ChargeSignDocuments from "../connection/signDocments.js";
 
 
 const functionsArray = [
@@ -23,6 +24,10 @@ const functionsArray = [
     {
         time: "0 5 * * *",
         fn: chargingBillingRules
+    },
+    {
+        time: "0 5 * * *",
+        fn: ChargeSignDocuments
     },
     {
         time: "0 4 * * *",
@@ -48,7 +53,7 @@ const functionsArray = [
 functionsArray.forEach(res => {
     return new CronJob(res.time,
         function () {
-            // res.fn();
+            res.fn();
         },
         null,
         true,
