@@ -7,6 +7,7 @@ import { customerShoppings, getFinancialDataFromContaAzul, getSaleItem } from ".
 import { getContactsWithId } from "./externalConnections/rdStation.js"
 import { CompleteCheckPointOnTrello, CreateCommentOnTrello } from "./externalConnections/trello.js"
 import { SendGroupAlerts, SendSimpleWpp } from "./externalConnections/wpp.js"
+import { ChecksumAlgorithm } from "@aws-sdk/client-s3"
 
 const { registerFinder, registerFindMany } = new RegisterFinder()
 const delay = ms => new Promise(res => setTimeout(res, ms));
@@ -73,16 +74,14 @@ class associationDatabaseAndCas {
 
             const { items: [product] } = data;
 
-            if (!product) {
-                body.push(null);
-                continue;
-            }
+            if (!product) continue;
+
 
             const { codigo, nome: nameProduct } = product;
 
             body.push({
                 id: res.id + '-' + index,
-                sku: codigo,
+                sku: codigo || 'erro sku',
                 name,
                 phone,
                 student: customFields["Nome do aluno (se não for responsável próprio))"] ?? name,
@@ -95,7 +94,7 @@ class associationDatabaseAndCas {
 
 
         /////analisar essa validação daqui 
-        if (body.some(res => res ?? res)) await SendSimpleWpp(
+        if (body.some(res => res)) await SendSimpleWpp(
             "marcos",
             process.env.MARCOS,
             `um desses materiais não foi encontrado`
@@ -212,7 +211,7 @@ Professor: *${response.customFields["Professor"]}*
 
         console.log({ params: params.length })
 
-        // const param = params.splice(0, 3)
+        // const param = params.splice(0, 10)
 
         for (let index = 0; index < params.length; index++) {
             const element = params[index];
@@ -251,9 +250,9 @@ Professor: *${response.customFields["Professor"]}*
             ])
             await delay(7000);
             console.timeEnd(`[sync]: search sales... ${userData.name}`);
+
             if (!purchases) continue;
             const { data } = purchases;
-            console.log({ purchases })
 
             const filteredPaid = data.filter(res => res.condicao_pagamento === true);
             const filteredPaidProduct = filteredPaid.find(res => res.itens === 'PRODUCT');
@@ -267,24 +266,27 @@ Professor: *${response.customFields["Professor"]}*
             console.time(`[sync]: match sales... ${userData.name}`);
 
             for (const item of filteredPaid) {
-                if (!vistos.has(item.total)) {
-                    vistos.add(item.total);
+                const saleItem = await getSaleItem(item.id, this.header);
 
-                    const saleItem = await getSaleItem(item.id, this.header);
-                    if (saleItem.find(r => r.nome === 'Taxa de Matrícula')) {
-                        keys.push({ name: 'taxa de matricula', item: saleItem[0] })
-                        continue
-                    }
-                    if (saleItem.find(r => r.tipo === 'PRODUTO')) {
-                        keys.push({ name: 'material didatico', item: saleItem })
-                        continue
-                    }
+                if (!saleItem || saleItem.length === 0) continue
 
-                    keys.push({ name: 'parcela', item: saleItem[0] })
-
+                if (!vistos.has('taxa') && saleItem.find(r => r.nome === 'Taxa de Matrícula')) {
+                    keys.push({ name: 'taxa de matricula', item: saleItem[0] })
+                    vistos.add('taxa')
+                    continue
                 }
+
+                if (!vistos.has('material') && saleItem.find(r => r.tipo === 'PRODUTO')) {
+                    keys.push({ name: 'material didatico', item: saleItem })
+                    vistos.add('material')
+                    continue
+                }
+                if (!vistos.has('parcela')) {
+                    keys.push({ name: 'parcela', item: saleItem[0] })
+                    vistos.add('parcela')
+                }
+                await delay(7000);
             }
-            await delay(7000)
             console.timeEnd(`[sync]: match sales... ${userData.name}`);
 
             console.log({ keys })
@@ -420,10 +422,10 @@ Professor: *${response.customFields["Professor"]}*
     }
 
 
-    async associateDatabaseAndSale(sales) {
+    async associateDatabaseAndSale(sales, database) {
         const data = [];
 
-        for (const user of this.registers) {
+        for (const user of database) {
             const salesUsers = await sales.filter(res => res.cliente.nome === user.name)
 
             if (salesUsers.length === 0) continue;
@@ -461,15 +463,15 @@ Professor: *${response.customFields["Professor"]}*
 
 
             const { data, has_more, total } = allSales
-            const gathered = await this.associateDatabaseAndSale(data);
-
+            const gathered = await this.associateDatabaseAndSale(data, this.registers);
 
             gathered.length > 0 &&
                 await this.updateOnDatabaseRegister(gathered);
 
+            console.log("[DATABASE AND C.A. UPDATED]")
+            return
             // has_more && this.init(pages + 1);
 
-            console.log("[DATABASE AND C.A. UPDATED]")
             return
 
         } catch (error) {
@@ -552,7 +554,8 @@ async function reorganizeDatabaseData(unity) {
 
 const SyncronizeSalesAndRegisters = async () => {
 
-    ["PTB",
+    [
+        "PTB",
         // "Centro"
     ].forEach(async unity => {
 
@@ -584,7 +587,7 @@ const SyncronizeSalesAndRegisters = async () => {
 }
 
 
-SyncronizeSalesAndRegisters()
+// SyncronizeSalesAndRegisters()
 
 export default SyncronizeSalesAndRegisters
 

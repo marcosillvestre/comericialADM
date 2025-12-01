@@ -57,6 +57,9 @@ routes.post('/registro-conta-azul', RegisterContaAzulController.storeContract)
 routes.post('/venda', RegisterContaAzulController.storeSale)
 routes.post('/taxa', RegisterContaAzulController.storeEnrollmentFee)
 
+
+routes.post('/uploads', upload.single('file'), AutentiqueController.store)
+
 //////////////
 routes.use(auth) // autenticated routes
 
@@ -134,7 +137,6 @@ routes.delete("/file", FilesController.deleteFiles)
 
 
 
-routes.post('/uploads', upload.single('file'), AutentiqueController.store)
 routes.post('/uploads-recibos', upload.single('file'), AutentiqueController.storeRecipe)
 
 

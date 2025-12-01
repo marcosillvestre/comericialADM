@@ -10,7 +10,6 @@ class AutentiqueController {
 
         try {
 
-
             const pdfPath = req.file.path;
 
             // Ler o arquivo PDF como stream
