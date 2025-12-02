@@ -128,7 +128,8 @@ class PostController {
             const [deal] = await gatheringDataForDatabase([dealWin])
 
             const newUser = register ??
-                await createRegisterWhenDocumentSigned(deal, signatures, signed);
+                await createRegisterWhenDocumentSigned(
+                    { ...deal, assinaturaContratoStatus: "Ok", }, signatures, signed);
 
 
             const unityNumber = {

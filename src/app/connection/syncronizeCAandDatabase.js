@@ -554,10 +554,7 @@ async function reorganizeDatabaseData(unity) {
 
 const SyncronizeSalesAndRegisters = async () => {
 
-    [
-        "PTB",
-        // "Centro"
-    ].forEach(async unity => {
+    ["PTB", "Centro"].forEach(async unity => {
 
         try {
             // const token = await getToken(unity, 'refresh');

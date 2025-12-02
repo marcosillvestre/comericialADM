@@ -103,12 +103,11 @@ export const createRegisterWhenDocumentSigned = async (data, signatures, link) =
     const register = await prisma.registers.create({
         data: {
             ...data,
-            assinaturaContratoStatus: "Ok",
             files: {
                 create: {
                     contentType: "link",
                     key: link,
-                    name: "Link do documento assinado"
+                    name: "Link do documento"
                 }
             },
             historic: {

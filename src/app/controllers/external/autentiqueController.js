@@ -7,9 +7,10 @@ import { SendSimpleWpp } from '../../connection/externalConnections/wpp.js';
 import { winADeal } from '../../connection/externalConnections/rdStation.js';
 import { gatheringDataForDatabase } from '../../connection/rdSearchSync.js';
 import { createRegisterWhenDocumentSigned } from '../../connection/externalConnections/autentique.js';
+import prisma from '../../../database/database.js';
 class AutentiqueController {
     async store(req, res) {
-        const { name, number } = req.body
+        const { name: nameCustomer, number } = req.body
 
         try {
 
@@ -43,7 +44,7 @@ class AutentiqueController {
             `,
                 variables: {
                     "document": { "name": `${originalname.replace(".pdf", "").replace(/(\d+)(\s*\([^)]*\))?(\.[^\s]+)?$/g, '$1')}` },
-                    "signers": [{ "name": `${name}`, 'action': "SIGN" },
+                    "signers": [{ "name": `${nameCustomer}`, 'action': "SIGN" },
                     { "name": "Victor", 'action': "SIGN" },
                     ],
                     file: null,
@@ -76,18 +77,19 @@ class AutentiqueController {
                         SendSimpleWpp(
                             name,
                             number,
-                            `Olá *${name}*, a American Way está te enviando um documento para assinatura neste link:
+                            `Olá *${nameCustomer}*, a American Way está te enviando um documento para assinatura neste link:
                             
 ${customerLink}
 
-Qualquer problema você pode entrar em contato com seu consultor responsável(para tornar o link clicável você pode salvar o número da American Way🗽).
+Qualquer problema você pode entrar em contato com seu consultor responsável
+(para tornar o link clicável você pode salvar o número da American Way🗽).
 `,
                             ['automação']
                         ),
                         SendSimpleWpp("Victor", `${process.env.VICTOR}`,
                             `🆕🆕🆕🆕🆕🆕🆕
-Victor, novo contrato para você assinar em nome de *${name}* neste link:
-${school}`
+                        Victor, novo contrato para você assinar em nome de *${name}* neste link:
+                        ${school}`
                         ),
 
                     ])
@@ -98,7 +100,9 @@ ${school}`
                     if (!registerExists) {
                         const dealWin = await winADeal(id);
                         const [deal] = await gatheringDataForDatabase([dealWin]);
-                        await createRegisterWhenDocumentSigned(deal, signatures, customerLink);
+                        await createRegisterWhenDocumentSigned(
+                            deal, signatures, customerLink
+                        );
                     }
 
                     return res.status(200).json({

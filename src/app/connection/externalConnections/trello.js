@@ -368,7 +368,7 @@ ${url}`
 
                 const date = new Date();
                 const firstDay = new Date(`${date.getFullYear()}-${date.getMonth() + 1}-1`).setUTCHours(0)
-                const lastDay = new Date(`${date.getFullYear()}-${date.getMonth() + 1}-31`).setUTCHours(0)
+                const lastDay = new Date(`${date.getFullYear()}-${date.getMonth() + 1}-31`).setHours(23, 59, 59, 999)
 
                 const counter = await registerFindMany({
                     created_at: {
@@ -402,10 +402,8 @@ Tipo: *${customFields["Formato de Aula"]}*
 
 *PTB*: ${countPTB?.length}
 *Centro*: ${countCentro?.length}
-
-Ranking mensal:
-
-                `
+`
+                // Ranking mensal:
                 let chat = customFields["Unidade"] === "Centro" ?
                     process.env.UMBLER_CHAT_REM_ID_CENTRO : process.env.UMBLER_CHAT_REM_ID_PTB
 

@@ -36,8 +36,7 @@ const getData = async () => {
 
 async function ChargeSignDocuments() {
     const data = await getData();
-
-    if (data.length === 0) return "No documents to process"
+    if (data.length === 0) return "No documents to process";
 
     try {
         for (let index = 0; index < data.length; index++) {
@@ -46,10 +45,15 @@ async function ChargeSignDocuments() {
 
             if (!phone) continue;
 
-            const filekey = files.find(f => f.key.includes("autentiue.com.br"));
-            const message = `Olá, tudo bem? Aqui é da American Way. Estamos finalizando o seu cadastro e para isso precisamos que você assine o contrato. Por favor, verifique seu e-mail e siga as instruções para completar a assinatura. Qualquer dúvida, estamos à disposição! 
+            const filekey = files.find(f => f.key.includes("assina.ae"));
+            const message = `Olá, tudo bem? Aqui é da American Way. 
+Estamos finalizando o seu cadastro e para isso precisamos que você assine o contrato. Por favor, verifique seu e-mail e siga as instruções para completar a assinatura.
+
+Qualquer dúvida, estamos à disposição! 
                 
-${filekey?.key ?? '*erro ao gerar link do documento entre em contato com seu gerente comercial*.'}`;
+${filekey?.key ?? '*erro ao gerar link do documento entre em contato com seu gerente comercial*.'}
+
+(se já assinou, por favor desconsidere esta mensagem)`;
 
             await SendSimpleWpp(
                 name,
@@ -68,6 +72,5 @@ ${filekey?.key ?? '*erro ao gerar link do documento entre em contato com seu ger
         });
     }
 }
-
 
 export default ChargeSignDocuments;
