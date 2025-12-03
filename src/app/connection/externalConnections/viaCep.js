@@ -13,7 +13,7 @@ export const getDataFromCep = async (cep) => {
     } catch (error) {
 
         console.log({
-            error: error.response.data,
+            error: error.response,
             where: "ViaCEP",
         })
 

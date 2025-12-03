@@ -287,7 +287,8 @@ class RegisterContaAzulController {
             await SendSimpleWpp(
                 "marcos",
                 process.env.MARCOS,
-                JSON.stringify(`[CONTRACT]: ${error}`, null, 2)
+                JSON.stringify(`[CONTRACT]: ${error} / ${nomeResponsavel}-${Unidade}`, null, 2)
+
             );
 
             if (typeof error === 'string') return res.status(400).json({
@@ -535,7 +536,7 @@ class RegisterContaAzulController {
             await SendSimpleWpp(
                 "marcos",
                 process.env.MARCOS,
-                JSON.stringify(`[SALE]: ${error}`, null, 2)
+                JSON.stringify(`[SALE]: ${error} / ${nomeResponsavel}-${Unidade}`, null, 2)
             );
 
             if (typeof error === 'string') return res.status(400).json({
@@ -762,7 +763,8 @@ class RegisterContaAzulController {
             await SendSimpleWpp(
                 "marcos",
                 process.env.MARCOS,
-                JSON.stringify(`[FEE]: ${error}`, null, 2)
+                JSON.stringify(`[FEE]: ${error} / ${nomeResponsavel}-${Unidade}`, null, 2)
+
             );
 
             if (typeof error === 'string') return res.status(400).json({

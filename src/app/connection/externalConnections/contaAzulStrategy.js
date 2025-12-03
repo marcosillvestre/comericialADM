@@ -326,17 +326,18 @@ export const CreatePeople = async ({ token, body }) => {
         const status = error?.response?.status;
         const msg = error?.response?.data?.error || error.error || "Erro inesperado";
 
+
+        if (msg.includes("Já existe uma pessoa cadastrada")) {
+            const { persons } = await GetDataForCreateSales({ search: cpf, token })
+            return persons
+        };
+
         console.error({
             fullError: error?.response?.data || error,
             status,
             message: error.response?.data?.error,
             context: "[CREATE PEOPLE]",
         });
-
-        if (msg.includes("Já existe uma pessoa cadastrada")) {
-            const { persons } = await GetDataForCreateSales({ search: cpf, token })
-            return persons
-        };
 
         if (msg === "CEP inválido") throw (`[CREATE PEOPLE] [${status || 'Erro'}] ${msg}`);
 
@@ -473,7 +474,7 @@ export const CreateSale = async ({ token, body }) => {
     } catch (error) {
 
         const status = error?.response?.status;
-        const msg = error?.response?.data?.error || error.error || "Erro inesperado";
+        const msg = error?.response?.data?.message || error.error || "Erro inesperado";
 
         console.error({
             status,
