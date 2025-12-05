@@ -287,13 +287,13 @@ class RegisterContaAzulController {
             await SendSimpleWpp(
                 "marcos",
                 process.env.MARCOS,
-                JSON.stringify(`[CONTRACT]: ${error} / ${nomeResponsavel}-${Unidade}`, null, 2)
+                JSON.stringify(`[CONTRACT]: ${error} `, null, 2)
 
             );
 
             if (typeof error === 'string') return res.status(400).json({
                 message: error.includes("Internal Server Error") ?
-                    "Erro ao enviar esse contrato ao conta azul, dados incompatíveis" : error
+                    "Erro ao enviar esse contrato ao conta azul, dados incompatíveis" : "Resposta inesperada do servidor, tente novamente"
             })
 
             if ("errors" in error) return res.status(400).json({ message: error.errors.map(err => `\n${err}`) })
@@ -536,7 +536,7 @@ class RegisterContaAzulController {
             await SendSimpleWpp(
                 "marcos",
                 process.env.MARCOS,
-                JSON.stringify(`[SALE]: ${error} / ${nomeResponsavel}-${Unidade}`, null, 2)
+                JSON.stringify(`[SALE]: ${error}`, null, 2)
             );
 
             if (typeof error === 'string') return res.status(400).json({
@@ -731,13 +731,14 @@ class RegisterContaAzulController {
                     "09a1a3f8-f75e-4b25-a2ce-e815514028de" : "682c4202-e0c2-4bab-a847-c8dbe89b80d9",
             }]
 
+
             const saleBody = {
                 idCategorie: Categorie?.id,
                 idCenterCost: CenterCost?.id,
                 idFinancialAccount: FinancialAccount?.id,
 
                 notes: saleNotes,
-                idClient: newPeople?.uuid,
+                idClient: newPeople.uuid,
                 itens,
                 payment: newTax,
                 dueDay: newTax?.payment_date,
@@ -763,7 +764,7 @@ class RegisterContaAzulController {
             await SendSimpleWpp(
                 "marcos",
                 process.env.MARCOS,
-                JSON.stringify(`[FEE]: ${error} / ${nomeResponsavel}-${Unidade}`, null, 2)
+                JSON.stringify(`[FEE]: ${error}`, null, 2)
 
             );
 
