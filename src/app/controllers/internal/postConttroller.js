@@ -68,7 +68,8 @@ class PostController {
             const { event: { data } } = req.body
 
             const { name, signatures, files } = await GetDocument(data.document);
-            const [type, id] = name.split("+");
+            const [type, idRaw] = name.split("+");
+            const [id, _] = idRaw.split(" ");
 
             const { signed } = files;
 
