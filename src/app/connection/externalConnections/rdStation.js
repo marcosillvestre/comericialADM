@@ -29,7 +29,21 @@ export async function updateStageRd(data, unity) {
 }
 
 
-async function getDealId(name, aluno, classe) {
+export async function getDealByName(name) {
+    try {
+        const { data } = await axios.get(`https://crm.rdstation.com/api/v1/deals?token=${process.env.RD_TOKEN}&name=${name}`)
+        const { total, deals } = data
+
+        return deals
+
+    } catch (error) {
+        console.log(error)
+        return error
+    }
+
+}
+
+export async function getDealId(name, aluno, classe) {
     try {
         const { data } = await axios.get(`https://crm.rdstation.com/api/v1/deals?token=${process.env.RD_TOKEN}&name=${name}`)
         const { total, deals } = data
@@ -42,7 +56,8 @@ async function getDealId(name, aluno, classe) {
 
             let relatedClasse = element.deal_custom_fields.filter(res => res.custom_field.label.includes('Classe')).map(res => res.value)[0]
 
-            if (nameAluno.toLowerCase().includes(aluno.toLowerCase()) && relatedClasse === classe) result.push({ id: element.id, user: element.user })
+            if (nameAluno.toLowerCase().includes(aluno.toLowerCase()) &&
+                relatedClasse === classe) result.push({ id: element.id, user: element.user })
         }
 
         return result

@@ -4,7 +4,7 @@ import axios from 'axios';
 
 export const getDataFromCep = async (cep) => {
     try {
-        if (!cep) throw new Error
+        if (!cep) throw new Error("CEP não informado")
 
         const cepCleared = cep.replace(/\s+/g, "");
 

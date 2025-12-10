@@ -89,30 +89,22 @@ export const getSaleProducts = async (headers, id) => {
 ///////// NEW ENDPOINT
 
 
-// id: '9aef2d79-9705-453f-b569-0c1fdc518047',
-//     status: 'OVERDUE',
-//     total: 251,
-//     descricao: 'Venda 974289',
-//     data_vencimento: '2025-10-15',
-//     status_traduzido: 'ATRASADO',
-//     nao_pago: 251,
-//     pago: 0,
-//     data_criacao: '2025-05-16T16:53:15.870895',
-//     data_alteracao: '2025-09-20T02:23:59.741041',
-//     cliente: {
-//       id: '9b4b24e0-474c-4edd-a476-ed05ad67e901',
-//       nome: 'Soraya da Silva Pereira'
-//     },
 
 
 
 export const customerShoppings = async (idCustomer, headers, type) => {
 
+    const agora = new Date();
+    const primeiroDia = new Date(agora.getFullYear(), agora.getMonth() - 1, 1);
+    const ultimoDia = new Date(agora.getFullYear(), agora.getMonth() + 1, 0);
+
     const query = new URLSearchParams({
         pagina: 1,
         tamanho_pagina: 100,
         ids_clientes: idCustomer,
-        // type
+        itens: type,
+        data_inicio: simplifyDates(primeiroDia),
+        data_fim: simplifyDates(ultimoDia),
     }).toString();
 
     try {

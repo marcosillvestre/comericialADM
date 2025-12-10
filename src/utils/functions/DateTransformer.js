@@ -31,3 +31,14 @@ export function simplifyDates(date) {
     const parsedDate = newDate.split("T")[0];
     return parsedDate
 }
+
+
+export const parseDates = (date) => {
+
+    if (!date) return new Date()
+
+    const dates = new Date(date).toISOString();
+    const utc = dates.split("T")[0];
+    const isoDate = utc + "T03:00:00.000Z";
+    return new Date(isoDate).toLocaleDateString('pt-BR')
+}
