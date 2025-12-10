@@ -230,7 +230,7 @@ class BillingRulesExec {
                 console.timeEnd(`processo ${nameCustomer} - ${index}`)
 
                 ruleAplied.push({
-                    idSale: sale?.id,
+                    idSale: sale[indexed]?.id,
                     nameCustomer,
                     business_phone: telefone_comercial || telefone_celular,
                     email,
