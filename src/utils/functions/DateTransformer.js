@@ -1,3 +1,12 @@
+export const getFirstAndLastDateOfMonth = (range) => {
+
+    const agora = new Date();
+    const primeiroDia = new Date(agora.getFullYear(), agora.getMonth() - range, 1);
+    const ultimoDia = new Date(agora.getFullYear(), agora.getMonth() + range, 0);
+
+    return { firstDate: primeiroDia, lastDate: ultimoDia };
+}
+
 export const ReOrderDate = (string) => {
 
     if (!string || !string.includes("/")) return null

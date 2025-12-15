@@ -1,5 +1,5 @@
 import prisma from "../../database/database.js";
-import { parseDates, simplifyDates } from "../../utils/functions/DateTransformer.js";
+import { getFirstAndLastDateOfMonth, parseDates, simplifyDates } from "../../utils/functions/DateTransformer.js";
 import { getNewToken } from "../core/getToken.js";
 import { customerShoppings, getClienteData, getFinancialDataFromContaAzul, getSaleData, getSaleItem } from "./externalConnections/contaAzulStrategy.js";
 import { SendMail } from "./externalConnections/emailService.js";
@@ -62,7 +62,6 @@ const dispatchReminders = async ({ billingAplied, reminderMethod, message, unity
         unity,
         length: billingAplied.length
     })
-
 
     for (let index = 0; index < billingAplied.length; index++) {
         const sale = billingAplied[index];
@@ -157,7 +156,11 @@ class BillingRulesExec {
                     continue
                 }
 
-                const sale = sales.filter(res => res.total === total && res.nome !== "Taxa de Matrícula");
+                const { firstDate } = getFirstAndLastDateOfMonth(1);
+                const monthStr = simplifyDates(firstDate).slice(0, 7);  // "YYYY-MM"
+
+                const sale = sales.filter(res => res.total === total &&
+                    res.nome !== "Taxa de Matrícula" && res.data.startsWith(monthStr));
 
                 if (sale.length === 0) {
                     console.log({
@@ -166,10 +169,10 @@ class BillingRulesExec {
                     });
                     continue
                 };
-                const indexed = sale.length - 1;
+
                 const [relatedItemToSale, saleData] = await Promise.all([
-                    getSaleItem(sale[indexed]?.id, this.header),
-                    getSaleData(sale[indexed]?.id, this.header)
+                    getSaleItem(sale[0]?.id, this.header),
+                    getSaleData(sale[0]?.id, this.header)
                 ])
 
 
@@ -230,7 +233,7 @@ class BillingRulesExec {
                 console.timeEnd(`processo ${nameCustomer} - ${index}`)
 
                 ruleAplied.push({
-                    idSale: sale[indexed]?.id,
+                    idSale: sale[0]?.id,
                     nameCustomer,
                     business_phone: telefone_comercial || telefone_celular,
                     email,
@@ -282,7 +285,6 @@ class BillingRulesExec {
             const { data, has_more, total } = filteredData;
 
             if (data.length === 0) continue;
-
             const billingAplied = await this.filterForServiceOrProductSelected(
                 data,
                 category === 'Product' ? productsRelated : servicesRelated,
@@ -382,10 +384,7 @@ const chargingBillingRules = () => {
             const [token] = await Promise.all([getNewToken(unity)])
             const header = { "Authorization": `Bearer ${token}` }
 
-            const startBilling = await new BillingRulesExec(
-                header,
-                unity,
-            )
+            const startBilling = await new BillingRulesExec(header, unity)
 
             console.time(`Process [bills]: ${unity}`);
 

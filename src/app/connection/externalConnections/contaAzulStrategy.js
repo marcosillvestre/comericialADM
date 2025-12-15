@@ -2,7 +2,7 @@ import axios from "axios"
 import { getNewToken } from "../../core/getToken.js"
 
 import { v4 } from "uuid"
-import { ReOrderDate, simplifyDates } from "../../../utils/functions/DateTransformer.js"
+import { getFirstAndLastDateOfMonth, ReOrderDate, simplifyDates } from "../../../utils/functions/DateTransformer.js"
 import { installments } from "../../../utils/functions/installments.js"
 import { randomNumber } from "../../../utils/functions/serializeNumbers.js"
 import { getDataFromCep } from "./viaCep.js"
@@ -94,17 +94,15 @@ export const getSaleProducts = async (headers, id) => {
 
 export const customerShoppings = async (idCustomer, headers, type) => {
 
-    const agora = new Date();
-    const primeiroDia = new Date(agora.getFullYear(), agora.getMonth() - 1, 1);
-    const ultimoDia = new Date(agora.getFullYear(), agora.getMonth() + 1, 0);
+    const { firstDate, lastDate } = await getFirstAndLastDateOfMonth(1);
 
     const query = new URLSearchParams({
         pagina: 1,
         tamanho_pagina: 100,
         ids_clientes: idCustomer,
         itens: type,
-        data_inicio: simplifyDates(primeiroDia),
-        data_fim: simplifyDates(ultimoDia),
+        data_inicio: simplifyDates(firstDate),
+        data_fim: simplifyDates(lastDate),
     }).toString();
 
     try {
@@ -142,16 +140,12 @@ export const getFinancialDataFromContaAzul = async (headers, page, initialDate, 
         venc_ate: await simplifyDates(finalDate),
     })
 
-
     const query = new URLSearchParams({
         pagina: page,
         tamanho_pagina: 100,
         data_vencimento_de: await simplifyDates(initialDate),
         data_vencimento_ate: await simplifyDates(finalDate),
         status
-        // campo_ordenado_descendente: 'data_vencimento',
-        // campo_ordenado_ascendente: 'nome',
-        // status: 'ATRASADO', // 'EM_ABERTO'
     }).toString();
 
     try {
