@@ -22,6 +22,9 @@ const messages = ({ nameCustomer, payment, idSale, message, product_or_service_r
 
     const keys = Object.keys(possibilities);
 
+
+    // console.log(`${possibilities['link-pagamento']}+ ${possibilities['nome-cliente']}`);
+
     for (let index = 0; index < keys.length; index++) {
         message = message.replace(`{{${keys[index]}}}`, `${possibilities[keys[index]]}`)
         message = message.replace(/  +/g, '\n\n')
@@ -76,7 +79,7 @@ const dispatchReminders = async ({ billingAplied, reminderMethod, message, unity
         const messageCustomized = await messages({
             idSale, message, nameCustomer, payment, product_or_service_related
         })
-
+        continue
         const { whatsapp, email: emailReminder } = reminderMethod;
 
         if (!business_phone) await SendGroupAlerts(
@@ -99,6 +102,16 @@ const dispatchReminders = async ({ billingAplied, reminderMethod, message, unity
 
         await delay(5000);
     }
+}
+
+const getEverythingSale = async (idSale, header) => {
+
+    const [relatedItemToSale, saleData] = await Promise.all([
+        getSaleItem(idSale, header),
+        getSaleData(idSale, header)
+    ])
+
+    return { relatedItemToSale, saleData }
 }
 
 class BillingRulesExec {
@@ -128,7 +141,7 @@ class BillingRulesExec {
                     customerShoppings(idCustomer, this.header, category)
                 ])
 
-                console.time(`processo ${nameCustomer} - ${index}`);
+                // console.time(`processo ${nameCustomer} - ${index}`);
 
                 if (!customerData || !customerSales) {
                     console.log({
@@ -138,7 +151,7 @@ class BillingRulesExec {
                     });
 
                     await delay(7000)
-                    console.timeEnd(`processo ${nameCustomer} - ${index}`)
+                    // console.timeEnd(`processo ${nameCustomer} - ${index}`)
                     continue;
                 }
 
@@ -156,25 +169,44 @@ class BillingRulesExec {
                     continue
                 }
 
-                const { firstDate } = getFirstAndLastDateOfMonth(1);
-                const monthStr = simplifyDates(firstDate).slice(0, 7);  // "YYYY-MM"
+                const { firstDate, lastDate } = getFirstAndLastDateOfMonth(1);
+
+                const monthInitialStr = simplifyDates(firstDate).slice(0, 7);  // "YYYY-MM"
+                const monthFinalStr = simplifyDates(lastDate).slice(0, 7);  // "YYYY-MM"
 
                 const sale = sales.filter(res => res.total === total &&
-                    res.nome !== "Taxa de Matrícula" && res.data.startsWith(monthStr));
+                    res.data.startsWith(monthInitialStr) ||
+                    res.data.startsWith(monthFinalStr)
+                );
+
+                // console.log(sale.length + ` - quantidade de vendas com essa data ${monthInitialStr}`);
 
                 if (sale.length === 0) {
                     console.log({
                         error: "Sem venda com o mesmo valor da parcela",
                         nameCustomer
                     });
+
+                    await delay(7000)
+                    // console.timeEnd(`processo ${nameCustomer} - ${index}`)
                     continue
                 };
 
-                const [relatedItemToSale, saleData] = await Promise.all([
-                    getSaleItem(sale[0]?.id, this.header),
-                    getSaleData(sale[0]?.id, this.header)
-                ])
+                const rightSearched = {};
+                const simplifiedAtDate = await simplifyDates(atDay);
 
+                for (let index = 0; index < sale.length; index++) {
+                    const saleItem = sale[index];
+                    const { relatedItemToSale, saleData } = await getEverythingSale(saleItem.id, this.header);
+                    if (saleData.venda.parcelas[0].data_vencimento !== simplifiedAtDate) continue
+                    rightSearched['relatedItemToSale'] = relatedItemToSale;
+                    rightSearched['saleData'] = saleData;
+                    rightSearched['id'] = saleItem.id;
+                    await delay(6000);
+                    // console.log(`achou a data correta ${saleData.venda.parcelas[0].data_vencimento} no ${index}`);
+                }
+
+                const { relatedItemToSale, saleData } = rightSearched;
 
                 if (!relatedItemToSale || !saleData) {
 
@@ -185,22 +217,18 @@ class BillingRulesExec {
 
                         unity: this.unity,
                         nameCustomer,
-                        sale: sale[indexed]
+                        sale: rightSearched
                     })
 
-                    await delay(7000)
-                    console.timeEnd(`processo ${nameCustomer} - ${index}`)
+                    await delay(7000);
+                    // console.timeEnd(`processo ${nameCustomer} - ${index}`);
                     continue
                 }
 
-                const related = rulesProducts.find(
-                    res => res.name === relatedItemToSale[0]?.nome
-                )
+                const related = rulesProducts.find(res => res.name === relatedItemToSale[0]?.nome)
 
                 const { telefone_comercial, telefone_celular, email } = customerData;
-                const simplifiedAtDate = await simplifyDates(atDay);
                 const { venda, observacoes_pagamento: _, vendedor: __ } = saleData;
-
 
                 if (!related) {
 
@@ -214,13 +242,11 @@ class BillingRulesExec {
 
                     console.log(`nome do material nao encontrado, `);
                     await delay(7000)
-                    console.timeEnd(`processo ${nameCustomer} - ${index}`)
+                    // console.timeEnd(`processo ${nameCustomer} - ${index}`)
                     continue;
                 }
 
-                const { valor } = relatedItemToSale.find(
-                    res => res.nome === related?.name
-                )
+                const { valor } = relatedItemToSale.find(res => res.nome === related?.name)
 
                 const payment = {
                     method: venda.tipo_pagamento,
@@ -230,10 +256,10 @@ class BillingRulesExec {
                 }
 
                 await delay(7000)
-                console.timeEnd(`processo ${nameCustomer} - ${index}`)
+                // console.timeEnd(`processo ${nameCustomer} - ${index}`)
 
                 ruleAplied.push({
-                    idSale: sale[0]?.id,
+                    idSale: rightSearched.id,
                     nameCustomer,
                     business_phone: telefone_comercial || telefone_celular,
                     email,
@@ -278,9 +304,7 @@ class BillingRulesExec {
                 len: filteredData?.data.length
             })
 
-            if (!filteredData) {
-                throw new Error("Init data came as null")
-            };
+            if (!filteredData) throw new Error("Init data came as null")
 
             const { data, has_more, total } = filteredData;
 
@@ -314,11 +338,7 @@ class BillingRulesExec {
 
     async GatheringDatabaseBillingRules() {
 
-        const typesTrigger = [
-            'AT',
-            'BEFORE',
-            'AFTER'
-        ]
+        const typesTrigger = ['AT', 'BEFORE', 'AFTER']
 
         for (let index = 0; index < typesTrigger.length; index++) {
             const element = typesTrigger[index];
@@ -401,6 +421,5 @@ const chargingBillingRules = () => {
 
     });
 }
-
 
 export default chargingBillingRules
