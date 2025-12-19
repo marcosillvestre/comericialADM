@@ -28,23 +28,6 @@ const idList = {
     'Centro': "Centro"
 }
 
-// const parsed = (string) => {
-//     try {
-//         const match = string.match(/["']?serviço["']?:\s*(["']?)([^\n\r"']+)\1/i)
-//         const matchStudent = string.match(/["']?Aluno["']?:\s*(["']?)([^\n\r"']+)\1/i)
-//         const service = match ? match[2].trim() : null;
-//         const student = matchStudent ? matchStudent[2].trim() : null;
-
-//         return {
-//             service,
-//             student
-//         }
-
-//     } catch (error) {
-
-//         return "error aqui"
-//     }
-// }
 
 class associationDatabaseAndCas {
     constructor({ unity, header, registers }) {
@@ -105,7 +88,7 @@ class associationDatabaseAndCas {
     }
 
     async EchoRegister(response, where, sale) {
-        // console.log({ where, sale })
+        console.log({ where, sale })
 
         let messages = {
             "materialDidaticoStatus": `> *${response.name}*
@@ -146,7 +129,7 @@ Professor: *${response.customFields["Professor"]}*
             process.env.UMBLER_CHAT_PAYS_CENTRO :
             process.env.UMBLER_CHAT_PAYS_PTB
 
-        1 > 2 && await SendGroupAlerts(
+        await SendGroupAlerts(
             messages[where],
             chat
         )
@@ -263,33 +246,34 @@ Professor: *${response.customFields["Professor"]}*
 
             const vistos = new Set();
             const keys = [];
-            console.time(`[sync]: match sales... ${userData.name}`);
+            console.time(`[sync]: matching sales... ${userData.name}`);
+
 
             for (const item of filteredPaid) {
                 const saleItem = await getSaleItem(item.id, this.header);
 
                 if (!saleItem || saleItem.length === 0) continue
 
-                if (!vistos.has('taxa') && saleItem.find(r => r.nome === 'Taxa de Matrícula')) {
+                if (!vistos.has('taxa') && saleItem.find(r => r.nome === 'Taxa de Matrícula') &&
+                    userData['pendents'].includes('taxaMatriculaStatus')) {
                     keys.push({ name: 'taxa de matricula', item: saleItem[0] })
                     vistos.add('taxa')
                     continue
                 }
 
-                if (!vistos.has('material') && saleItem.find(r => r.tipo === 'PRODUTO')) {
+                if (!vistos.has('material') && saleItem.find(r => r.tipo === 'PRODUTO') &&
+                    userData['pendents'].includes('materialDidaticoStatus')) {
                     keys.push({ name: 'material didatico', item: saleItem })
                     vistos.add('material')
                     continue
                 }
-                if (!vistos.has('parcela')) {
+                if (!vistos.has('parcela') && userData['pendents'].includes('pagamentoPrimeiraParcelaStatus')) {
                     keys.push({ name: 'parcela', item: saleItem[0] })
                     vistos.add('parcela')
                 }
                 await delay(7000);
             }
-            console.timeEnd(`[sync]: match sales... ${userData.name}`);
-
-            console.log({ keys })
+            console.timeEnd(`[sync]: matching sales... ${userData.name}`);
 
             keys.map(async (res) => {
 
@@ -328,9 +312,6 @@ Professor: *${response.customFields["Professor"]}*
                     })
 
             })
-
-
-
         }
     }
 
@@ -584,10 +565,7 @@ const SyncronizeSalesAndRegisters = async () => {
 }
 
 
-// SyncronizeSalesAndRegisters()
-
 export default SyncronizeSalesAndRegisters
-
 
 // const o = await prisma.service.findMany()
 

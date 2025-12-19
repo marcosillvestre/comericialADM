@@ -161,31 +161,7 @@ class KitsController {
                 data: body,
             })
 
-            if (1 > 2) {
-                const opts = await getOptionsFromRdCustomFields("64bee4fa5ccd17001cec1e12")
-                let newMd = name.concat(` / ${sku}`)
-                let filteredOptions = opts.filter(res => !res.includes(name))
 
-                await updateRdOptionsCustomFields("64bee4fa5ccd17001cec1e12", filteredOptions.concat(newMd))
-
-
-                const { decreaseFifteen, descreaseThird, descreaseTw, increseTax } = await AplieDescount(price_selling)
-
-                const newInsume = await prisma.kit.create({
-                    data: {
-                        name,
-                        sku,
-                        price_selling,
-                        color,
-                        price_ticket: increseTax,
-                        price_card: descreaseTw,
-                        price_cash: descreaseThird,
-                        price_link: decreaseFifteen,
-                        category: "Product"
-                    },
-                });
-
-            }
 
             return res.status(201).json(newKit);
         } catch (error) {
@@ -232,51 +208,6 @@ class KitsController {
                 data: body,
 
             })
-
-            if (1 > 2) {
-                const { name: fName, status: fStatus } = await prisma.kit.findUnique({
-                    where: {
-                        id
-                    }
-                });
-
-
-                if (name !== fName || status !== fStatus) {
-                    try {
-                        const opts = await getOptionsFromRdCustomFields("64bee4fa5ccd17001cec1e12")
-                        let newMd = name.concat(` / ${sku}`)
-                        let filteredOptions = opts.filter(res => !res.includes(fName))
-
-                        status === false ? await updateRdOptionsCustomFields("64bee4fa5ccd17001cec1e12", filteredOptions) :
-                            await updateRdOptionsCustomFields("64bee4fa5ccd17001cec1e12", filteredOptions.concat(newMd))
-
-
-                    } catch (error) {
-                        console.log(error)
-                        return res.status(500).json({ error: 'Failed to update Insume' });
-
-                    }
-
-                }
-
-                const { decreaseFifteen, descreaseThird, descreaseTw, increseTax } = await AplieDescount(price_selling)
-
-                const updatedInsume = await prisma.kit.update({
-                    where: { id: id },
-                    data: {
-                        name,
-                        sku,
-                        price_selling,
-                        price_ticket: increseTax,
-                        price_card: descreaseTw,
-                        price_cash: descreaseThird,
-                        price_link: decreaseFifteen,
-                        color,
-                        status
-                    },
-                })
-            }
-
 
             return res.status(200).json(kitUpdated);
         } catch (error) {
