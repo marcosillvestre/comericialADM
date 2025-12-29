@@ -79,7 +79,7 @@ const dispatchReminders = async ({ billingAplied, reminderMethod, message, unity
         const messageCustomized = await messages({
             idSale, message, nameCustomer, payment, product_or_service_related
         })
-        continue
+
         const { whatsapp, email: emailReminder } = reminderMethod;
 
         if (!business_phone) await SendGroupAlerts(
@@ -422,4 +422,5 @@ const chargingBillingRules = () => {
     });
 }
 
+chargingBillingRules()
 export default chargingBillingRules
