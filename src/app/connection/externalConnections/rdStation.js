@@ -99,17 +99,25 @@ export async function createTasks(name, aluno, classe) {
 
 
 export async function getContactsWithId(id) {
+    try {
 
-    const [{ data: contacts }, { data: deal }] = await Promise.all([
-        axios.get(`https://crm.rdstation.com/api/v1/deals/${id}/contacts?token=${process.env.RD_TOKEN}`),
-        axios.get(`https://crm.rdstation.com/api/v1/deals/${id}?token=${process.env.RD_TOKEN}`),
-    ])
+        const [{ data: contacts }, { data: deal }] = await Promise.all([
+            axios.get(`https://crm.rdstation.com/api/v1/deals/${id}/contacts?token=${process.env.RD_TOKEN}`),
+            axios.get(`https://crm.rdstation.com/api/v1/deals/${id}?token=${process.env.RD_TOKEN}`),
+        ])
 
-    return {
-        deal,
-        phone: contacts.contacts[0] ? contacts.contacts[0].phones[0]?.phone : "",
-        email: contacts.contacts[0] ? contacts.contacts[0].emails[0]?.email : "",
-        contacts: contacts.contacts[0] ? contacts.contacts[0] : ""
+        return {
+            deal,
+            phone: contacts.contacts[0] ? contacts.contacts[0].phones[0]?.phone : "",
+            email: contacts.contacts[0] ? contacts.contacts[0].emails[0]?.email : "",
+            contacts: contacts.contacts[0] ? contacts.contacts[0] : ""
+        }
+
+    } catch (error) {
+        console.log({
+            // error: error.response.data,
+            where: 'search for deal for id'
+        });
     }
 
 }

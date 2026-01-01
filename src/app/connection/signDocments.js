@@ -1,6 +1,6 @@
 import prisma from "../../database/database.js";
 import { getContactsWithId, winADeal } from "./externalConnections/rdStation.js";
-import { SendSimpleWpp } from "./externalConnections/wpp.js";
+import { SendGroupAlerts, SendSimpleWpp } from "./externalConnections/wpp.js";
 
 const getData = async () => {
     const sevenDaysAgo = new Date()
@@ -8,11 +8,11 @@ const getData = async () => {
 
     const data = await prisma.registers.findMany({
         include: {
-            files: true
+            files: true,
+            historic: true
         },
         where: {
             AND: [
-
                 {
                     created_at: {
                         gte: new Date(sevenDaysAgo.setHours(0, 0, 0, 0)),
@@ -21,7 +21,7 @@ const getData = async () => {
                 },
                 {
                     assinaturaContratoStatus: {
-                        not: "Ok"
+                        not: "Ok",
                     }
                 }
 
@@ -36,34 +36,50 @@ const getData = async () => {
 
 async function ChargeSignDocuments() {
     const data = await getData();
-    if (data.length === 0) return "No documents to process";
+    if (data.length === 0) return console.log("No documents to process");
+
+    console.log(data.length)
 
     try {
-        for (let index = 0; index < data.length; index++) {
-            const { name, id, files } = data[index];
-            const { phone } = await getContactsWithId(id);
 
-            if (!phone) continue;
+        let toSendAdm = '*Contratos pendentes de assinatura*: \n';
+        for (let index = 0; index < data.length; index++) {
+            const { name, id, files, customFields, historic, assinaturaContratoStatus } = data[index];
+            const contactData = await getContactsWithId(id);
+            if (!contactData) continue;
 
             const filekey = files.find(f => f.key.includes("assina.ae"));
-            const message = `Olá, tudo bem? Aqui é da American Way. 
-Estamos finalizando o seu cadastro e para isso precisamos que você assine o contrato. Por favor, verifique seu e-mail e siga as instruções para completar a assinatura.
+            const messageCustomer =
+                `A sua matrícula não foi validada em nosso sistema. 
 
-Qualquer dúvida, estamos à disposição! 
-                
-${filekey?.key ?? '*erro ao gerar link do documento entre em contato com seu gerente comercial*.'}
+Por favor, certifique-se se já foi assinado o contrato para que a sua proposta não expire ou seja cancelada.
 
-(se já assinou, por favor desconsidere esta mensagem)`;
+Segue o link: ${filekey?.key ?? "erro ao gerar o link, entre em contato com seu consultor comercial."}
 
-            await SendSimpleWpp(
-                name,
-                phone,
-                message,
-                ['automação']
-            )
+Caso já tenha assinado, desconsidere essa mensagem.`;
+            let noAuto = historic.filter(res => res.responsible !== 'Automação' && res.responsible !== "Automatização");
+            const messageAdm =
+                `Contrato n°: ${index + 1}
+*responsavel*: ${customFields['Nome do responsável']}
+*aluno*: ${customFields['Nome do aluno'] || name} 
 
+*Assinaturas*: ------------
+${noAuto.length > 0 ?
+                    noAuto.map(t => t.responsible && `\n ${t.responsible} ✔`) : "Nenhuma assinatura ainda"
+                }
 
+-------------------------`
+
+            toSendAdm += ("\n" + messageAdm)
+
+            const { phone } = contactData;
+            if (!phone) continue;
+            await SendSimpleWpp(name, phone, messageCustomer, ['automação'])
         }
+
+        console.log(toSendAdm);
+        await SendGroupAlerts(toSendAdm, process.env.UMBLER_COMERCIAL)
+
     } catch (error) {
 
         console.log({

@@ -102,7 +102,6 @@ export async function SendSimpleWpp(name, phone, message, tag) {
             messageBody,
             { headers }
         )
-        if (!data) throw new Error("Mensagem não enviada")
 
         const { contactId: _, chat: { id } } = data;
 
@@ -112,9 +111,11 @@ export async function SendSimpleWpp(name, phone, message, tag) {
 
     } catch (error) {
 
-        console.log(error)
-        return new Error(error)
-
+        console.log({
+            error: error.response.data,
+            where: "[ SEND SIMPLE WPP ]"
+        })
+        return null
     }
 
 }
