@@ -389,6 +389,7 @@ ${url}`
 
                 const setter = new Set();
                 const ranking = {};
+
                 for (let index = 0; index < counter.length; index++) {
                     const { owner } = counter[index];
                     setter.has(owner) ? ranking[owner] += 1 : (ranking[owner] = 1, setter.add(owner));
