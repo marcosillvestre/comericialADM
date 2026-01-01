@@ -4,6 +4,7 @@ import { RegisterFinder } from "../../../database/registers/register.find.js";
 import { StringsMethods } from "../../../utils/functions/serializerStrings.js";
 import { getContactsWithId, updateStageRd } from "./rdStation.js";
 import { SendGroupAlerts, SendSimpleWpp } from "./wpp.js";
+import prisma from "../../../database/database.js";
 const { registerFindMany, registerFinder } = new RegisterFinder()
 const { spacesAndLowerCase } = new StringsMethods()
 
@@ -386,12 +387,26 @@ ${url}`
                 const countPTB = counter.filter(res => res.customFields['Unidade'] === 'PTB');
                 const countCentro = counter.filter(res => res.customFields['Unidade'] === 'Centro');
 
+                const setter = new Set();
+                const ranking = {};
+                for (let index = 0; index < counter.length; index++) {
+                    const { owner } = counter[index];
+                    setter.has(owner) ? ranking[owner] += 1 : (ranking[owner] = 1, setter.add(owner));
+                }
+
+                const ordenado = Object.entries(ranking)
+                    .sort((a, b) => b[1] - a[1])
+
+                const rank = ordenado
+                    .map(([nome, valor], index) => `${index + 1}° - ${nome}: ${valor}`)
+                    .join('\n');
+
                 let comercialMessage = `
 NOVO ALUNO, UHUULL!!🥳🤩
 
-> *${body.name.trim()}*
+> *${name.trim()}*
 
-Nome aluno: *${customFields["Nome do aluno (se não for responsável próprio))"]}*
+Nome aluno: *${customFields["Nome do aluno (se não for responsável próprio))"] || name}*
 Vendedor: *${customFields["Vendedor"]}*
 Unidade: *${customFields["Unidade"]}*
 Idade: *${customFields["Idade do Aluno"]}*
@@ -402,8 +417,12 @@ Tipo: *${customFields["Formato de Aula"]}*
 
 *PTB*: ${countPTB?.length}
 *Centro*: ${countCentro?.length}
+
+Ranking parcial:
+
+${rank}
 `
-                // Ranking mensal:
+
                 let chat = customFields["Unidade"] === "Centro" ?
                     process.env.UMBLER_CHAT_REM_ID_CENTRO : process.env.UMBLER_CHAT_REM_ID_PTB
 
@@ -421,7 +440,3 @@ Tipo: *${customFields["Formato de Aula"]}*
     }
 }
 
-
-async (params) => {
-    console.log("first")
-}
