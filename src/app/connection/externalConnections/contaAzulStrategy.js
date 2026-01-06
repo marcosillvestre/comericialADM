@@ -255,7 +255,7 @@ export const CreatePeople = async ({ token, body }) => {
         if (!cepData) throw ("CEP inválido");
         if (!birthDate) throw ("Data de nascimento inválida");
 
-        const { estado, localidade } = cepData;
+        const { cep: CEP, estado, localidade } = cepData;
 
         const doc = cpf.length > 11 ? "Jurídica" : "Física"
         const typeDoc = cpf.length > 11 ? "cnpj" : "cpf"
@@ -280,7 +280,7 @@ export const CreatePeople = async ({ token, body }) => {
             enderecos: [
                 {
                     id: v4(),
-                    cep,
+                    cep: CEP,
                     logradouro: address,
                     numero: number,
                     complemento: complement,

@@ -153,7 +153,7 @@ class RegisterContaAzulController {
 
             const newPeople = await CreatePeople({ token: newToken, body: bodyPerson });
 
-            if (!newPeople) return res.status(400).json({ message: "CPF inválido, cliente não encontrado no conta azul" });
+            if (!newPeople) return res.status(400).json({ message: "Erro ao cadastrar cliente ao conta azul, verifique os dados" });
 
 
             let venc = await DateTransformer(newService?.payment_date);
@@ -391,9 +391,7 @@ class RegisterContaAzulController {
                 body: bodyPerson
             });
 
-            if (!newPeople) return res.status(400).json({
-                message: "CPF inválido, cliente não encontrado no conta azul"
-            });
+            if (!newPeople) return res.status(400).json({ message: "Erro ao cadastrar cliente ao conta azul, verifique os dados" });
 
             const saleNotes = await createComment({
                 'Responsável': nomeResponsavel,
@@ -637,7 +635,7 @@ class RegisterContaAzulController {
 
             const newPeople = await CreatePeople({ token: newToken, body: bodyPerson });
 
-            if (!newPeople) return res.status(400).json({ message: "CPF inválido, cliente não encontrado no conta azul" });
+            if (!newPeople) return res.status(400).json({ message: "Erro ao cadastrar cliente ao conta azul, verifique os dados" });
 
             const saleNotes = await createComment({
                 'Responsável': nomeResponsavel,
