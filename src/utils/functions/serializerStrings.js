@@ -28,3 +28,6 @@ export const createComment = (body) => {
         .join('\n');
 }
 
+export const EncodingStrings = (str) => {
+    return Buffer.from(str, 'latin1').toString('utf8')
+}

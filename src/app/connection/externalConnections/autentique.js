@@ -3,6 +3,7 @@ import 'dotenv/config';
 import FormData from 'form-data';
 import prisma from "../../../database/database.js";
 import { StartCicleWhenNewRegisterIsCreated } from "./trello.js";
+import { EncodingStrings } from "../../../utils/functions/serializerStrings.js";
 
 
 export const GetDocument = async (params) => {
@@ -85,6 +86,68 @@ export const GetDocument = async (params) => {
         console.log(error)
     }
 
+}
+export const ListDocuments = async () => {
+    try {
+        const formData = new FormData();
+        formData.append('operations', JSON.stringify({
+            query: `
+    query{
+        documents(limit: 30, page: 1) {
+            total
+            data {
+            id
+            name
+            refusable
+            sortable
+            created_at
+            signatures {
+                public_id
+                name
+                email
+                created_at
+                action { name }
+                link { short_link }
+                user { id name email }
+                viewed { created_at }
+                signed { created_at }
+                rejected { created_at }
+            }
+            files { original signed }
+            }
+        }
+    }`,
+            variables: {}
+        }));
+        formData.append('map', JSON.stringify({ '0': ['variables.file'] }));
+
+        var config = {
+            method: 'post',
+            url: 'https://api.autentique.com.br/v2/graphql',
+            headers: {
+                'Authorization': `Bearer ${process.env.AUTENTIQUE_TOKEN}`,
+                ...formData.getHeaders()
+            },
+            data: formData
+        };
+
+        const { data: { data: { documents } } } = await axios(config)
+
+        return documents
+
+    } catch (error) {
+        console.log({ error })
+    }
+
+}
+
+export const GetDocumentsByName = async (name) => {
+    if (!name) return null;
+
+
+    let { data } = await ListDocuments();
+    const document = data.find(doc => EncodingStrings(doc.name).includes(name));
+    return document
 }
 
 export const createRegisterWhenDocumentSigned = async (data, signatures, link) => {
