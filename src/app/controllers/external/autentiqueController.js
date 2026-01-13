@@ -101,7 +101,7 @@ Qualquer problema você pode entrar em contato com seu consultor responsável
                         const dealWin = await winADeal(id);
                         const [deal] = await gatheringDataForDatabase([dealWin]);
                         await createRegisterWhenDocumentSigned(
-                            deal, signatures, customerLink
+                            deal, [], customerLink
                         );
                     }
 

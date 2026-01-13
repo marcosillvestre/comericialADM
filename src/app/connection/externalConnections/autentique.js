@@ -153,7 +153,7 @@ export const GetDocumentsByName = async (name) => {
 export const createRegisterWhenDocumentSigned = async (data, signatures, link) => {
 
     const usersSigned = signatures.map(sign => {
-        return sign.link !== null && {
+        return sign.signed !== null && {
             responsible: sign?.user?.name ?? sign?.name,
             information: {
                 field: "assinaturaContratoStatus",
