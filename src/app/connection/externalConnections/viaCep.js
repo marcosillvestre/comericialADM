@@ -17,8 +17,7 @@ export const getDataFromCep = async (cep) => {
             where: "ViaCEP",
         })
 
-        throw "Dados de CEP inválidos"
-
+        return null
     }
 
 }

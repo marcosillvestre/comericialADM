@@ -105,10 +105,10 @@ const getDateRD = (birthday) => {
 export const gatheringDataForDatabase = async (deals) => {
     const data = []
 
-    try {
 
-        for (const deal of deals) {
+    for (const deal of deals) {
 
+        try {
             const { id, deal_custom_fields, user, name,
                 deal_products: [service], deal_stage } = deal
 
@@ -120,6 +120,7 @@ export const gatheringDataForDatabase = async (deals) => {
             const CEP = await findYourValueForCustomFields('CEP', deal_custom_fields)
 
             const viaCepData = await getDataFromCep(CEP);
+            if (!viaCepData) continue;
 
             const customFields = async () => {
                 const cf = await prisma.customFields.findMany()
@@ -201,20 +202,20 @@ export const gatheringDataForDatabase = async (deals) => {
                 }
             })
 
+        } catch (error) {
+            console.log({ error, where: "[GATHERINGDATABASEDATA]" })
+
+            await SendSimpleWpp(
+                "marcos",
+                process.env.MARCOS,
+                JSON.stringify(`[GATHERINGDATAFORDATABASE]: ${error}`, null, 2))
+
+            throw error
         }
-
-        return data;
-
-    } catch (error) {
-        console.log({ error, where: "[GATHERINGDATABASEDATA]" })
-
-        await SendSimpleWpp(
-            "marcos",
-            process.env.MARCOS,
-            JSON.stringify(`[GATHERINGDATAFORDATABASE]: ${error}`, null, 2))
-
-        throw error
     }
+
+    return data;
+
 }
 
 async function LoopForStoreNewRegisters(deals) {
