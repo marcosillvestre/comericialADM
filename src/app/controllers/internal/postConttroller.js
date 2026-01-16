@@ -172,10 +172,10 @@ Te esperamos na aula 👩‍💻`,
 
                 await Promise.all([
 
-                    ScheduleBotMessages(
-                        newUser.name, newUser.customFields["Phone"],
-                        newUser.customFields["Data da primeira aula"],
-                        "Lembrete da primeira aula"),
+                    // ScheduleBotMessages(
+                    //     newUser.name, newUser.customFields["Phone"],
+                    //     newUser.customFields["Data da primeira aula"],
+                    //     "Lembrete da primeira aula"),
 
                     SendSimpleWpp(
                         newUser.name,
