@@ -249,6 +249,7 @@ export const CreatePeople = async ({ token, body }) => {
         complement, name, birth, contract, role, address, number } = body;
 
     try {
+        const cpfClean = cpf.trim();
         const birthDate = await ReOrderDate(birth);
         const cepData = await getDataFromCep(cep);
 
@@ -257,17 +258,13 @@ export const CreatePeople = async ({ token, body }) => {
 
         const { cep: CEP, estado, localidade } = cepData;
 
-        const doc = cpf.length > 11 ? "Jurídica" : "Física"
-        const typeDoc = cpf.length > 11 ? "cnpj" : "cpf"
+        const doc = cpfClean.length > 11 ? "Jurídica" : "Física"
+        const typeDoc = cpfClean.length > 11 ? "cnpj" : "cpf"
 
         const newBody = {
-            perfis: [
-                {
-                    tipo_perfil: 'Cliente'
-                }
-            ],
+            perfis: [{ tipo_perfil: 'Cliente' }],
             tipo_pessoa: doc,
-            [typeDoc]: cpf,
+            [typeDoc]: cpfClean,
             nome: name,
             data_nascimento: birthDate,
             email: email,
@@ -292,7 +289,6 @@ export const CreatePeople = async ({ token, body }) => {
             ],
 
         }
-
 
         const { data } = await axios.post(
             `https://api-v2.contaazul.com/v1/pessoas`,
