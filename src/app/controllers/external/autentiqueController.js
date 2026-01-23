@@ -134,7 +134,7 @@ Qualquer problema você pode entrar em contato com seu consultor responsável
         const { name, number } = req.body
 
         try {
-            const path = req.file.path;
+            const pdfPath = req.file.path;
 
             // Ler o arquivo PDF como stream
             const fileStream = fs.createReadStream(pdfPath);
