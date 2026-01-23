@@ -134,11 +134,10 @@ Qualquer problema você pode entrar em contato com seu consultor responsável
         const { name, number } = req.body
 
         try {
-            const pdfPath = req.file.path;
+            const { path, originalname } = req.file;
 
             // Ler o arquivo PDF como stream
-            const fileStream = fs.createReadStream(pdfPath);
-
+            const fileStream = fs.createReadStream(path);
             // Criar um FormData para enviar o arquivo via GraphQL mutation
             const formData = new FormData();
             formData.append('operations', JSON.stringify({
