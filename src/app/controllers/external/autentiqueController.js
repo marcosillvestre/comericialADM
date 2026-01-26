@@ -217,7 +217,7 @@ Qualquer problema você pode entrar em contato com seu consultor responsável (p
 
                 })
                 .finally(() => {
-                    fs.unlink(pdfPath, (err) => {
+                    fs.unlink(path, (err) => {
                         if (err) throw err;
                         console.log('path was deleted');
                     })
