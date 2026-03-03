@@ -1,6 +1,4 @@
 import { CronJob } from "cron";
-
-
 import chargingBillingRules from '../connection/billingRule.js';
 // import syncContaAzulRegister from "../connection/contaAzul.js";
 import { firstClassDaily, firstClassSearch } from '../connection/FirstClassSearch.js';
@@ -8,7 +6,7 @@ import orderBooks from "../connection/orderingBooks.js";
 import NewSearchSync from "../connection/rdSearchSync.js";
 import renewContracts from '../connection/searchEndContractsRd.js';
 import SyncronizeSalesAndRegisters from '../connection/syncronizeCAandDatabase.js';
-import ChargeSignDocuments from "../connection/signDocments.js";
+// import ChargeSignDocuments from "../connection/signDocments.js";
 
 
 const functionsArray = [
@@ -24,10 +22,6 @@ const functionsArray = [
     {
         time: "0 5 * * *",
         fn: chargingBillingRules
-    },
-    {
-        time: "0 5 * * *",
-        fn: ChargeSignDocuments
     },
     {
         time: "0 4 * * *",
