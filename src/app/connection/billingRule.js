@@ -378,7 +378,7 @@ class BillingRulesExec {
         const data = await getFinancialDataFromContaAzul(
             this.header, page, initialDate, finalDate, ['ATRASADO', 'EM_ABERTO'])
 
-        return data
+        return data.filter(res => res['condicao_pagamento'] === false)
     }
 
     async init(pages) {
