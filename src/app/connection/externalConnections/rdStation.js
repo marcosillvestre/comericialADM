@@ -314,12 +314,12 @@ export async function Funnels(id) {
 
         try {
             const { data } = await axios.
-                get(`https://crm.rdstation.com/api/v1/deal_pipelines?limit=1000&token=${process.env.RD_TOKEN}`)
+                get(`https://crm.rdstation.com/api/v1/deal_pipelines?limit=200&token=${process.env.RD_TOKEN}`)
 
             return data.filter(res => !res.name.toLowerCase().includes("teste"))
         } catch (error) {
 
-            return error
+            console.log({ error: error.response.data, where: "[GET FUNNELS]" })
         }
     }
 

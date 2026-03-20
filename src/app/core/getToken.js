@@ -1,6 +1,7 @@
 import axios from "axios";
 import prisma from "../../database/database.js";
 import 'dotenv/config';
+import { SendSimpleWpp } from "../connection/externalConnections/wpp.js";
 
 const encodedTest = Buffer.from(`${process.env.CONTA_AZUL_CLIENT_IDd}:${process.env.CONTA_AZUL_CLIENT_SECRETt}`, 'utf8').toString('base64');
 
@@ -32,6 +33,10 @@ async function Run({ refresh_token }) {
             error: error.response,
             where: "[SWITCH GRANT_TYPE FOR ACCESS_CODE]",
         })
+
+        await SendSimpleWpp("marcos", process.env.MARCOS,
+            "O refresh token do conta azul expirou")
+
     }
 }
 
