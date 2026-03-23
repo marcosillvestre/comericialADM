@@ -299,10 +299,10 @@ class BillingRulesExec {
             const atDay = await calculateDates(today, daysToAction, triggerType[typeTrigger]);
             const filteredData = await this.getContaAzulData(page, atDay, atDay);
 
-            console.log({
-                typeTrigger, daysToAction,
-                len: filteredData?.data.length
-            })
+            // console.log({
+            //     typeTrigger, daysToAction,
+            //     len: filteredData?.data.length
+            // })
 
             if (!filteredData) throw new Error("Init data came as null")
 

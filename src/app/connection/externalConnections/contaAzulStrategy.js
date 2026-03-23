@@ -117,7 +117,7 @@ export const customerShoppings = async (idCustomer, headers, type) => {
         if (!itens) throw new Error("Data errror, API out of system")
 
         return {
-            data: itens,
+            data: itens.filter(item => item.condicao_pagamento === false),
             has_more: total_itens === 100
         }
 
